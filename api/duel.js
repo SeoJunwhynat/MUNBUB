@@ -153,7 +153,7 @@ async function state(c,room,guest,me){
 async function sendError(res,code,text){return res.status(code).json({error:text})}
 export default async function handler(req,res){
  noCache(res);
- if(!configured())return sendError(res,503,'대결 서버의 Blob 저장소가 연결되지 않았어. Vercel 설정을 확인해 줘.');
+ if(!configured())return sendError(res,503,'대결 서버의 데이터베이스가 연결되지 않았어. Render DATABASE_URL 설정을 확인해 줘.');
  const me=session(req);
  if(!me)return sendError(res,401,'1대1 대결은 온라인 로그인 후 이용할 수 있어.');
  if(req.method==='GET'){
