@@ -184,5 +184,5 @@ function mount(){
  return !!row;
 }
 mount();const interval=setInterval(()=>{if(mount())clearInterval(interval)},250);setTimeout(()=>clearInterval(interval),16000);
-setInterval(()=>{if(roomsDialog.open&&screen==='list'&&Date.now()-lastCheck>5000)refresh()},6700);
+setInterval(()=>{if(roomsDialog.open&&screen==='list'&&Date.now()-lastCheck>9000)refresh()},12000);
 })();
