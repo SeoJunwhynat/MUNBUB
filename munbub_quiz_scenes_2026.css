@@ -19,18 +19,8 @@ body:has(#workspace.mb-playing-scene:not([hidden])){
 #workspace#workspace.mb-playing-scene.mb-scene-idiom{background-image:url('/ui-assets/scene_idiom.webp')!important}
 #workspace#workspace.mb-playing-scene.mb-scene-infinite{background-image:url('/ui-assets/scene_infinite.webp')!important}
 #workspace#workspace.mb-playing-scene.mb-scene-hard{background-image:url('/ui-assets/scene_hard.webp')!important}
-/* The transparent 12-frame supplied WebP stays animated as a separate background layer.
-   Both layers are positioned using the SAME viewport height: the parent backdrop
-   is 2172 x 724 and cover is always height-constrained at mobile/desktop ratios.
-   Its central arch opening contains the timer sprite around x=51.4%, y=30%. */
-#workspace#workspace.app-shell.mb-playing-scene.mb-scene-timed:not([hidden]){
- background-image:url('/ui-assets/hourglass_only_loop_20261106.webp'),url('/ui-assets/scene_timed.webp')!important;
- background-position:51.4% 55%,center center!important;
- background-size:auto 22%,cover!important;
- background-repeat:no-repeat,no-repeat!important;
- background-color:#292039!important;
-}
-
+/* User-supplied GIF replaces the old timed.webp, not an overlay. */
+#workspace#workspace.mb-playing-scene.mb-scene-timed{background-image:url('/ui-assets/timed-background-final.gif')!important}
 #workspace.mb-playing-scene .work-sidebar{
  display:block!important;min-width:0!important;height:100dvh!important;
  overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;

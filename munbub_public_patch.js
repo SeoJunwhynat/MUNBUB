@@ -44,7 +44,7 @@ const css=document.createElement('style');css.id='mb-public-css';css.textContent
 #mb-public-dialog .mb-pub-field input,#mb-public-dialog .mb-pub-field select{width:100%}
 #mb-public-dialog .mb-pub-backrow{margin-bottom:13px}
 #mb-public-dialog .mb-pub-message{margin-top:12px;min-height:1.5em;color:#ffd18b;line-height:1.5;font-size:13px}
-/* Original temporary public button theme removed: the PNG-only art button owns this view. */
+#homeScreen .mb-online-actions #mb-public-open{min-height:52px!important;display:grid;place-items:center;font-size:clamp(13px,1.15vw,17px)!important;background:linear-gradient(#fae9cc,#cba27a)!important;color:#422b29!important;border:4px double #96674c!important;border-radius:13px!important}
 .sidebar-nav .mb-public-nav,.mobile-drawer .mb-public-nav{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:65px;padding:9px 4px;background:linear-gradient(#ffe8be,#d4a57c);border:3px double #91644c;border-radius:11px;color:#482e28;font-weight:950;font-size:17px}
 @media(max-width:730px){#mb-public-dialog{width:100vw;max-height:100dvh;height:100dvh;padding:12px;border-radius:0}#mb-public-dialog .mb-pub-layout{grid-template-columns:1fr}#mb-public-dialog .mb-pub-side{display:none}#mb-public-dialog .mb-pub-actions{justify-content:flex-start}#mb-public-dialog .mb-pub-room{grid-template-columns:minmax(0,1fr) auto;gap:7px}#mb-public-dialog .mb-pub-people{display:none}#mb-public-dialog .mb-pub-field{grid-template-columns:1fr;gap:4px}#mb-public-dialog #mb-pub-list{max-height:52dvh}}
 `;document.head.append(css);

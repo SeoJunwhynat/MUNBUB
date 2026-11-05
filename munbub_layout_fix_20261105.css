@@ -1,0 +1,26 @@
+/* 2026-11-05 stable gameplay viewport and mode-button dimensions.
+   Keep the sidebar independent from the quiz content and the home route. */
+html,body{max-width:100%;overflow-x:clip}
+#homeScreen.app-shell[hidden],#workspace.app-shell[hidden],
+#workspace.app-shell .view[hidden],#homeScreen [hidden]{display:none!important;visibility:hidden!important}
+/* Nav background swaps, active states and clicks must not resize the layout. */
+#homeScreen .sidebar-nav,#workspace .sidebar-nav{width:100%!important;min-width:0!important;flex-shrink:0!important}
+#homeScreen .sidebar-nav>.navbtn,#workspace .sidebar-nav>.navbtn,
+#homeScreen .sidebar-nav>.mb-public-nav,#workspace .sidebar-nav>.mb-public-nav,
+#homeScreen .sidebar-nav>.mb-duel-nav,#workspace .sidebar-nav>.mb-duel-nav,
+#homeScreen .sidebar-nav>.navbtn:is(:hover,:active,:focus,.active),
+#workspace .sidebar-nav>.navbtn:is(:hover,:active,:focus,.active){
+ box-sizing:border-box!important;position:relative!important;flex:0 0 auto!important;width:100%!important;max-width:100%!important;
+ min-width:0!important;margin-inline:0!important;transform:none!important;transform-origin:center!important;
+ scale:1!important;translate:none!important;zoom:1!important;
+}
+#homeScreen .sidebar-nav>.navbtn img,#workspace .sidebar-nav>.navbtn img{
+ display:block!important;width:100%!important;max-width:100%!important;height:auto!important;
+ min-height:0!important;object-fit:contain!important;object-position:center center!important;
+}
+#homeScreen .sidebar-nav>.navbtn.active,#workspace .sidebar-nav>.navbtn.active{
+ filter:brightness(.77) saturate(.95)!important;
+}
+
+/* The active quiz viewport and all play-mode compositions are owned by
+   munbub_quiz_scenes_2026.css only. Legacy sizing rules were removed. */

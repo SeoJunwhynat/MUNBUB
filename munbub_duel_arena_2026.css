@@ -1174,14 +1174,3 @@
   width:clamp(74px,22vw,108px)!important;height:clamp(74px,22vw,108px)!important;
  }
 }
-
-/* 2026-11-06: speech tails face their actual player portraits, not the arena edge. */
-#mb-duel-dialog#mb-duel-dialog.mb-duel-live .mb-duel-scoreboard .mb-duel-score .mb-duel-portrait-emote::after{
- content:""!important;position:absolute!important;top:-10px!important;bottom:auto!important;
- left:auto!important;right:13%!important;width:15px!important;height:15px!important;
- background:#ffedcc!important;border:0!important;border-top:3px solid #9b654c!important;
- border-left:3px solid #9b654c!important;transform:rotate(45deg)!important;
-}
-#mb-duel-dialog#mb-duel-dialog.mb-duel-live .mb-duel-scoreboard .mb-duel-score:nth-child(2) .mb-duel-portrait-emote::after{
- right:auto!important;left:13%!important;
-}

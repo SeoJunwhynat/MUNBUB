@@ -1,0 +1,78 @@
+/* Original image-based simulator fitted as an interactive, working ranked game menu. */
+#mb-ranked-dialog.mb-ranked-visual-open[open]{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box!important;position:fixed!important;inset:0!important;
+ margin:auto!important;padding:0!important;width:100vw!important;max-width:none!important;
+ height:100dvh!important;max-height:none!important;overflow:hidden!important;
+ border:0!important;border-radius:0!important;background:transparent!important;
+ box-shadow:none!important;z-index:2147482000!important;
+}
+#mb-ranked-dialog.mb-ranked-visual-open::backdrop{background:rgba(28,15,23,.48)!important}
+#mb-ranked-dialog .mb-ranked-lobby{
+ position:relative;flex:0 0 auto;box-sizing:border-box;
+ width:min(98vw,calc(95dvh * 1672 / 941));aspect-ratio:1672/941;
+ height:auto;max-height:95dvh;overflow:hidden;border:3px solid #edc689;
+ border-radius:9px;box-shadow:0 16px 60px #140a14a8;isolation:isolate;background:#d9b084;
+}
+#mb-ranked-dialog .mb-ranked-lobby-art{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;z-index:0}
+#mb-ranked-dialog .mb-ranked-lobby button{box-sizing:border-box!important;position:absolute!important;display:block!important;
+ border:0!important;background:transparent!important;padding:0!important;min-height:0!important;margin:0!important;
+ border-radius:7px!important;cursor:pointer!important;touch-action:manipulation!important;
+ color:transparent!important;font-size:0!important;z-index:5!important;opacity:1!important;visibility:visible!important;
+ box-shadow:none!important;filter:none!important;
+}
+#mb-ranked-dialog .mb-ranked-lobby button::after{content:"";position:absolute;inset:3px;border:3px solid #ffe59a;
+ box-shadow:0 0 15px #ffd08d;opacity:0;pointer-events:none;border-radius:8px;transition:opacity .12s}
+#mb-ranked-dialog .mb-ranked-lobby button:hover::after,#mb-ranked-dialog .mb-ranked-lobby button:focus-visible::after,
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-mode.selected::after{opacity:.88}
+#mb-ranked-dialog .mb-ranked-lobby #mb-ranked-stage-back{left:1%;top:1%;width:15%;height:12%}
+#mb-ranked-dialog .mb-ranked-lobby #mb-ranked-stage-guide{left:74%;top:0%;width:7%;height:13%}
+#mb-ranked-dialog .mb-ranked-lobby #mb-ranked-stage-reward{left:81%;top:0%;width:7%;height:13%}
+#mb-ranked-dialog .mb-ranked-lobby #mb-ranked-stage-rules{left:88%;top:0%;width:7%;height:13%}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-modes{position:absolute;left:6%;top:32%;width:28%;height:40%;display:flex;flex-direction:column;justify-content:space-around;z-index:3}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-modes button.mb-ranked-stage-mode{
+ position:relative!important;width:100%!important;height:auto!important;aspect-ratio:1100/380;
+ background:transparent!important;overflow:visible!important;flex:0 0 auto;display:block!important;
+}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-modes button img{width:100%!important;height:100%!important;object-fit:contain!important;pointer-events:none!important}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-tabs{position:absolute;left:40.9%;top:30.6%;width:42.8%;height:8.5%;display:grid;grid-template-columns:repeat(3,1fr);gap:.6%;z-index:5}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-tabs button.mb-ranked-stage-tab{position:relative!important;width:100%!important;height:100%!important}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-tabs button.mb-ranked-stage-tab.selected::after{opacity:1;border-color:#ffd77d;box-shadow:0 0 10px #ffb34d}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-rows{position:absolute;left:39%;top:44%;width:47%;height:37%;z-index:2;overflow-y:auto;overflow-x:hidden;
+ background:transparent;color:#52302a;padding:0 1%;font-size:clamp(10px,1.1vw,18px);font-weight:900;scrollbar-width:thin;}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-row{display:grid;grid-template-columns:15% 1fr 23%;gap:2%;align-items:center;min-height:clamp(22px,4.15dvh,45px);
+ border-bottom:1px solid #a57b5985;padding:2px 5%;background:rgba(255,242,218,.45)}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-row:nth-child(even){background:rgba(225,185,143,.34)}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-row strong{text-align:right}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-empty{font-size:clamp(11px,1.25vw,18px);text-align:center;margin:10% 2% 0;color:#765440}
+#mb-ranked-dialog .mb-ranked-lobby #mb-ranked-begin{left:31%;top:80%;width:38%;height:15%}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-note{position:absolute;left:36%;top:75%;width:53%;z-index:3;margin:0;
+ background:rgba(255,239,201,.9);border-radius:7px;color:#5d3132;text-align:center;font-size:clamp(10px,1vw,15px);font-weight:850;pointer-events:none}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-note:empty{display:none}
+#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-mobileinfo{display:none}
+@media(min-width:701px){#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-modes{top:31.5%;height:41%;justify-content:space-between}#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-modes button.mb-ranked-stage-mode{height:31%!important;aspect-ratio:auto}#mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-modes img{visibility:hidden!important}}
+#mb-ranked-dialog.mb-ranked-playing{background:linear-gradient(rgba(255,235,211,.95),rgba(252,236,211,.96)),url('/ui-assets/ranked-stage-final.png') center/cover!important}
+#mb-ranked-dialog.mb-ranked-playing .mb-ranked-question{background:rgba(255,245,227,.96)!important}
+@media(max-width:700px) and (orientation:portrait){
+ #mb-ranked-dialog .mb-ranked-lobby{width:96vw!important;height:95dvh!important;max-height:95dvh!important;aspect-ratio:auto!important;
+ background:linear-gradient(180deg,#f7d6a0 0,#fee5bc 39%,#ecc49e 100%)}
+ #mb-ranked-dialog .mb-ranked-lobby-art{width:100%;height:28%;object-fit:cover;object-position:top center}
+ #mb-ranked-dialog .mb-ranked-lobby #mb-ranked-stage-back{top:2%;left:3%;width:23%;height:8%}
+ #mb-ranked-dialog .mb-ranked-lobby #mb-ranked-stage-guide{top:2%;left:72%;width:8%;height:8%}
+ #mb-ranked-dialog .mb-ranked-lobby #mb-ranked-stage-reward{top:2%;left:81%;width:8%;height:8%}
+ #mb-ranked-dialog .mb-ranked-lobby #mb-ranked-stage-rules{top:2%;left:90%;width:8%;height:8%}
+ #mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-modes{left:4%;top:27%;width:92%;height:18%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;align-items:center}
+ #mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-modes button.mb-ranked-stage-mode{width:100%!important;}
+ #mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-tabs{left:5%;top:46%;width:90%;height:7%;}
+ #mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-tab{background:#76504b!important}
+ #mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-tab:nth-child(1)::before{content:'전체';color:#ffe3b9;font-size:13px;position:absolute;inset:0;display:grid;place-items:center}
+ #mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-tab:nth-child(2)::before{content:'일간';color:#ffe3b9;font-size:13px;position:absolute;inset:0;display:grid;place-items:center}
+ #mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-tab:nth-child(3)::before{content:'주간';color:#ffe3b9;font-size:13px;position:absolute;inset:0;display:grid;place-items:center}
+ #mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-rows{left:5%;top:54%;width:90%;height:26%;font-size:13px;background:rgba(255,244,216,.92);border:3px double #af7b57;border-radius:7px}
+ #mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-row{min-height:31px}
+ #mb-ranked-dialog .mb-ranked-lobby #mb-ranked-begin{left:6%;top:84%;width:88%;height:11%;background:#6f3137!important;color:#ffe7c0!important;font-size:23px!important;font-weight:1000}
+ #mb-ranked-dialog .mb-ranked-lobby #mb-ranked-begin::before{content:'▶ 랭킹 도전하기';color:#ffe7c0;position:absolute;inset:0;display:grid;place-items:center;font-size:21px}
+ #mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-note{left:6%;top:80.3%;width:88%;font-size:11px;line-height:1.2}
+ #mb-ranked-dialog .mb-ranked-lobby .mb-ranked-stage-mobileinfo{display:none}
+}
+@media(prefers-reduced-motion:reduce){#mb-ranked-dialog .mb-ranked-lobby button::after{transition:none}}

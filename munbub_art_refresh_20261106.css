@@ -22,27 +22,8 @@ button.mb-art-button:hover img.mb-art-button-img,button.mb-art-button:focus-visi
 }
 button.mb-art-button:active img.mb-art-button-img{filter:brightness(.9)!important;transform:translateY(1px)!important}
 button.mb-art-button:focus-visible{outline:3px solid #ffde9a!important;outline-offset:2px!important}
-/* Only artwork is visible. Exclude old JavaScript-injected rounded panels and pseudo layers. */
-#homeScreen .mb-mascot-stage>.mb-online-actions :is(#mb-title-open,#mb-public-open).mb-art-button{
- position:relative!important;display:block!important;box-sizing:border-box!important;
- width:100%!important;min-width:0!important;max-width:100%!important;
- height:auto!important;min-height:0!important;max-height:none!important;
- margin:0!important;padding:0!important;aspect-ratio:auto!important;
- border:0!important;border-radius:0!important;outline-offset:2px!important;
- background:transparent!important;background-image:none!important;
- box-shadow:none!important;text-shadow:none!important;color:transparent!important;
- font-size:0!important;line-height:0!important;filter:none!important;
- transform:none!important;overflow:visible!important;
-}
-#homeScreen .mb-mascot-stage>.mb-online-actions :is(#mb-title-open,#mb-public-open).mb-art-button::before,
-#homeScreen .mb-mascot-stage>.mb-online-actions :is(#mb-title-open,#mb-public-open).mb-art-button::after{
- content:none!important;display:none!important;
-}
-#homeScreen .mb-mascot-stage>.mb-online-actions :is(#mb-title-open,#mb-public-open).mb-art-button>img.mb-art-button-img{
- position:relative!important;display:block!important;width:100%!important;height:auto!important;
- margin:0!important;padding:0!important;border:0!important;background:none!important;
- object-fit:contain!important;aspect-ratio:auto!important;
- opacity:1!important;visibility:visible!important;pointer-events:none!important;
+#homeScreen .mb-online-actions :is(#mb-title-open,#mb-public-open).mb-art-button{
+ width:min(100%,245px)!important;min-height:0!important;aspect-ratio:auto!important;max-width:245px!important;
 }
 .sidebar-nav button.mb-art-button,.mobile-drawer button.mb-art-button{width:100%!important;max-width:100%!important}
 /* Score table artwork is one 2048x682 sprite, displayed proportionally, with live scores over blank banners. */
