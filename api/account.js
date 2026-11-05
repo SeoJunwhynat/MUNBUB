@@ -1,5 +1,5 @@
 /* Tastefully minimal nickname+password accounts with unique server-side names. */
-import { list } from '@vercel/blob';
+import { list } from '../lib/mb-storage.js';
 import {
  configured,noCache,sameOrigin,session,setSession,clearSession,
  nickname,canonicalName,newId,hash,readPrivate,writePrivate,
