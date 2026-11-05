@@ -16,7 +16,8 @@ async function fixture(){
  const helpers={configured:()=>true,noCache:()=>{},sameOrigin:()=>true,
   session:req=>req.user||null,setSession:(res,id,name)=>{res.cookie={id,name}},clearSession:res=>{res.cookie=null},
   nickname:s=>{s=String(s||'').trim();return s.length>=2&&s.length<=12&&/^[가-힣a-zA-Z0-9_ ]+$/.test(s)?s:null},
-  canonicalName,newId:randomUUID,hash,readPrivate,writePrivate,
+  canonicalName,newId:randomUUID,hash,readPrivate,
+   usesPostgres:()=>false,readPrivatePrefix:async()=>[],writePrivate,
   passwordValid:s=>typeof s==='string'&&s.length>=8&&s.length<=72&&s.trim().length>=8,
   passwordHash:s=>{let salt=randomBytes(16).toString('hex');return {salt,digest:scryptSync(s,salt,64).toString('hex'),algorithm:'scrypt'}},
   passwordMatches:(s,record)=>{if(!record?.salt)return false;let a=scryptSync(s,record.salt,64),b=Buffer.from(record.digest,'hex');return a.length===b.length&&timingSafeEqual(a,b)}
@@ -26,7 +27,7 @@ async function fixture(){
  const server=new vm.SyntheticModule(Object.keys(helpers),function(){for(let [k,v]of Object.entries(helpers))this.setExport(k,v)},{context});
  const code=await readFile(new URL('../api/account.js',import.meta.url),'utf8');
  const m=new vm.SourceTextModule(code,{context});
- await m.link(id=>id==='@vercel/blob'?external:server);await m.evaluate();
+ await m.link(id=>id==='../lib/mb-storage.js'?external:server);await m.evaluate();
  return async(method,body={},user=null)=>{
   const req={method,body,user,headers:{}};
   const res={statusCode:200,status(n){this.statusCode=n;return this},json(value){this.body=value;return this},setHeader(){}};
