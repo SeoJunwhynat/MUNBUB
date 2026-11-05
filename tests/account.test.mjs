@@ -26,7 +26,7 @@ async function fixture(){
  const server=new vm.SyntheticModule(Object.keys(helpers),function(){for(let [k,v]of Object.entries(helpers))this.setExport(k,v)},{context});
  const code=await readFile(new URL('../api/account.js',import.meta.url),'utf8');
  const m=new vm.SourceTextModule(code,{context});
- await m.link(id=>id==='@vercel/blob'?external:server);await m.evaluate();
+ await m.link(id=>id==='../lib/mb-storage.js'?external:server);await m.evaluate();
  return async(method,body={},user=null)=>{
   const req={method,body,user,headers:{}};
   const res={statusCode:200,status(n){this.statusCode=n;return this},json(value){this.body=value;return this},setHeader(){}};
