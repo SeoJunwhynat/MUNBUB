@@ -1,0 +1,82 @@
+/* 2026-11-06 supplied title/public buttons, hanok scoreboard, ranking UI, timed GIF. */
+/* Keep the visual sprites inside their own elements: no black overlay or backdrop blocks clicks. */
+:where(#homeScreen,.sidebar-nav,.mobile-drawer) button.mb-art-button {
+ position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;
+ padding:0!important;margin:3px 0!important;border:0!important;background:none!important;
+ box-shadow:none!important;border-radius:0!important;overflow:visible!important;isolation:isolate!important;
+ aspect-ratio:auto!important;color:transparent!important;font-size:0!important;line-height:0!important;
+ transform:none!important;filter:none!important;opacity:1!important;visibility:visible!important;
+ z-index:auto!important;cursor:pointer!important;
+}
+:where(#homeScreen,.sidebar-nav,.mobile-drawer) button.mb-art-button::before,
+:where(#homeScreen,.sidebar-nav,.mobile-drawer) button.mb-art-button::after{display:none!important;content:none!important}
+button.mb-art-button img.mb-art-button-img{
+ display:block!important;position:relative!important;width:100%!important;height:auto!important;max-width:100%!important;
+ max-height:none!important;aspect-ratio:auto!important;object-fit:contain!important;pointer-events:none!important;
+ opacity:1!important;visibility:visible!important;filter:none!important;transform:none!important;
+ image-rendering:auto!important;
+}
+button.mb-art-button:hover img.mb-art-button-img,button.mb-art-button:focus-visible img.mb-art-button-img{
+ filter:brightness(1.12)!important;transform:translateY(-1px)!important;
+}
+button.mb-art-button:active img.mb-art-button-img{filter:brightness(.9)!important;transform:translateY(1px)!important}
+button.mb-art-button:focus-visible{outline:3px solid #ffde9a!important;outline-offset:2px!important}
+/* Only artwork is visible. Exclude old JavaScript-injected rounded panels and pseudo layers. */
+#homeScreen .mb-mascot-stage>.mb-online-actions :is(#mb-title-open,#mb-public-open).mb-art-button{
+ position:relative!important;display:block!important;box-sizing:border-box!important;
+ width:100%!important;min-width:0!important;max-width:100%!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ margin:0!important;padding:0!important;aspect-ratio:auto!important;
+ border:0!important;border-radius:0!important;outline-offset:2px!important;
+ background:transparent!important;background-image:none!important;
+ box-shadow:none!important;text-shadow:none!important;color:transparent!important;
+ font-size:0!important;line-height:0!important;filter:none!important;
+ transform:none!important;overflow:visible!important;
+}
+#homeScreen .mb-mascot-stage>.mb-online-actions :is(#mb-title-open,#mb-public-open).mb-art-button::before,
+#homeScreen .mb-mascot-stage>.mb-online-actions :is(#mb-title-open,#mb-public-open).mb-art-button::after{
+ content:none!important;display:none!important;
+}
+#homeScreen .mb-mascot-stage>.mb-online-actions :is(#mb-title-open,#mb-public-open).mb-art-button>img.mb-art-button-img{
+ position:relative!important;display:block!important;width:100%!important;height:auto!important;
+ margin:0!important;padding:0!important;border:0!important;background:none!important;
+ object-fit:contain!important;aspect-ratio:auto!important;
+ opacity:1!important;visibility:visible!important;pointer-events:none!important;
+}
+.sidebar-nav button.mb-art-button,.mobile-drawer button.mb-art-button{width:100%!important;max-width:100%!important}
+/* Score table artwork is one 2048x682 sprite, displayed proportionally, with live scores over blank banners. */
+#mb-duel-dialog#mb-duel-dialog.mb-duel-live .mb-duel-hud{max-height:unset!important;overflow:visible!important}
+#mb-duel-dialog#mb-duel-dialog.mb-duel-live .mb-duel-vs-bar{
+ position:relative!important;box-sizing:border-box!important;display:block!important;
+ width:min(52vw,410px)!important;height:auto!important;min-height:0!important;max-height:none!important;
+ aspect-ratio:2048/682!important;margin:clamp(-10px,-.8dvh,-2px) auto 0!important;
+ padding:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:transparent url('/ui-assets/duel-scoreboard-final.png') center/contain no-repeat!important;
+ overflow:visible!important;isolation:isolate!important;
+}
+#mb-duel-dialog#mb-duel-dialog.mb-duel-live .mb-duel-vs-bar .mb-duel-vs-caption{
+ position:absolute!important;left:50%!important;top:49%!important;transform:translate(-50%,-50%)!important;
+ background:rgba(53,25,23,.88)!important;border:2px solid #bc917b!important;
+ color:#f8dfb8!important;border-radius:30px!important;padding:1px 5px!important;
+ font-size:clamp(8px,1vw,13px)!important;line-height:1.2!important;
+}
+#mb-duel-dialog#mb-duel-dialog.mb-duel-live :is(#mb-duel-score-left,#mb-duel-score-right){
+ position:absolute!important;top:47%!important;transform:translate(-50%,-50%)!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:24%!important;height:35%!important;min-height:0!important;max-height:none!important;
+ padding:0!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+ background:transparent!important;color:#3a1d19!important;text-shadow:1px 1px #fff1d9!important;
+ font-size:clamp(17px,2.8vw,37px)!important;font-weight:1000!important;white-space:nowrap!important;
+}
+#mb-duel-dialog#mb-duel-dialog.mb-duel-live #mb-duel-score-left{left:25%!important}
+#mb-duel-dialog#mb-duel-dialog.mb-duel-live #mb-duel-score-right{left:75%!important}
+/* Timed backgrounds and quiz mode panels are managed exclusively by
+   munbub_quiz_scenes_2026.css; no duplicate rules here. */
+/* Waiting-room chat keeps emoji controls on the heading row, not underneath the input. */
+#mb-duel-dialog#mb-duel-dialog#mb-duel-dialog.mb-duel-live .mb-public-chat{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;grid-template-rows:auto minmax(22px,1fr) auto!important;gap:3px!important;align-items:center!important}
+#mb-duel-dialog#mb-duel-dialog#mb-duel-dialog.mb-duel-live .mb-public-chat>strong{grid-column:1!important;grid-row:1!important}
+#mb-duel-dialog#mb-duel-dialog#mb-duel-dialog.mb-duel-live .mb-public-quickchat{grid-column:2!important;grid-row:1!important;align-self:center!important;gap:3px!important}
+#mb-duel-dialog#mb-duel-dialog#mb-duel-dialog.mb-duel-live .mb-public-quickchat button{min-height:24px!important;padding:0 5px!important}
+#mb-duel-dialog#mb-duel-dialog#mb-duel-dialog.mb-duel-live #mb-public-chatlog{grid-column:1/-1!important;grid-row:2!important;min-height:22px!important;padding:3px 6px!important}
+#mb-duel-dialog#mb-duel-dialog#mb-duel-dialog.mb-duel-live #mb-public-chatform{grid-column:1/-1!important;grid-row:3!important}

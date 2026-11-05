@@ -1,0 +1,277 @@
+/* Canonical gameplay composition — 2026-11-06.
+   One stylesheet owns all five gameplay screens, with one mobile breakpoint.
+   Keep home and generic setup routes untouched. */
+html:has(#workspace.mb-playing-scene:not([hidden])),
+body:has(#workspace.mb-playing-scene:not([hidden])){
+ height:100dvh!important;min-height:100dvh!important;
+ overflow:hidden!important;overscroll-behavior:none!important;
+}
+#homeScreen.app-shell[hidden],#workspace.app-shell[hidden],#workspace .view[hidden]{display:none!important}
+#workspace#workspace.app-shell.mb-playing-scene:not([hidden]){
+ box-sizing:border-box!important;display:grid!important;position:fixed!important;
+ inset:0!important;z-index:30!important;width:100vw!important;height:100dvh!important;
+ max-width:none!important;min-height:0!important;margin:0!important;
+ grid-template-columns:clamp(150px,16vw,230px) minmax(0,1fr)!important;
+ overflow:hidden!important;background-position:center center!important;
+ background-size:cover!important;background-repeat:no-repeat!important;
+}
+#workspace#workspace.mb-playing-scene.mb-scene-spelling{background-image:url('/ui-assets/scene_spelling.webp')!important}
+#workspace#workspace.mb-playing-scene.mb-scene-idiom{background-image:url('/ui-assets/scene_idiom.webp')!important}
+#workspace#workspace.mb-playing-scene.mb-scene-infinite{background-image:url('/ui-assets/scene_infinite.webp')!important}
+#workspace#workspace.mb-playing-scene.mb-scene-hard{background-image:url('/ui-assets/scene_hard.webp')!important}
+/* The transparent 12-frame supplied WebP stays animated as a separate background layer.
+   Both layers are positioned using the SAME viewport height: the parent backdrop
+   is 2172 x 724 and cover is always height-constrained at mobile/desktop ratios.
+   Its central arch opening contains the timer sprite around x=51.4%, y=30%. */
+#workspace#workspace.app-shell.mb-playing-scene.mb-scene-timed:not([hidden]){
+ background-image:url('/ui-assets/hourglass_only_loop_20261106.webp'),url('/ui-assets/scene_timed.webp')!important;
+ background-position:51.4% 55%,center center!important;
+ background-size:auto 22%,cover!important;
+ background-repeat:no-repeat,no-repeat!important;
+ background-color:#292039!important;
+}
+
+#workspace.mb-playing-scene .work-sidebar{
+ display:block!important;min-width:0!important;height:100dvh!important;
+ overflow-x:hidden!important;overflow-y:auto!important;overscroll-behavior:contain!important;
+ scrollbar-gutter:stable!important;
+}
+#workspace.mb-playing-scene .work-main{
+ display:flex!important;flex-direction:column!important;box-sizing:border-box!important;
+ min-height:0!important;height:100dvh!important;max-height:100dvh!important;
+ min-width:0!important;margin:0!important;padding:clamp(4px,.8dvh,9px)!important;
+ overflow:hidden!important;background:transparent!important;
+}
+#workspace.mb-playing-scene .work-header{
+ display:flex!important;align-items:center!important;flex:0 0 auto!important;
+ box-sizing:border-box!important;min-height:0!important;width:100%!important;
+ margin:0 0 5px!important;padding:5px 10px!important;
+ border:2px solid #d9b18a!important;border-radius:10px!important;
+ background:rgba(51,30,37,.89)!important;
+}
+#workspace.mb-playing-scene .work-header h1{font-size:clamp(16px,1.8vw,23px)!important;margin:0!important}
+#workspace.mb-playing-scene .work-header p{display:none!important}
+#workspace#workspace.app-shell.mb-playing-scene #view-quiz.mb-quiz-scene:not([hidden]){
+ display:grid!important;position:relative!important;box-sizing:border-box!important;
+ grid-template-columns:minmax(0,950px) clamp(175px,17.5vw,280px)!important;
+ grid-template-rows:minmax(0,1fr)!important;column-gap:clamp(10px,1.4vw,23px)!important;
+ justify-content:center!important;align-items:start!important;
+ flex:1 1 0!important;width:100%!important;height:100%!important;
+ min-width:0!important;min-height:0!important;max-height:none!important;
+ padding:0!important;margin:0!important;background:transparent!important;overflow:visible!important;
+}
+/* No full-page translucent cream rectangle: only the question and answers are cards. */
+#workspace#workspace.app-shell.mb-playing-scene #view-quiz.mb-quiz-scene>.panel{
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ position:relative!important;box-sizing:border-box!important;
+ width:100%!important;max-width:950px!important;
+ height:min(76dvh,705px)!important;min-height:0!important;
+ max-height:calc(100dvh - 90px)!important;
+ margin:clamp(26px,5.5dvh,60px) 0 0!important;
+ padding:0!important;gap:clamp(5px,.75dvh,9px)!important;
+ border:0!important;border-radius:0!important;box-shadow:none!important;
+ overflow:visible!important;background:transparent!important;
+}
+#workspace.mb-playing-scene #view-quiz .quiz-meta{
+ flex:0 0 auto!important;min-height:0!important;margin:0!important;
+ padding:4px 10px!important;gap:5px!important;border-radius:8px!important;
+ color:#4d322b!important;background:rgba(248,229,205,.92)!important;
+ font-size:clamp(11px,1.08vw,14px)!important;
+}
+#workspace.mb-playing-scene #view-quiz :is(.quiz-progress,.time-remaining-track){
+ flex:0 0 auto!important;height:6px!important;min-height:0!important;
+ margin:0 6px!important;border-radius:9px!important;
+}
+#workspace.mb-playing-scene #view-quiz .prompt{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ flex:0 0 auto!important;box-sizing:border-box!important;width:100%!important;
+ min-height:clamp(90px,14dvh,150px)!important;max-height:23dvh!important;
+ margin:clamp(13px,2.3dvh,24px) 0 0!important;
+ padding:clamp(14px,2.4dvh,28px)!important;
+ border:4px double #b28b6b!important;border-radius:16px!important;
+ background:rgba(255,241,219,.94)!important;
+ box-shadow:0 9px 22px #190e1c45,inset 0 0 0 2px #fff9e7!important;
+ color:#442b26!important;font-size:clamp(19px,2.05vw,29px)!important;
+ font-weight:900!important;text-align:center!important;line-height:1.43!important;
+ overflow-y:auto!important;overflow-wrap:anywhere!important;
+}
+#workspace.mb-playing-scene #view-quiz .prompt-desc{
+ flex:0 0 auto!important;margin:0!important;padding:0 9px!important;
+ color:#fff2d9!important;text-align:center!important;
+ font-size:clamp(12px,1vw,14px)!important;font-weight:850!important;
+ line-height:1.4!important;text-shadow:0 1px 3px #170c14,0 2px 5px #170c14!important;
+}
+/* Bottom answer deck; never scaled to fill the map. */
+#workspace#workspace.mb-playing-scene #view-quiz #answerArea{
+ box-sizing:border-box!important;display:flex!important;flex:0 0 auto!important;
+ flex-direction:column!important;justify-content:center!important;
+ align-self:stretch!important;min-width:0!important;width:100%!important;
+ min-height:clamp(100px,15dvh,178px)!important;max-height:28dvh!important;
+ margin:auto 0 0!important;padding:clamp(8px,1.3dvh,14px)!important;
+ border:4px double #b28b6b!important;border-radius:17px!important;
+ background:rgba(255,241,219,.95)!important;
+ box-shadow:0 9px 22px #160c1755,inset 0 0 0 2px #fff9e7!important;
+ overflow-y:auto!important;
+}
+#workspace.mb-playing-scene #view-quiz :is(.option-list,.choice-grid){
+ display:grid!important;flex:1 1 auto!important;width:100%!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ grid-auto-rows:minmax(44px,1fr)!important;
+ min-height:0!important;max-height:none!important;
+ margin:0!important;gap:clamp(7px,1.05dvh,11px)!important;
+}
+#workspace.mb-playing-scene #view-quiz .option{
+ display:flex!important;align-items:center!important;min-width:0!important;
+ min-height:44px!important;padding:clamp(6px,1dvh,12px)!important;
+ font-size:clamp(14px,1.38vw,19px)!important;line-height:1.25!important;
+}
+#workspace.mb-playing-scene #view-quiz #answerArea :is(input,textarea){
+ box-sizing:border-box!important;max-width:100%!important;
+ min-height:48px!important;font-size:clamp(16px,1.3vw,21px)!important;
+}
+#workspace.mb-playing-scene #view-quiz .feedback:not([hidden]){
+ position:absolute!important;left:0!important;right:0!important;
+ bottom:clamp(52px,8dvh,74px)!important;z-index:4!important;
+ box-sizing:border-box!important;max-height:24dvh!important;
+ margin:0!important;padding:9px 12px!important;overflow-y:auto!important;
+ border:2px solid #c6966d!important;border-radius:12px!important;
+ background:rgba(255,244,220,.98)!important;
+ box-shadow:0 4px 20px #20121470!important;
+}
+#workspace.mb-playing-scene #view-quiz .quiz-bottom{
+ display:flex!important;justify-content:center!important;flex:0 0 auto!important;
+ min-height:39px!important;gap:7px!important;margin:0!important;padding:5px!important;
+ border-radius:9px!important;background:rgba(255,231,205,.92)!important;
+}
+#workspace.mb-playing-scene #view-quiz .quiz-bottom button{
+ min-height:36px!important;padding:4px 10px!important;
+ font-size:clamp(12px,1.2vw,16px)!important;
+}
+#workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-quiz-companion{
+ position:relative!important;align-self:start!important;justify-self:center!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;
+ width:100%!important;max-width:280px!important;min-width:0!important;
+ margin:clamp(78px,16dvh,160px) 0 0!important;padding:0!important;
+ gap:9px!important;background:transparent!important;
+}
+#workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-mascot-button{
+ width:100%!important;max-width:280px!important;
+ height:clamp(170px,30dvh,310px)!important;
+ background:transparent!important;border:0!important;
+}
+#workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-mascot-button img{
+ width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ object-fit:contain!important;
+}
+#workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-quiz-speech{
+ box-sizing:border-box!important;width:100%!important;max-width:280px!important;
+ min-height:60px!important;padding:10px!important;
+ font-size:clamp(12px,1.03vw,16px)!important;line-height:1.35!important;
+}
+#workspace.mb-playing-scene #view-quiz .mb-quiz-hint{display:none!important}
+/* The ORIGINAL timer is moved above the question; the decorative mini-hourglass is hidden. */
+#workspace#workspace.app-shell>.mb-quiz-timer-group{display:none!important}
+#workspace#workspace.app-shell.mb-playing-scene.mb-scene-timed>.mb-quiz-timer-group{
+ position:absolute!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ left:50%!important;top:clamp(70px,12dvh,115px)!important;right:auto!important;bottom:auto!important;
+ transform:translateX(-50%)!important;z-index:40!important;pointer-events:none!important;
+ box-sizing:border-box!important;min-width:102px!important;width:auto!important;height:auto!important;
+ max-height:48px!important;margin:0!important;padding:5px 13px!important;gap:0!important;
+ border:2px solid #e1b67d!important;border-radius:10px!important;
+ background:rgba(47,25,50,.9)!important;color:#ffecd5!important;
+ box-shadow:0 3px 9px #180c20a5!important;
+}
+#workspace#workspace.mb-playing-scene>.mb-quiz-timer-group .mb-quiz-hourglass{display:none!important}
+#workspace#workspace.mb-playing-scene>.mb-quiz-timer-group #quizTimer{
+ display:block!important;font-size:clamp(16px,2.3dvh,25px)!important;
+ color:#ffe9bb!important;font-weight:1000!important;font-variant-numeric:tabular-nums!important;
+ white-space:nowrap!important;
+}
+#workspace#workspace.app-shell.mb-playing-scene.mb-scene-timed #view-quiz>.panel{
+ margin-top:clamp(95px,15dvh,145px)!important;height:min(64dvh,590px)!important;
+}
+#workspace#workspace.app-shell.mb-playing-scene.mb-scene-timed #view-quiz .prompt{
+ margin-top:clamp(8px,1.6dvh,20px)!important;
+}
+@media(min-width:701px) and (max-width:1100px){
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz.mb-quiz-scene:not([hidden]){
+  grid-template-columns:minmax(0,1fr) clamp(150px,17vw,220px)!important;
+ }
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-quiz-companion{margin-top:13dvh!important}
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-mascot-button{height:clamp(160px,24dvh,260px)!important}
+}
+@media(max-width:700px){
+ #workspace#workspace.app-shell.mb-playing-scene:not([hidden]){grid-template-columns:minmax(0,1fr)!important}
+ #workspace.mb-playing-scene .work-sidebar{display:none!important}
+ #workspace.mb-playing-scene .work-main{padding:4px!important}
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz.mb-quiz-scene:not([hidden]){
+  display:block!important;position:relative!important;grid-template-columns:minmax(0,1fr)!important;
+  width:100%!important;min-width:0!important;overflow:visible!important;
+ }
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz.mb-quiz-scene>.panel{
+  box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+  height:min(75dvh,625px)!important;max-height:calc(100dvh - 100px)!important;
+  margin:clamp(10px,3.5dvh,27px) 0 0!important;
+  padding:0!important;gap:5px!important;
+ }
+ #workspace.mb-playing-scene #view-quiz .quiz-meta{font-size:11px!important;padding:3px 6px!important}
+ #workspace.mb-playing-scene #view-quiz .prompt{
+  width:calc(100% - 118px)!important;min-height:clamp(110px,21dvh,177px)!important;
+  max-height:29dvh!important;margin:clamp(13px,2dvh,23px) 0 0!important;
+  padding:11px!important;font-size:clamp(16px,4vw,21px)!important;
+ }
+ #workspace.mb-playing-scene #view-quiz .prompt-desc{
+  width:calc(100% - 118px)!important;padding:0!important;font-size:11px!important;
+ }
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-quiz-companion{
+  position:absolute!important;top:clamp(84px,17dvh,142px)!important;
+  right:0!important;left:auto!important;width:112px!important;max-width:112px!important;
+  height:auto!important;margin:0!important;padding:0!important;
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  gap:5px!important;z-index:2!important;
+ }
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-mascot-button{
+  width:110px!important;max-width:110px!important;height:clamp(126px,20dvh,177px)!important;
+ }
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-quiz-speech{
+  width:112px!important;max-width:112px!important;min-height:0!important;
+  max-height:105px!important;padding:6px!important;
+  font-size:10px!important;line-height:1.25!important;overflow:hidden!important;text-align:center!important;
+ }
+ #workspace.mb-playing-scene #view-quiz #answerArea{
+  width:100%!important;min-height:135px!important;max-height:32dvh!important;
+  margin:auto 0 0!important;padding:7px!important;
+ }
+ #workspace.mb-playing-scene #view-quiz :is(.option-list,.choice-grid){
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-auto-rows:minmax(45px,1fr)!important;gap:6px!important;
+ }
+ #workspace.mb-playing-scene #view-quiz .option{min-height:45px!important;font-size:clamp(12px,3vw,16px)!important;padding:5px!important}
+ #workspace.mb-playing-scene #view-quiz .quiz-bottom{min-height:35px!important;padding:3px!important}
+ #workspace#workspace.app-shell.mb-playing-scene.mb-scene-timed>.mb-quiz-timer-group{
+  top:clamp(49px,8dvh,76px)!important;padding:3px 9px!important;
+ }
+ #workspace#workspace.app-shell.mb-playing-scene.mb-scene-timed #view-quiz.mb-quiz-scene>.panel{
+  margin-top:clamp(65px,10dvh,92px)!important;
+  height:min(69dvh,565px)!important;
+ }
+}
+@media(max-height:570px){
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz.mb-quiz-scene>.panel{
+  height:calc(100dvh - 95px)!important;margin-top:8px!important;
+ }
+ #workspace.mb-playing-scene #view-quiz .prompt{min-height:72px!important;max-height:22dvh!important;margin-top:3px!important}
+ #workspace.mb-playing-scene #view-quiz #answerArea{min-height:83px!important;max-height:30dvh!important}
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-mascot-button{height:min(26dvh,160px)!important}
+}
+/* Achievement notifications must never cover answer options. */
+body:has(#workspace.mb-playing-scene:not([hidden])) #mb-achievement-toast{
+ top:78px!important;right:14px!important;bottom:auto!important;left:auto!important;
+ transform:none!important;animation:none!important;max-width:310px!important;
+ padding:9px 12px!important;font-size:13px!important;
+}
+@media(max-width:700px){
+ body:has(#workspace.mb-playing-scene:not([hidden])) #mb-achievement-toast{
+  top:98px!important;right:7px!important;max-width:220px!important;
+ }
+}
