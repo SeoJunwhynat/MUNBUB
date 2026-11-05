@@ -1,6 +1,6 @@
 /* Private invite-code 1v1 quiz. Neither player's records overwrite the other's. */
 import { randomBytes, randomInt } from 'node:crypto';
-import { list, put, del } from '@vercel/blob';
+import { list, put, del } from '../lib/mb-storage.js';
 import { configured, noCache, sameOrigin, session, token, verify, readPrivate, writePrivate, answerCorrect, duelQuestionIds } from '../lib/mb-server.js';
 
 const PREFIX='duels/';
