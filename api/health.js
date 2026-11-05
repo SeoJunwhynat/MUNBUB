@@ -5,10 +5,10 @@ import { usingPostgres, checkStorage } from '../lib/mb-storage.js';
 export default async function handler(req,res) {
   noCache(res);
   if(req.method!=='GET')return res.status(405).json({error:'GET 요청만 지원해.'});
-  const backend=usingPostgres()?'postgres':'blob';
+  const backend='postgres';
   if(!configured())return res.status(503).json({
     status:'setup-required', backend, accounts:false, publicRooms:false,
-    nextStep:'Vercel Production 환경변수에 DATABASE_URL과 MB_SESSION_SECRET을 설정하거나 기존 Blob 연결을 확인해 줘.'
+    nextStep:'Render Environment에 DATABASE_URL과 MB_SESSION_SECRET을 설정해 줘.'
   });
   // Both ?probe=storage and the previously documented ?probe=blob are accepted.
   if(req.query?.probe==='storage'||req.query?.probe==='blob'){
@@ -22,7 +22,7 @@ export default async function handler(req,res) {
         code:String(error?.code||'').slice(0,80)
       });
       return res.status(503).json({status:'storage-unreachable',backend,
-        nextStep:'저장소 연결, 권한, 서비스 한도와 Production 환경변수를 확인해 줘.'});
+        nextStep:'Neon 데이터베이스 연결과 Render 환경변수 권한을 확인해 줘.'});
     }
   }
   return res.status(200).json({status:'configured',backend,accounts:true,publicRooms:true,
