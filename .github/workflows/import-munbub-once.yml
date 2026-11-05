@@ -25,8 +25,7 @@ jobs:
           test -f "$RUNNER_TEMP/old-munbub/index.html"
           test -f "$RUNNER_TEMP/old-munbub/api/duel.js"
           test -d "$RUNNER_TEMP/old-munbub/ui-assets"
-          rsync -a --exclude '.git/' "$RUNNER_TEMP/old-munbub/" "$GITHUB_WORKSPACE/"
-          rm -f .github/workflows/import-munbub-once.yml
+          rsync -a --exclude '.git/' --exclude '.github/workflows/' "$RUNNER_TEMP/old-munbub/" "$GITHUB_WORKSPACE/"
           test -f index.html
           test -f api/duel.js
           test -d ui-assets
