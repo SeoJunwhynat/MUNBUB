@@ -25,7 +25,7 @@ async function fixture(){
   const mod=new vm.SyntheticModule(Object.keys(exports),function(){for(const [k,v] of Object.entries(exports))this.setExport(k,v)},{context,identifier:name});
   modules.set(name,mod);return mod;
  }
- synthetic('node:crypto',crypto);synthetic('@vercel/blob',blob);synthetic('../lib/mb-server.js',server);
+ synthetic('node:crypto',crypto);synthetic('../lib/mb-storage.js',blob);synthetic('../lib/mb-server.js',server);
  async function load(name){
   const source=await readFile(new URL('../api/'+name+'.js',import.meta.url),'utf8');
   const mod=new vm.SourceTextModule(source,{context,identifier:name});
