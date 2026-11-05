@@ -9,6 +9,6 @@
   },
   "scripts": {
     "test": "node --experimental-vm-modules --test tests/*.test.mjs",
-    "check": "node --check lib/mb-storage.js && node --check lib/mb-server.js && node --check api/account.js && node --check api/duel.js && node --check api/public-rooms.js && node --check api/health.js"
+    "check": "node --check lib/mb-storage.js && node --check lib/mb-server.js && node --check api/account.js && node --check api/duel.js && node --check api/public-rooms.js && node --check api/health.js && node --check munbub_duel_patch.js && node --check munbub_public_patch.js && node --check scripts/migrate-blob-to-postgres.mjs"
   }
 }
