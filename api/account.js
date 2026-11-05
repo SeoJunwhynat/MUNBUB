@@ -2,7 +2,7 @@
 import { list } from '../lib/mb-storage.js';
 import {
  configured,noCache,sameOrigin,session,setSession,clearSession,
- nickname,canonicalName,newId,hash,readPrivate,readPrivatePrefix,writePrivate,
+ nickname,canonicalName,newId,hash,readPrivate,readPrivatePrefix,writePrivate,usesPostgres,
  passwordValid,passwordHash,passwordMatches
 } from '../lib/mb-server.js';
 
@@ -12,7 +12,7 @@ const err=(res,status,error)=>res.status(status).json({error});
 function duplicate(e){return /already exists|alreadyexist|conflict|409/i.test(String(e?.message||e))}
 async function oldNameAlreadyUsed(name,exceptId){
  // One database query replaces thousands of Blob reads during registration.
- if(process.env.DATABASE_URL||process.env.POSTGRES_URL){
+ if(usesPostgres()){
   const records=await readPrivatePrefix('profiles/',1000);
   return records.some(p=>p&&p.id!==exceptId&&canonicalName(p.name)===canonicalName(name));
  }
