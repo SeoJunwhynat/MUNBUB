@@ -100,12 +100,12 @@ test('Neon adapter: atomic create, update, batch read, list cursor, and delete',
   assert.equal(store.getBlobCalls(),0);
 });
 
-test('Without DATABASE_URL, retain legacy Blob storage behavior',async()=>{
+test('Without DATABASE_URL, fail closed without falling back to Vercel Blob',async()=>{
   const store=await fixture(false);
   assert.equal(store.usingPostgres(),false);
-  await store.writeJson('profiles/legacy.json',{name:'legacy'});
-  assert.deepEqual(JSON.parse(JSON.stringify(await store.readJson('profiles/legacy.json'))),{name:'legacy'});
-  assert.equal((await store.list({prefix:'profiles/'})).blobs.length,1);
-  assert.ok(store.getBlobCalls()>0);
+  await assert.rejects(store.readJson('profiles/u1.json'),/DATABASE_URL is not set/);
+  await assert.rejects(store.writeJson('profiles/u1.json',{name:'test'}),/DATABASE_URL is not set/);
+  await assert.rejects(store.checkStorage(),/DATABASE_URL is not set/);
+  assert.equal(store.getBlobCalls(),0);
   assert.equal(store.getSQLCalls(),0);
 });
