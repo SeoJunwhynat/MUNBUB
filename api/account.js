@@ -2,7 +2,7 @@
 import { list } from '../lib/mb-storage.js';
 import {
  configured,noCache,sameOrigin,session,setSession,clearSession,
- nickname,canonicalName,newId,hash,readPrivate,writePrivate,
+ nickname,canonicalName,newId,hash,readPrivate,readPrivatePrefix,writePrivate,
  passwordValid,passwordHash,passwordMatches
 } from '../lib/mb-server.js';
 
@@ -11,6 +11,11 @@ const profilePath=id=>'profiles/'+id+'.json';
 const err=(res,status,error)=>res.status(status).json({error});
 function duplicate(e){return /already exists|alreadyexist|conflict|409/i.test(String(e?.message||e))}
 async function oldNameAlreadyUsed(name,exceptId){
+ // One database query replaces thousands of Blob reads during registration.
+ if(process.env.DATABASE_URL||process.env.POSTGRES_URL){
+  const records=await readPrivatePrefix('profiles/',1000);
+  return records.some(p=>p&&p.id!==exceptId&&canonicalName(p.name)===canonicalName(name));
+ }
  // Old recovery-code accounts predate the unique-name registry.
  let cursor=undefined;
  for(let page=0;page<20;page++){
