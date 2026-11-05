@@ -16,7 +16,8 @@ async function fixture(){
  const helpers={configured:()=>true,noCache:()=>{},sameOrigin:()=>true,
   session:req=>req.user||null,setSession:(res,id,name)=>{res.cookie={id,name}},clearSession:res=>{res.cookie=null},
   nickname:s=>{s=String(s||'').trim();return s.length>=2&&s.length<=12&&/^[가-힣a-zA-Z0-9_ ]+$/.test(s)?s:null},
-  canonicalName,newId:randomUUID,hash,readPrivate,writePrivate,
+  canonicalName,newId:randomUUID,hash,readPrivate,
+   usesPostgres:()=>false,readPrivatePrefix:async()=>[],writePrivate,
   passwordValid:s=>typeof s==='string'&&s.length>=8&&s.length<=72&&s.trim().length>=8,
   passwordHash:s=>{let salt=randomBytes(16).toString('hex');return {salt,digest:scryptSync(s,salt,64).toString('hex'),algorithm:'scrypt'}},
   passwordMatches:(s,record)=>{if(!record?.salt)return false;let a=scryptSync(s,record.salt,64),b=Buffer.from(record.digest,'hex');return a.length===b.length&&timingSafeEqual(a,b)}
