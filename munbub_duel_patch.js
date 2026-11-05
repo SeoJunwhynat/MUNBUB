@@ -871,16 +871,16 @@
  function signalDelay(){
   if(!dialog.open||!roomCode||document.hidden)return 1400;
   if(signalFailures>3)return 2600;
-  if(phase==='question'||phase==='opponent')return 440;
-  if(phase==='review'||phase==='countdown'||phase==='feedback')return 660;
-  if(phase==='waiting')return 900;
-  if(phase==='finished')return 950;
+  if(phase==='question'||phase==='opponent')return 900;
+  if(phase==='review'||phase==='countdown'||phase==='feedback')return 1100;
+  if(phase==='waiting')return 1600;
+  if(phase==='finished')return 2200;
   return 2200;
  }
  function fullDelay(){
   if(!dialog.open||!roomCode||document.hidden)return 4000;
   if(status?.signalTicket&&signalFailures<2)
-   return phase==='results'?14000:6500;
+   return phase==='results'?18000:9000;
   return phase==='waiting'?1000:1300;
  }
  async function backgroundPoll(){
