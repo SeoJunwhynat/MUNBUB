@@ -1,5 +1,5 @@
 /* Live, opt-in public duel listing. Private invite rooms never appear here. */
-import { list } from '@vercel/blob';
+import { list } from '../lib/mb-storage.js';
 import { configured, noCache, readPrivate } from '../lib/mb-server.js';
 const ID=/^[A-HJ-NP-Z2-9]{8}$/;
 const PREFIX='public-rooms/';
