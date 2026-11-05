@@ -17,7 +17,8 @@ async function fixture(){
  const list=async({prefix='',limit=1000}={})=>({blobs:[...files.keys()].filter(k=>k.startsWith(prefix)).sort().slice(0,limit).map(pathname=>({pathname}))});
  const blob={list,put:async(path,text,options={})=>writePrivate(path,JSON.parse(text),{overwrite:options.allowOverwrite===true}),del:async(path)=>{if(Array.isArray(path)){path.forEach(p=>files.delete(p))}else files.delete(path)}};
  const server={configured:()=>true,noCache:()=>{},sameOrigin:()=>true,session:req=>req.user,
-  token:claim=>JSON.stringify(claim),verify:claim=>JSON.parse(claim),readPrivate,writePrivate,
+  token:claim=>JSON.stringify(claim),verify:claim=>JSON.parse(claim),readPrivate,
+  readPrivateBatch:paths=>Promise.all(paths.map(readPrivate)),writePrivate,
   answerCorrect:()=>true,duelQuestionIds:()=>[...Array.from({length:156},(_,i)=>'s'+(i+1)),...Array.from({length:95},(_,i)=>'i'+(i+1))]};
  const context=vm.createContext({console,Date,JSON,Response,Buffer,setTimeout,clearTimeout});
  const modules=new Map();
