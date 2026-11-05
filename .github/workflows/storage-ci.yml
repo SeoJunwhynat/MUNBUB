@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - fix/storage-postgres-migration
+      - migration/render-neon
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
