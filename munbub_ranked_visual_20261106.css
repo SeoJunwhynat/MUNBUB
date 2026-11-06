@@ -79,7 +79,7 @@
 
 /* Play experience aligned with the regular quiz mode, not the ranking menu's opaque simulator panel. */
 #mb-ranked-dialog.mb-ranked-playing[open]{width:100vw!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;margin:0!important;border:0!important;border-radius:0!important;background:#281c32 url('/ui-assets/scene_infinite_20261106_v2.webp') center/cover no-repeat!important}
-#mb-ranked-dialog.mb-ranked-playing[data-mb-ranked-mode="hardcore"]{background-image:url('/ui-assets/scene_hard_20261106_v2.webp')!important}
+#mb-ranked-dialog.mb-ranked-playing[data-mb-ranked-mode="hardcore"]{background-image:url('/ui-assets/scene_hard_20261106_v2.webp'),url('/ui-assets/scene_hard.webp')!important}
 #mb-ranked-dialog.mb-ranked-playing[data-mb-ranked-mode="timed60"]{background-image:url('/ui-assets/scene_timed.webp')!important}
 #mb-ranked-dialog.mb-ranked-playing .mb-ranked-head{position:relative!important;z-index:3;background:rgba(47,29,36,.94)!important;padding:8px clamp(12px,2vw,25px)!important}
 #mb-ranked-dialog.mb-ranked-playing .mb-ranked-body{box-sizing:border-box!important;isolation:isolate;position:relative!important;flex:1!important;min-height:0!important;width:100%!important;max-width:none!important;margin:0!important;padding:clamp(10px,2dvh,22px) clamp(170px,22vw,320px) 10px clamp(12px,4vw,60px)!important;display:flex!important;flex-direction:column!important;gap:clamp(7px,1dvh,13px)!important;overflow:hidden!important}
