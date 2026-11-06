@@ -52,13 +52,21 @@ function makeQuestion(kind,exclude){const src=kind==='spell'?BANK.spelling:BANK.
 }
 function publicQuestion(q){const {answer,accepted,exp,...shown}=q;return shown;}
 function playerInfo(p){return {id:p.id,name:p.name,x:p.x,z:p.z,yaw:p.yaw,pitch:p.pitch,stamina:p.stamina,ready:p.ready,alive:p.alive};}
+function listPublicRooms(){
+ return [...rooms.values()].filter(r=>r.visibility==='public'&&r.status==='lobby'&&r.players.size<r.limit)
+  .sort((a,b)=>b.createdAt-a.createdAt).slice(0,50).map(r=>({
+   code:r.code,title:r.title,visibility:'public',players:r.players.size,
+   limit:r.limit,hostName:[...r.players.values()].find(p=>p.id===r.host)?.name||'탐험가',
+   createdAt:r.createdAt
+  }));
+}
 function snapshot(room) {
- return {code:room.code,status:room.status,host:room.host,won:room.won||false,version:room.version,players:[...room.players.values()].map(playerInfo),
+ return {code:room.code,title:room.title,visibility:room.visibility,limit:room.limit,status:room.status,host:room.host,won:room.won||false,version:room.version,players:[...room.players.values()].map(playerInfo),
  map:room.map,objects:room.objects.map(o=>({...o,question:o.question?publicQuestion(o.question):undefined,cooldownUntil:undefined,cooldownRemaining:Math.max(0,o.cooldownUntil-stamp())})),quizSolved:room.quizSolved,owned:room.owned,enemy:{x:room.enemy.x,z:room.enemy.z,grace:Math.max(0,room.enemy.grace)},elapsed:room.elapsed};
 }
 function dispatch(room,only=null){const payload=JSON.stringify(snapshot(room));const message='data: '+payload+'\n\n';for(const [token,client] of room.listeners){if(only&&token!==only)continue;try{client.write(message);}catch{room.listeners.delete(token);}}}
 function resultEvent(room,p,body){for(const [token,res] of room.listeners){if(token===p.token){try{res.write('event: notice\ndata: '+JSON.stringify(body)+'\n\n')}catch{};break}}}
-function createRoom(name,world,accountId){if(rooms.size>=MAX_ROOMS)throw badRequest('서버 방 개수가 가득 찼습니다.');let id=code();while(rooms.has(id))id=code();let token=rand(),pid=rand(6);let p={token,id:pid,accountId,name:safeName(name),x:6,z:6,yaw:0,pitch:0,stamina:100,ready:true,alive:true,lastMove:stamp()};let room={code:id,host:pid,status:'lobby',players:new Map([[token,p]]),listeners:new Map(),createdAt:stamp(),lastActivity:stamp(),version:0,elapsed:0,enemy:{x:world.enemy.x,z:world.enemy.z,grace:START_GRACE,path:[],pathAt:0},map:world.map,objects:world.objects,quizSolved:{},owned:{spell:false,idiom:false},won:false};rooms.set(id,room);return {room,p};}
+function createRoom(name,world,accountId,options={}){if(rooms.size>=MAX_ROOMS)throw badRequest('서버 방 개수가 가득 찼습니다.');let id=code();while(rooms.has(id))id=code();let token=rand(),pid=rand(6);let p={token,id:pid,accountId,name:safeName(name),x:6,z:6,yaw:0,pitch:0,stamina:100,ready:true,alive:true,lastMove:stamp()};let room={code:id,host:pid,title:options.title||'두 개의 열쇠',visibility:options.visibility||'private',limit:options.limit||4,status:'lobby',players:new Map([[token,p]]),listeners:new Map(),createdAt:stamp(),lastActivity:stamp(),version:0,elapsed:0,enemy:{x:world.enemy.x,z:world.enemy.z,grace:START_GRACE,path:[],pathAt:0},map:world.map,objects:world.objects,quizSolved:{},owned:{spell:false,idiom:false},won:false};rooms.set(id,room);return {room,p};}
 function auth(b,account){
  const room=rooms.get(String(b.code||'').toUpperCase());
  const player=room&&[...room.players.values()].find(p=>p.accountId===account?.id);
@@ -118,11 +126,17 @@ const server=http.createServer(async(req,res)=>{
    const url=new URL(req.url,'http://localhost');if(req.method==='OPTIONS'){return error(res,405,'지원하지 않는 방식이야.');}
    if(!req._mbBackroomsUser)return error(res,401,'맛춘범 계정으로 로그인해야 해.');
    if(req.method==='GET'&&url.pathname==='/api/health')return json(res,200,{ok:true,rooms:rooms.size,players:[...rooms.values()].reduce((n,r)=>n+r.players.size,0)});
+   if(req.method==='GET'&&url.pathname==='/api/rooms')return json(res,200,{ok:true,rooms:listPublicRooms()});
    if(req.method==='GET'&&url.pathname==='/api/events'){
       const {room,player}=auth({code:url.searchParams.get('code')},req._mbBackroomsUser);res.writeHead(200,{'content-type':'text/event-stream; charset=utf-8','cache-control':'no-cache, no-transform','connection':'keep-alive','x-accel-buffering':'no','x-content-type-options':'nosniff'});res.write('retry: 1500\n\n');room.listeners.get(player.token)?.end();room.listeners.set(player.token,res);dispatch(room,player.token);req.on('close',()=>{if(room.listeners.get(player.token)===res)room.listeners.delete(player.token)});return;
    }
-   if(req.method==='POST'&&url.pathname==='/api/create'){const b=await read(req);const world=validateWorld(b.world);const {room,p}=createRoom(req._mbBackroomsUser.name,world,req._mbBackroomsUser.id);return json(res,200,{ok:true,code:room.code,token:p.token,playerId:p.id,isHost:true,room:snapshot(room)});}
-   if(req.method==='POST'&&url.pathname==='/api/join'){const b=await read(req),room=rooms.get(String(b.code||'').toUpperCase());if(!room)return error(res,404,'해당 방이 없습니다. 방 코드를 다시 확인하세요.');const existing=[...room.players.values()].find(p=>p.accountId===req._mbBackroomsUser.id);if(existing)return json(res,200,{ok:true,code:room.code,token:existing.token,playerId:existing.id,isHost:existing.id===room.host,room:snapshot(room)});if(room.status!=='lobby')return error(res,409,'이미 탐험이 시작된 방입니다.');if(room.players.size>=4)return error(res,409,'이 방은 정원이 찼습니다.');const token=rand(),pid=rand(6);room.players.set(token,{token,id:pid,name:safeName(req._mbBackroomsUser.name),accountId:req._mbBackroomsUser.id,x:6,z:6,yaw:0,pitch:0,stamina:100,ready:false,alive:true,lastMove:stamp()});room.lastActivity=stamp();dispatch(room);return json(res,200,{ok:true,code:room.code,token,playerId:pid,isHost:false,room:snapshot(room)});}
+   if(req.method==='POST'&&url.pathname==='/api/create'){const b=await read(req);const world=validateWorld(b.world);const visibility=b.visibility===undefined?'private':b.visibility;
+    if(!['public','private'].includes(visibility))return error(res,400,'공개방 설정이 올바르지 않습니다.');
+    const limit=b.limit===undefined?4:Number(b.limit);
+    if(!Number.isInteger(limit)||limit<2||limit>4)return error(res,400,'방 정원은 2~4명이어야 합니다.');
+    const title=String(b.title||'두 개의 열쇠').normalize('NFC').replace(/[<>\r\n\t]/g,'').trim().slice(0,24)||'두 개의 열쇠';
+    const {room,p}=createRoom(req._mbBackroomsUser.name,world,req._mbBackroomsUser.id,{title,limit,visibility});return json(res,200,{ok:true,code:room.code,token:p.token,playerId:p.id,isHost:true,room:snapshot(room)});}
+   if(req.method==='POST'&&url.pathname==='/api/join'){const b=await read(req),room=rooms.get(String(b.code||'').toUpperCase());if(!room)return error(res,404,'해당 방이 없습니다. 방 코드를 다시 확인하세요.');const existing=[...room.players.values()].find(p=>p.accountId===req._mbBackroomsUser.id);if(existing)return json(res,200,{ok:true,code:room.code,token:existing.token,playerId:existing.id,isHost:existing.id===room.host,room:snapshot(room)});if(room.status!=='lobby')return error(res,409,'이미 탐험이 시작된 방입니다.');if(room.players.size>=room.limit)return error(res,409,'이 방은 정원이 찼습니다.');const token=rand(),pid=rand(6);room.players.set(token,{token,id:pid,name:safeName(req._mbBackroomsUser.name),accountId:req._mbBackroomsUser.id,x:6,z:6,yaw:0,pitch:0,stamina:100,ready:false,alive:true,lastMove:stamp()});room.lastActivity=stamp();dispatch(room);return json(res,200,{ok:true,code:room.code,token,playerId:pid,isHost:false,room:snapshot(room)});}
    if(req.method==='POST'&&url.pathname==='/api/action'){let b=await read(req),{room,player}=auth(b,req._mbBackroomsUser);let r=handleAction(room,player,b);return json(res,200,r);}
    if(req.method==='POST'&&url.pathname==='/api/leave'){let b=await read(req),{room,player}=auth(b,req._mbBackroomsUser);let r=handleAction(room,player,{type:'leave'});return json(res,200,r);}
    if(req.method==='GET'&&['/','/index.html','/favicon.ico'].includes(url.pathname)){
@@ -137,4 +151,4 @@ const server=http.createServer(async(req,res)=>{
  }
 });
 if(require.main===module)server.listen(PORT,HOST,()=>console.log(`BACKROOMS CO-OP running at http://localhost:${PORT}`));
-module.exports={server,rooms,createRoom,validateWorld,handleAction,snapshot,publicQuestion};
+module.exports={server,rooms,createRoom,validateWorld,handleAction,snapshot,publicQuestion,listPublicRooms};
