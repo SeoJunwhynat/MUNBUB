@@ -19,7 +19,8 @@ async function fixture(){
  const server={configured:()=>true,noCache:()=>{},sameOrigin:()=>true,session:req=>req.user,
   token:claim=>JSON.stringify(claim),verify:claim=>JSON.parse(claim),readPrivate,
   readPrivateBatch:paths=>Promise.all(paths.map(readPrivate)),writePrivate,
-  answerCorrect:()=>true,duelQuestionIds:()=>[...Array.from({length:156},(_,i)=>'s'+(i+1)),...Array.from({length:95},(_,i)=>'i'+(i+1))]};
+  answerCorrect:()=>true,duelQuestionIds:()=>[...Array.from({length:156},(_,i)=>'s'+(i+1)),...Array.from({length:95},(_,i)=>'i'+(i+1))],
+  duelFinalIdiomIds:()=>Array.from({length:95},(_,i)=>'i'+(i+1))};
  const context=vm.createContext({console,Date,JSON,Response,Buffer,setTimeout,clearTimeout});
  const modules=new Map();
  function synthetic(name,exports){
