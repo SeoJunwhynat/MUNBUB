@@ -39,6 +39,7 @@ function publicFile(urlPath) {
     (urlPath === '/index.html' || urlPath === '/moved.html') ||
     /^\/(?:munbub_[\w.-]+\.(?:css|js)|hardcore_image_assets\.js)$/.test(urlPath) ||
     /^\/ui-assets\/(?:[\w.-]+\/)*[\w.-]+\.(?:png|webp|gif|jpe?g|svg|woff2?)$/i.test(urlPath) ||
+    /^\/ui-assets\/catalog\/[\w.-]+\.json$/i.test(urlPath) ||
     /^\/assets\/bgm\/[\w.-]+\.(?:mp3|wav|ogg)$/i.test(urlPath);
   if (!safe) return null;
   const absolute = resolve(root, '.' + urlPath);
