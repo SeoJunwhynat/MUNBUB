@@ -54,6 +54,60 @@
   });
  }
  installTitle();
+ // RESUME ALWAYS VISIBLE v20261106. The original index.html hides both buttons when
+ // store.active is null; wrap its progress refresh, rather than cloning controls.
+ (function installPersistentResumeControl(){
+  if(window.__mbResumeAlwaysVisible20261106)return;
+  window.__mbResumeAlwaysVisible20261106=true;
+  const ids=['resumeHotspot','mobileResume'];
+  const showButtons=()=>{
+   for(const id of ids){const btn=document.getElementById(id);if(btn)btn.hidden=false}
+  };
+  const originalProgress=window.updateHomeProgress;
+  if(typeof originalProgress==='function'){
+   window.updateHomeProgress=function(...args){
+    const result=originalProgress.apply(this,args);
+    showButtons();
+    return result;
+   };
+  }
+  function currentNormalSession(){
+   try{
+    const saved=JSON.parse(window.localStorage.getItem('matchunbeom_v1')||'null');
+    const active=saved?.active;
+    if(!active||!active.cfg)return {valid:false,ranked:false};
+    const cfg=active.cfg;
+    if(cfg.ranked||cfg.ranking||cfg.rankedChallenge||
+       active.ranked||active.rankedChallenge||active.mode==='ranked'||
+       ['ranked','ranking','ranked-infinite','ranked-hardcore','ranked-timed'].includes(cfg.mode)||
+       cfg.category==='ranked')return {valid:false,ranked:true};
+    const valid=['spelling','idiom','application','all'].includes(cfg.category)&&
+       Array.isArray(active.queue)&&active.queue.length>0&&
+       (Number(active.index||0)<active.queue.length||!!active.lastFeedback||!!cfg.infinite);
+    return {valid,ranked:false};
+   }catch{return {valid:false,ranked:false}}
+  }
+  function showNotice(message){
+   if(typeof window.toast==='function'){window.toast(message);return}
+   const toastEl=document.getElementById('toast');
+   if(toastEl){toastEl.textContent=message;toastEl.classList.add('show');return}
+   window.alert?.(message);
+  }
+  function interceptResume(event){
+   const status=currentNormalSession();
+   if(status.valid)return; // Retain the ORIGINAL click handler and resume state.
+   event.preventDefault();
+   event.stopImmediatePropagation();
+   showNotice(status.ranked?'랭킹전은 이어서 풀 수 없습니다.':'이전에 풀던 문제가 없습니다!');
+  }
+  for(const id of ids){
+   const btn=document.getElementById(id);
+   if(!btn)continue;
+   btn.setAttribute('aria-label','풀던 문제 이어서 풀기');
+   btn.addEventListener('click',interceptResume,true);
+  }
+  showButtons();
+ })();
  if(!$('#mb-night-scene')){
   const background=document.createElement('div');
   background.id='mb-night-scene';
