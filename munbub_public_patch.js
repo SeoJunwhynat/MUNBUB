@@ -44,145 +44,229 @@ const css=document.createElement('style');css.id='mb-public-css';css.textContent
 #mb-public-dialog .mb-pub-field input,#mb-public-dialog .mb-pub-field select{width:100%}
 #mb-public-dialog .mb-pub-backrow{margin-bottom:13px}
 #mb-public-dialog .mb-pub-message{margin-top:12px;min-height:1.5em;color:#ffd18b;line-height:1.5;font-size:13px}
-#homeScreen .mb-online-actions #mb-public-open{min-height:52px!important;display:grid;place-items:center;font-size:clamp(13px,1.15vw,17px)!important;background:linear-gradient(#fae9cc,#cba27a)!important;color:#422b29!important;border:4px double #96674c!important;border-radius:13px!important}
+/* Original temporary public button theme removed: the PNG-only art button owns this view. */
 .sidebar-nav .mb-public-nav,.mobile-drawer .mb-public-nav{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;min-height:65px;padding:9px 4px;background:linear-gradient(#ffe8be,#d4a57c);border:3px double #91644c;border-radius:11px;color:#482e28;font-weight:950;font-size:17px}
 @media(max-width:730px){#mb-public-dialog{width:100vw;max-height:100dvh;height:100dvh;padding:12px;border-radius:0}#mb-public-dialog .mb-pub-layout{grid-template-columns:1fr}#mb-public-dialog .mb-pub-side{display:none}#mb-public-dialog .mb-pub-actions{justify-content:flex-start}#mb-public-dialog .mb-pub-room{grid-template-columns:minmax(0,1fr) auto;gap:7px}#mb-public-dialog .mb-pub-people{display:none}#mb-public-dialog .mb-pub-field{grid-template-columns:1fr;gap:4px}#mb-public-dialog #mb-pub-list{max-height:52dvh}}
 `;document.head.append(css);
-let rooms=[],filter='all',query='',screen='list',busy=false,refreshing=false,lastCheck=0,pendingAccount=false;
+const moreCss=document.createElement('style');moreCss.id='mb-public-arena-four-style';moreCss.textContent=`
+#mb-public-dialog{width:min(98vw,1350px);max-height:97dvh;padding:clamp(10px,1.3vw,20px)}
+#mb-public-dialog .mb-pub-room{grid-template-columns:minmax(0,1fr) 62px auto}
+#mb-public-dialog .mb-pub-people{display:block!important;white-space:nowrap}
+#mb-public-dialog .mb-arena-hud{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:10px 0 17px}
+#mb-public-dialog .mb-arena-person{min-width:0;position:relative;border:3px solid #ae8263;border-radius:10px;background:#fff0d5;color:#3d2924;padding:10px;min-height:90px}
+#mb-public-dialog .mb-arena-person.mine{border-color:#f1bb52;box-shadow:0 0 0 2px #a95636}
+#mb-public-dialog .mb-arena-person strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:clamp(12px,1.45vw,18px)}
+#mb-public-dialog .mb-arena-person small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:#77513e}
+#mb-public-dialog .mb-arena-person .mb-arena-score{display:block;font-weight:1000;font-size:clamp(21px,2.2vw,31px);color:#833f30}
+#mb-public-dialog .mb-arena-person .mb-arena-mini{font-size:11px;color:#745045}
+#mb-public-dialog .mb-arena-person .mb-arena-emote{position:absolute;top:100%;left:0;z-index:2;background:#fff1d0;border:2px solid #9a614a;border-radius:12px;padding:7px 9px;font-size:38px;line-height:1;box-shadow:0 8px 15px #0006;pointer-events:none}
+#mb-public-dialog .mb-arena-person .mb-arena-emote::before{content:'';position:absolute;top:-10px;left:18px;width:15px;height:15px;border-top:2px solid #9a614a;border-left:2px solid #9a614a;transform:rotate(45deg);background:#fff1d0}
+#mb-public-dialog .mb-arena-person:nth-child(even) .mb-arena-emote{left:auto;right:0}
+#mb-public-dialog .mb-arena-person:nth-child(even) .mb-arena-emote::before{left:auto;right:18px}
+#mb-public-dialog .mb-arena-stage{min-height:min(47dvh,380px);margin-top:12px;border:4px double #bb936f;border-radius:13px;background:#ffe8cce8;color:#3f2928;padding:clamp(13px,2vw,23px)}
+#mb-public-dialog .mb-arena-stage h3{font-size:clamp(17px,2vw,28px);margin:8px auto 14px}
+#mb-public-dialog .mb-arena-question{font-weight:900;font-size:clamp(18px,2.1vw,30px);line-height:1.6;word-break:keep-all;margin:20px auto}
+#mb-public-dialog .mb-arena-stage .mb-arena-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:25px}
+#mb-public-dialog .mb-arena-options button{background:#fff8eb;border:2px solid #c39573;border-radius:8px;padding:11px;min-height:51px;color:#452c26;font-weight:850;font-size:clamp(14px,1.5vw,19px)}
+#mb-public-dialog .mb-arena-stage input{width:100%;min-width:0}
+#mb-public-dialog .mb-arena-stage .mb-arena-written{display:flex;gap:7px;margin-top:20px}
+#mb-public-dialog .mb-arena-status{color:#a04d3e;font-size:clamp(12px,1.2vw,17px);font-weight:850;min-height:20px}
+#mb-public-dialog .mb-arena-clock{font-weight:900;color:#804833;font-size:clamp(17px,2vw,25px)}
+#mb-public-dialog .mb-arena-chat{margin-top:12px;border:2px solid #bb906b;border-radius:10px;padding:10px;background:#2c1d20cb;color:#f5dfc3}
+#mb-public-dialog .mb-arena-messages{max-height:115px;overflow-y:auto;font-size:13px;margin-bottom:7px}
+#mb-public-dialog .mb-arena-messages p{margin:4px 0;overflow-wrap:anywhere}
+#mb-public-dialog .mb-arena-chat form{display:flex;gap:5px}
+#mb-public-dialog .mb-arena-chat form input{flex:1;min-width:0}
+#mb-public-dialog .mb-arena-reactions{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
+#mb-public-dialog .mb-arena-reactions button{font-size:25px;min-width:48px;padding:4px}
+#mb-public-dialog .mb-arena-rank{display:grid;gap:7px;margin:12px auto;max-width:550px}
+#mb-public-dialog .mb-arena-rank div{display:flex;justify-content:space-between;padding:10px 14px;background:#fff5e5;border:2px solid #bf9472;border-radius:9px;font-weight:850}
+@media(max-width:760px){
+ #mb-public-dialog{height:100dvh;max-height:100dvh;width:100vw;padding:10px;border-radius:0}
+ #mb-public-dialog .mb-arena-hud{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+ #mb-public-dialog .mb-arena-person{min-height:72px;padding:6px}
+ #mb-public-dialog .mb-arena-person .mb-arena-emote{font-size:31px;padding:3px 5px}
+ #mb-public-dialog .mb-arena-stage{min-height:36dvh;padding:11px}
+ #mb-public-dialog .mb-arena-stage .mb-arena-options{gap:7px;margin-top:12px}
+ #mb-public-dialog .mb-pub-room{grid-template-columns:minmax(0,1fr) auto auto}
+}
+#mb-public-dialog .mb-arena-settings-summary{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;background:#fff0d6;border:2px solid #b48a6c;border-radius:9px;padding:9px 12px;margin:10px 0;font-weight:800}
+#mb-public-dialog .mb-arena-settings-form{background:#f7e7cf;border:2px solid #c39a7d;border-radius:10px;padding:12px;margin:8px 0}
+#mb-public-dialog .mb-arena-settings-form h4{margin:0 0 10px;font-size:16px}
+#mb-public-dialog .mb-arena-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#mb-public-dialog .mb-arena-option{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700}
+#mb-public-dialog .mb-arena-option select{width:100%;min-width:0;max-width:100%;border:2px solid #af866c;border-radius:6px;background:#fff9ec;color:#3d2924;padding:8px;font:inherit}
+@media(max-width:600px){#mb-public-dialog .mb-arena-settings-grid{grid-template-columns:1fr}}
+`;document.head.append(moreCss);
+let rooms=[],filter='all',query='',screen='list',busy=false,refreshing=false,pendingAccount=false;
+let roomCode=null,room=null,viewKey='',pollTimer=0,pulseAt=0,serverOffset=0,lastRoomRefresh=0;
 const typeNames={mixed:'혼합',spelling:'맞춤법',idiom:'사자성어'};
-function button(text,id,kind=''){return '<button type="button" class="mb-pub-btn '+kind+'" id="'+id+'">'+text+'</button>'}
-function shell(body){if(!roomsDialog.isConnected)document.body.append(roomsDialog);roomsDialog.innerHTML='<div class="mb-pub-top"><h2>🏮 맛춘범 공개방</h2>'+button('✕ 닫기','mb-pub-close')+'</div>'+body+'<p id="mb-pub-message" class="mb-pub-message" role="status"></p>';roomsDialog.querySelector('#mb-pub-close')?.addEventListener('click',()=>roomsDialog.close())}
-function message(s){const p=$('mb-pub-message');if(p)p.textContent=s}
-function matchingRooms(){return rooms.filter(r=>(filter==='all'||(filter==='waiting'?r.status==='waiting':r.type===filter))&&
- (!query||(r.name+' '+r.host).toLowerCase().includes(query.toLowerCase())))}
-function drawRooms(){
- const list=$('mb-pub-list');if(!list)return;
- const shown=matchingRooms();
- list.innerHTML=shown.length?shown.map(r=>'<article class="mb-pub-room"><div><strong>📜 '+esc(r.name)+'</strong><small>방장 '+esc(r.host)+' · '+esc(typeNames[r.type]||'혼합')+' · '+r.count+'문제 · '+r.seconds+'초</small></div><span class="mb-pub-people">'+r.players+'/2</span><button type="button" class="mb-pub-btn '+(r.status==='waiting'?'primary':'')+'" data-mb-pub-join="'+esc(r.code)+'" '+(r.status!=='waiting'||r.players>=2?'disabled':'')+'>'+(r.status==='waiting'?'입장':r.status==='full'?'인원 가득':'게임 중')+'</button></article>').join(''):'<div style="padding:38px;text-align:center;color:#e6c9a7">조건에 맞는 공개방이 없어. 새 방을 만들어 봐!</div>';
- const count=$('mb-pub-count');if(count)count.textContent='공개방 '+rooms.length+'개 · 입장 가능 '+rooms.filter(r=>r.status==='waiting'&&r.players<2).length+'개';
+const formNames={auto:'문제별 자동',two:'2지선다',four:'4지선다',text:'서술형'};
+const emotes={wave:'👋',cheer:'👏',laugh:'😄',wow:'😮',cry:'😢',fire:'🔥',thumbs:'👍',thinking:'🤔',cool:'😎',sleep:'💤',love:'💗',angry:'😠'};
+function button(label,id,cls=''){return `<button type="button" class="mb-pub-btn ${cls}" id="${id}">${label}</button>`}
+function shell(body){if(!roomsDialog.isConnected)document.body.append(roomsDialog);
+ roomsDialog.innerHTML=`<div class="mb-pub-top"><h2>🏮 맛춘범 공개방 · 최대 4인</h2>${button('✕ 닫기','mb-pub-close')}</div>${body}<p id="mb-pub-message" class="mb-pub-message" role="status"></p>`;
+ $('mb-pub-close').onclick=close;
 }
-function listView(){
- screen='list';
- shell('<div class="mb-pub-actions">'+button('⟳ 새로고침','mb-pub-refresh')+button('🗝 코드 입장','mb-pub-code')+button('＋ 방 만들기','mb-pub-create','primary')+'</div>'+
-  '<p class="mb-pub-note">실제 접속 중인 플레이어의 방만 보여 줘. 초대 코드로 비공개 1대1 대전에도 참가할 수 있어.</p>'+
-  '<div class="mb-pub-layout"><section class="mb-pub-panel"><div class="mb-pub-searchline"><input id="mb-pub-search" placeholder="방 제목·방장 검색" autocomplete="off" value="'+esc(query)+'">'+button('⚡ 빠른 입장','mb-pub-quick','pale')+'</div>'+
-  '<div class="mb-pub-filters"><button class="mb-pub-filter active" data-mb-pub-filter="all">전체</button><button class="mb-pub-filter" data-mb-pub-filter="waiting">대기 중</button><button class="mb-pub-filter" data-mb-pub-filter="spelling">맞춤법</button><button class="mb-pub-filter" data-mb-pub-filter="idiom">사자성어</button><button class="mb-pub-filter" data-mb-pub-filter="mixed">혼합</button></div><div id="mb-pub-list"></div><p class="mb-pub-stats" id="mb-pub-count"></p></section>'+
-  '<aside class="mb-pub-panel mb-pub-side"><h3>📖 공개방 이용 안내</h3><p>새 방을 생성하면 모든 이용자가 목록에서 확인할 수 있어.<br>실제 채팅과 준비 기능은 대기실에서 작동해.<br>한 방에서 최대 2명까지 서버 채점 대결이 가능해.</p><p>4인 대전은 별도 동기화 기능이 필요하므로 현재 지원하지 않아.</p></aside></div>');
- $('#mb-pub-search').oninput=e=>{query=e.target.value;drawRooms()};
- $('#mb-pub-refresh').onclick=()=>refresh();
- $('#mb-pub-quick').onclick=()=>{const r=matchingRooms().find(x=>x.status==='waiting'&&x.players<2);r?join(r.code):message('선택한 조건에 맞는 입장 가능한 방이 없어.')};
- $('#mb-pub-code').onclick=codeView;$('#mb-pub-create').onclick=createView;
- roomsDialog.querySelectorAll('[data-mb-pub-filter]').forEach(b=>b.onclick=()=>{
-  filter=b.dataset.mbPubFilter;roomsDialog.querySelectorAll('[data-mb-pub-filter]').forEach(x=>x.classList.toggle('active',x===b));drawRooms();
- });
- roomsDialog.querySelector('#mb-pub-list').addEventListener('click',e=>{
-  const b=e.target.closest('[data-mb-pub-join]');if(b)join(b.dataset.mbPubJoin);
- });
- drawRooms();roomsDialog.querySelector('[data-mb-pub-filter="'+filter+'"]')?.click();
+function message(s){const el=$('mb-pub-message');if(el)el.textContent=s}
+async function request(body,code){const url='/api/public-arena'+(code?'?code='+encodeURIComponent(code):'');
+ const res=await fetch(url,{method:body?'POST':'GET',credentials:'same-origin',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
+ const data=await res.json().catch(()=>({}));if(!res.ok)throw Error(data.error||`공개방 연결 오류 (${res.status})`);return data;
 }
-function createView(){
- screen='create';shell('<div class="mb-pub-backrow">'+button('← 방 목록','mb-pub-back')+'</div>'+
-  '<section class="mb-pub-panel"><h3>🏮 새 공개방 만들기</h3><form id="mb-pub-createform" class="mb-pub-form">'+
-  '<div class="mb-pub-field"><label for="mb-pub-name">방 제목</label><input id="mb-pub-name" maxlength="36" value="함께 국어 대결해요!" required></div>'+
-  '<div class="mb-pub-field"><label for="mb-pub-type">문제 유형</label><select id="mb-pub-type"><option value="mixed">맞춤법 + 사자성어</option><option value="spelling">맞춤법만</option><option value="idiom">사자성어만</option></select></div>'+
-  '<div class="mb-pub-field"><label for="mb-pub-form">문제 형식</label><select id="mb-pub-form"><option value="auto">문제별 자동</option><option value="two">2지선다</option><option value="four">4지선다</option><option value="text">서술형</option></select></div>'+
-  '<div class="mb-pub-field"><label for="mb-pub-amount">문제 수</label><select id="mb-pub-amount"><option>5</option><option selected>10</option><option>15</option><option>20</option><option>30</option></select></div>'+
-  '<div class="mb-pub-field"><label for="mb-pub-seconds">제한 시간</label><select id="mb-pub-seconds"><option>10</option><option>15</option><option selected>25</option><option>30</option><option>40</option><option>60</option></select></div>'+
-  '<div class="mb-pub-field"><label>최대 인원</label><span>2명 (1대1)　<small style="opacity:.65">4명: 준비 중</small></span></div>'+
-  '<label style="display:flex;gap:7px;align-items:center"><input type="checkbox" id="mb-pub-private"> 비공개방 (목록에 표시하지 않고 코드로만 입장)</label>'+
-  '<div class="mb-pub-actions"><button type="submit" class="mb-pub-btn primary">✓ 방 생성</button></div></form></section>');
- $('#mb-pub-back').onclick=listView;$('#mb-pub-createform').onsubmit=async e=>{
-  e.preventDefault();if(busy)return;busy=true;message('방을 만들고 있어...');
-  const settings={type:$('#mb-pub-type').value,form:$('#mb-pub-form').value,count:Number($('#mb-pub-amount').value),seconds:Number($('#mb-pub-seconds').value)};
-  const body={action:'create',settings,publicRoom:!$('#mb-pub-private').checked,lobbyRoom:true,roomName:$('#mb-pub-name').value.trim(),title:window.mbGetEquippedTitle?.()||'국어 새내기'};
-  try{const out=await request('/api/duel',body);message('방 생성 완료! 대기실로 이동 중...');await enterDuel(out.code)}
-  catch(error){message(error.message)}finally{busy=false}
+function matches(){return rooms.filter(r=>(filter==='all'||(filter==='waiting'?r.status==='waiting':r.type===filter))&&(!query||(r.name+' '+r.host).toLowerCase().includes(query.toLowerCase())))}
+function drawRooms(){const el=$('mb-pub-list');if(!el)return;
+ const shown=matches();el.innerHTML=shown.length?shown.map(r=>`<article class="mb-pub-room"><div><strong>📜 ${esc(r.name)}</strong><small>방장 ${esc(r.host)} · ${typeNames[r.type]||'혼합'} · ${formNames[r.form]||'문제별 자동'} · ${r.count}문제 · ${r.seconds}초</small></div><span class="mb-pub-people">${r.players}/${r.capacity}</span><button type="button" class="mb-pub-btn ${r.status==='waiting'?'primary':''}" data-join="${esc(r.code)}" ${r.status!=='waiting'?'disabled':''}>${r.status==='waiting'?'입장':r.status==='full'?'정원 마감':'대전 중'}</button></article>`).join(''):'<p class="mb-pub-note">조건에 맞는 공개방이 없어. 새 방을 만들어 봐!</p>';
+ const count=$('mb-pub-count');if(count)count.textContent=`공개방 ${rooms.length}개 · 입장 가능 ${rooms.filter(r=>r.status==='waiting').length}개`;
+}
+function listView(){screen='list';roomCode=null;room=null;viewKey='';stopPoll();
+ shell(`<div class="mb-pub-actions">${button('⟳ 새로고침','mb-pub-refresh')}${button('🗝 공개방 코드 입장','mb-pub-code')}${button('＋ 방 만들기','mb-pub-create','primary')}</div><p class="mb-pub-note">2~4명이 함께 대결해! 일반 친구 초대 1대1 코드는 별도의 1대1 설정에서 입장해 줘.</p><div class="mb-pub-layout"><section class="mb-pub-panel"><div class="mb-pub-searchline"><input id="mb-pub-search" placeholder="방 제목·방장 검색" value="${esc(query)}">${button('⚡ 빠른 입장','mb-pub-quick','pale')}</div><div class="mb-pub-filters">${['all','waiting','spelling','idiom','mixed'].map((v,i)=>`<button class="mb-pub-filter ${filter===v?'active':''}" data-filter="${v}">${['전체','입장 가능','맞춤법','사자성어','혼합'][i]}</button>`).join('')}</div><div id="mb-pub-list"></div><p id="mb-pub-count" class="mb-pub-stats"></p></section><aside class="mb-pub-panel mb-pub-side"><h3>📖 4인 공개방</h3><p>최대 4명 입장 · 방장이 최소 2명 준비 완료 후 시작<br>모두 같은 문제를 풀고 서버 채점으로 점수 결정<br>점수판 · 이모티콘 · 채팅 · 최종 순위 지원</p></aside></div>`);
+ $('mb-pub-search').oninput=e=>{query=e.target.value;drawRooms()};$('mb-pub-refresh').onclick=refresh;
+ $('mb-pub-quick').onclick=()=>{const r=matches().find(r=>r.status==='waiting');r?join(r.code):message('입장 가능한 방이 없어.')};
+ $('mb-pub-code').onclick=codeView;$('mb-pub-create').onclick=createView;
+ roomsDialog.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;roomsDialog.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));drawRooms()});
+ $('mb-pub-list').onclick=e=>{const b=e.target.closest('[data-join]');if(b)join(b.dataset.join)};drawRooms();
+}
+function createView(){screen='create';shell(`<div class="mb-pub-backrow">${button('← 방 목록','mb-pub-back')}</div><section class="mb-pub-panel"><h3>🏮 공개방 만들기</h3><form id="mb-pub-createform" class="mb-pub-form">
+ <div class="mb-pub-field"><label for="mb-pub-name">방 제목</label><input id="mb-pub-name" maxlength="36" value="국어 4인 대결!" required></div>
+ <div class="mb-pub-field"><label for="mb-pub-capacity">최대 인원</label><select id="mb-pub-capacity"><option>2</option><option>3</option><option selected>4</option></select></div>
+ <div class="mb-pub-field"><label for="mb-pub-type">문제 유형</label><select id="mb-pub-type"><option value="mixed">맞춤법 + 사자성어</option><option value="spelling">맞춤법만</option><option value="idiom">사자성어만</option></select></div>
+ <div class="mb-pub-field"><label for="mb-pub-form">문제 형식</label><select id="mb-pub-form"><option value="auto">문제별 자동</option><option value="two">2지선다</option><option value="four">4지선다</option><option value="text">서술형</option></select></div>
+ <div class="mb-pub-field"><label for="mb-pub-amount">문제 수</label><select id="mb-pub-amount"><option>5</option><option selected>10</option><option>15</option><option>20</option><option>30</option></select></div>
+ <div class="mb-pub-field"><label for="mb-pub-seconds">문제당 시간</label><select id="mb-pub-seconds"><option>10</option><option>15</option><option selected>25</option><option>30</option><option>40</option><option>60</option></select></div>
+ <button class="mb-pub-btn primary" type="submit">✓ 공개방 생성</button></form></section>`);
+ $('mb-pub-back').onclick=listView;
+ $('mb-pub-createform').onsubmit=async e=>{e.preventDefault();if(busy)return;busy=true;message('방을 생성하는 중...');
+ const settings={type:$('#mb-pub-type').value,form:$('#mb-pub-form').value,count:Number($('#mb-pub-amount').value),seconds:Number($('#mb-pub-seconds').value)};
+ try{const x=await request({action:'create',roomName:$('#mb-pub-name').value,capacity:Number($('#mb-pub-capacity').value),title:window.mbGetEquippedTitle?.()||'국어 새내기',settings});roomCode=x.code;room=x.state;gameView(true);}
+ catch(error){message(error.message)}finally{busy=false};
  };
 }
-function codeView(){
- screen='code';shell('<div class="mb-pub-backrow">'+button('← 방 목록','mb-pub-back')+'</div><section class="mb-pub-panel"><h3>🗝 코드로 입장</h3><p class="mb-pub-note">8자리 대결 코드를 입력해 줘. 친구가 만든 비공개방에도 참가할 수 있어.</p>'+
- '<form id="mb-pub-codeform" class="mb-pub-form"><input id="mb-pub-codeinput" maxlength="8" autocomplete="off" placeholder="ABCD2345" required style="text-transform:uppercase;max-width:300px;letter-spacing:2px"><button class="mb-pub-btn primary" type="submit">입장</button></form></section>');
- $('#mb-pub-back').onclick=listView;$('#mb-pub-codeform').onsubmit=e=>{e.preventDefault();join($('#mb-pub-codeinput').value)};
+function codeView(){screen='code';shell(`<div class="mb-pub-backrow">${button('← 방 목록','mb-pub-back')}</div><div class="mb-pub-panel"><h3>🗝 공개방 코드로 입장</h3><p class="mb-pub-note">8자리 공개방 코드를 입력해 줘. 개인 1대1 코드는 1대1 메뉴에서 입력해.</p><form id="mb-pub-codeform" class="mb-pub-form"><input id="mb-pub-codeinput" maxlength="8" autocomplete="off" placeholder="ABCD2345" required><button type="submit" class="mb-pub-btn primary">입장</button></form></div>`);
+ $('mb-pub-back').onclick=listView;$('mb-pub-codeform').onsubmit=e=>{e.preventDefault();join($('#mb-pub-codeinput').value)};
 }
-async function request(url,body){
- const res=await fetch(url,{method:body?'POST':'GET',credentials:'same-origin',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});
- const data=await res.json().catch(()=>({}));
- if(!res.ok){
-  const why=res.status===404?'공개방 API가 배포되지 않았어. 프로젝트 루트에 api 폴더가 있는지 확인해 줘.':
-   res.status===503?'온라인 저장소 연결 오류야. Vercel Blob 설정을 확인해 줘.':
-   res.status===401?'온라인 계정 로그인이 필요해.':'서버와 통신할 수 없어 ('+res.status+').';
-  throw Error(data.error||why);
+async function join(code){if(busy)return;code=String(code||'').trim().toUpperCase();if(!/^[A-HJ-NP-Z2-9]{8}$/.test(code))return message('8자리 코드를 확인해 줘.');busy=true;message('방에 참가하는 중...');
+ try{const x=await request({action:'join',code,title:window.mbGetEquippedTitle?.()||'국어 새내기'});roomCode=code;room=x.state;gameView(true)}catch(error){message(error.message)}finally{busy=false};
+}
+function scoreCards(){return room.players.map(p=>`<article class="mb-arena-person ${p.id===room.me?'mine':''}" data-pid="${esc(p.id)}"><strong>${p.id===room.hostId?'👑 ':''}${esc(p.name)}${p.id===room.me?' (나)':''}</strong><small>${esc(p.title||'국어 새내기')}</small><span class="mb-arena-score">${p.score}점</span><span class="mb-arena-mini">${p.left?'퇴장':room.phase==='lobby'?(p.ready?'✅ 준비 완료':'⏳ 준비 중'):(p.answered?'✓ 제출 완료':'풀이 중')}</span>${p.lastEmote&&Date.now()-p.lastEmote.at<4200?`<span class="mb-arena-emote">${emotes[p.lastEmote.id]||'👋'}</span>`:''}</article>`).join('')}
+function getQuestion(){try{return typeof MAP!=='undefined'?MAP.get(room.questionId):null}catch{return null}}
+function chosenForm(){if(room.settings.form!=='auto')return room.settings.form;return room.round%5===4?'text':room.round%4===0?'two':'four'}
+function choices(q){const answer=q.type==='idiom'?q.answer:(q.answers||[])[0]||q.answer;
+ const n=chosenForm()==='two'?2:4;
+ const pool=(typeof ALL==='undefined'?[]:ALL).filter(x=>x.type===q.type&&x.id!==q.id).map(x=>x.type==='idiom'?x.answer:(x.answers||[])[0]||x.answer).filter(Boolean);
+ // Stable per-room ordering, so both players see the same answer positions.
+ let seed=0;for(const c of (room.code+room.round))seed=(seed*33+c.charCodeAt(0))>>>0;
+ const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ const candidates=[...new Set(pool.filter(x=>x!==answer))];for(let i=candidates.length-1;i>0;i--){let j=Math.floor(rnd()*(i+1));[candidates[i],candidates[j]]=[candidates[j],candidates[i]]}
+ const result=[answer,...candidates.slice(0,n-1)];for(let i=result.length-1;i>0;i--){let j=Math.floor(rnd()*(i+1));[result[i],result[j]]=[result[j],result[i]]}
+ return result;
+}
+function settingSelect(id,label,choices,current){
+ return `<label class="mb-arena-option"><span>${esc(label)}</span><select id="${id}">${choices.map(([value,name])=>`<option value="${value}" ${String(current)===value?'selected':''}>${esc(name)}</option>`).join('')}</select></label>`;
+}
+function lobbySettings(){
+ const setting=room.settings;
+ const selected=`${typeNames[setting.type]||'혼합'} · ${formNames[setting.form]||'문제별 자동'} · ${setting.count}문제 · ${setting.seconds}초`;
+ const summary=`<div class="mb-arena-settings-summary"><strong>📖 이번 대전 문제 유형</strong><span>${esc(selected)}</span></div>`;
+ if(room.me!==room.hostId)return summary+'<p class="mb-pub-note">방장이 문제 유형을 변경할 수 있어. 변경하면 준비 상태가 초기화돼.</p>';
+ return summary+`<form id="mb-arena-settings-form" class="mb-arena-settings-form">
+ <h4>⚙ 방장 문제 유형 설정</h4><div class="mb-arena-settings-grid">
+ ${settingSelect('mb-arena-edit-type','문제 유형',[['mixed','맞춤법 + 사자성어'],['spelling','맞춤법만'],['idiom','사자성어만']],setting.type)}
+ ${settingSelect('mb-arena-edit-form','문제 형식',[['auto','문제별 자동'],['two','2지선다'],['four','4지선다'],['text','서술형']],setting.form)}
+ ${settingSelect('mb-arena-edit-count','문제 수',[5,10,15,20,30].map(n=>[String(n),String(n)+'문제']),setting.count)}
+ ${settingSelect('mb-arena-edit-seconds','문제당 시간',[10,15,25,30,40,60].map(n=>[String(n),String(n)+'초']),setting.seconds)}
+ </div><p class="mb-pub-note">변경한 설정은 참가자 전원에게 적용돼. 적용하면 모두 다시 준비해야 해.</p>
+ <button type="submit" class="mb-pub-btn primary">✓ 문제 유형 적용</button></form>`;
+}
+function stage(){const p=room.players.find(p=>p.id===room.me);if(!p)return '';
+ if(room.phase==='lobby')return `<h3>🏮 ${esc(room.name)}</h3><p>방 코드 <b>${esc(room.code)}</b> · 참가 ${room.players.filter(x=>!x.left).length}/${room.capacity}명</p><p>최소 2명 입장한 뒤 모두 준비하면 방장이 시작할 수 있어.</p>${lobbySettings()}<div class="mb-pub-actions">${button(p.ready?'✓ 준비 취소':'✓ 준비 완료','mb-arena-ready','primary')}${room.me===room.hostId?button('▶ 대전 시작','mb-arena-start'):''}${button('📋 코드 복사','mb-arena-copy','pale')}</div>`;
+ if(room.phase==='countdown')return `<h3>⚔ 대결 준비</h3><p class="mb-arena-clock" id="mb-arena-clock">5초 뒤에 시작...</p><p>모든 플레이어가 같은 문제를 풀어!</p>`;
+ if(room.phase==='question'){
+  const q=getQuestion();if(!q)return `<p>문제 데이터를 불러오지 못했어. 화면을 새로고침해 줘.</p>`;
+  const form=chosenForm(),title=q.type==='idiom'?'뜻에 맞는 사자성어를 골라 줘.':'문장에 알맞은 표현을 골라 줘.';
+  return `<div class="mb-arena-clock" id="mb-arena-clock" role="timer">⏱ ${room.settings.seconds}초</div><h3>문제 ${room.round+1}/${room.settings.count} · ${title}</h3><p class="mb-arena-question">${esc(q.type==='idiom'?q.meaning:q.prompt)}</p>${p.answered?'<p class="mb-arena-status">✓ 답변 접수 완료 · 다른 플레이어를 기다리는 중</p>':(form==='text'?`<form class="mb-arena-written" id="mb-arena-written"><input id="mb-arena-input" maxlength="100" autocomplete="off" placeholder="정답 입력" required><button class="mb-pub-btn primary" type="submit">제출</button></form>`:`<div class="mb-arena-options">${choices(q).map(x=>`<button type="button" data-answer="${esc(x)}">${esc(x)}</button>`).join('')}</div>`)}<p class="mb-arena-status" id="mb-arena-question-status"></p>`;
  }
- return data;
-}
-async function refresh(){
- if(!roomsDialog.open||screen!=='list'||refreshing)return;
- refreshing=true;
- try{const data=await request('/api/public-rooms');rooms=Array.isArray(data.rooms)?data.rooms:[];lastCheck=Date.now();if(roomsDialog.open&&screen==='list'){drawRooms();message('실시간 공개방 목록이 갱신됐어.')}}
- catch(e){message(e.message)}
- finally{refreshing=false}
-}
-async function enterDuel(code){
- if(typeof window.mbDuelEnterRoom!=='function')throw Error('1대1 대전 모듈을 불러오지 못했어. 새로고침해 줘.');
- // Never stack two modal dialogs: close the public-room browser FIRST.
- // The originating route is passed to duel so Settings / Exit returns here.
- const wasOpen=roomsDialog.open;
- if(wasOpen)roomsDialog.close();
- try{await window.mbDuelEnterRoom(code,{origin:'public'})}
- catch(error){
-  if(wasOpen&&!roomsDialog.open)roomsDialog.showModal();
-  throw error;
+ if(room.phase==='review'){
+  const a=room.myAnswer,q=getQuestion();const ans=q?(q.type==='idiom'?q.answer:(q.answers||[])[0]||q.answer):'';
+  return `<h3>${room.round+1}번째 문제 결과</h3><p class="mb-arena-status">${a?(a.correct?'✅ 정답 +'+a.points+'점':'❌ 오답'):'⏳ 제한 시간 종료 · 미제출'}</p><p>정답: <b>${esc(ans)}</b></p><p class="mb-arena-clock" id="mb-arena-clock">5초 후 ${room.round+1===room.settings.count?'결과 발표':'다음 문제'}</p>${button(room.round+1===room.settings.count?'🏆 결과 확인하기':'✓ 바로 진행 동의','mb-arena-review','primary')}`;
  }
-}
-async function join(code){
- if(busy)return;code=String(code||'').trim().toUpperCase();if(!/^[A-HJ-NP-Z2-9]{8}$/.test(code))return message('8자리 방 코드를 확인해 줘.');
- busy=true;message('방에 참가하고 있어...');
- try{await request('/api/duel',{action:'join',code,title:window.mbGetEquippedTitle?.()||'국어 새내기'});message('참가 완료! 대기실로 이동 중...');await enterDuel(code)}
- catch(e){message(e.message)}finally{busy=false}
-}
-let opening=false;
-async function open(){
- if(opening)return;opening=true;
- try{
- try{
-  const account=await request('/api/account');
-  if(!account.loggedIn){
-   pendingAccount=true;
-   window.mbOpenAccount?.();
-   if(typeof window.mbOpenAccount!=='function'){
-    if(!roomsDialog.open)roomsDialog.showModal();
-    filter='all';query='';listView();
-    message('온라인 로그인·계정 생성 화면을 불러오지 못했어. 새로고침한 뒤 다시 눌러 줘.');
-   }
-   return;
-  }
- }catch(e){
-  if(!roomsDialog.open)roomsDialog.showModal();
-  filter='all';query='';listView();
-  message('공개방 서버 확인 실패: '+e.message);
-  return;
+ if(room.phase==='finished'){
+  const ranking=[...room.players].filter(x=>!x.left).sort((a,b)=>b.score-a.score||b.correct-a.correct);
+  return `<h3>🏆 최종 결과</h3><div class="mb-arena-rank">${ranking.map((p,i)=>`<div><span>${i+1}위 ${room.winnerIds.includes(p.id)?'🏆 ':''}${esc(p.name)}${p.id===room.me?' (나)':''}</span><span>${p.score}점</span></div>`).join('')}</div>${button('🏠 공개방 목록으로','mb-arena-again','primary')}`;
  }
- pendingAccount=false;
- if(!roomsDialog.open)roomsDialog.showModal();
- filter='all';query='';listView();
- await refresh();
-}finally{opening=false}
+ return '';
 }
+function gameView(force){if(!room||!roomCode)return;
+ screen='game';const key=[room.phase,room.round,room.players.map(p=>[p.id,p.ready,p.left,p.answered].join(':')).join('|'),room.chat.at(-1)?.id||'',JSON.stringify(room.settings)].join('~');
+ if(!force&&viewKey===key){const hud=$('mb-arena-hud');if(hud)hud.innerHTML=scoreCards();return}
+ viewKey=key;
+ const body=`<div class="mb-pub-actions">${button('← 방 나가기','mb-arena-leave')}${button('⟳ 동기화','mb-arena-refresh','pale')}</div><p class="mb-pub-note">${esc(room.name)} · ${room.players.filter(p=>!p.left).length}/${room.capacity}명 · ${typeNames[room.settings.type]||'혼합'} · ${formNames[room.settings.form]||'문제별 자동'} · ${room.settings.count}문제 · ${room.settings.seconds}초</p><section id="mb-arena-hud" class="mb-arena-hud">${scoreCards()}</section><div class="mb-arena-stage">${stage()}</div><div class="mb-arena-reactions">${Object.entries(emotes).map(([k,v])=>`<button type="button" class="mb-pub-btn pale" data-emote="${k}" aria-label="${k}">${v}</button>`).join('')}</div><section class="mb-arena-chat"><strong>💬 대기실·대전 채팅</strong><div class="mb-arena-messages" id="mb-arena-chatlog">${chatHTML()}</div><form id="mb-arena-chat-form"><input id="mb-arena-chat-input" maxlength="80" placeholder="80자 이내" autocomplete="off"><button type="submit" class="mb-pub-btn pale">전송</button></form></section>`;
+ shell(body);$('mb-arena-leave').onclick=leaveRoom;$('mb-arena-refresh').onclick=updateRoom;
+ $('mb-arena-ready')?.addEventListener('click',()=>send('ready',{ready:!room.players.find(x=>x.id===room.me)?.ready}));
+ $('mb-arena-start')?.addEventListener('click',()=>send('start'));
+ $('mb-arena-settings-form')?.addEventListener('submit',e=>{
+  e.preventDefault();
+  const settings={type:$('#mb-arena-edit-type').value,form:$('#mb-arena-edit-form').value,
+   count:Number($('#mb-arena-edit-count').value),seconds:Number($('#mb-arena-edit-seconds').value)};
+  if(JSON.stringify(settings)===JSON.stringify(room.settings)){message('현재 1대1 모드와 같은 문제 유형 설정이 적용돼 있어.');return}
+  send('settings',{settings});
+ });
+ $('mb-arena-copy')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(room.code);message('코드가 복사됐어.')}catch{message('방 코드: '+room.code)}});
+ $('mb-arena-review')?.addEventListener('click',()=>send('reviewReady'));
+ $('mb-arena-again')?.addEventListener('click',leaveRoom);
+ roomsDialog.querySelectorAll('[data-answer]').forEach(btn=>btn.onclick=()=>send('answer',{index:room.round,answer:btn.dataset.answer}));
+ $('mb-arena-written')?.addEventListener('submit',e=>{e.preventDefault();send('answer',{index:room.round,answer:$('#mb-arena-input').value})});
+ roomsDialog.querySelectorAll('[data-emote]').forEach(btn=>btn.onclick=()=>send('emote',{emote:btn.dataset.emote}));
+ $('mb-arena-chat-form').onsubmit=e=>{e.preventDefault();const input=$('mb-arena-chat-input');if(input?.value.trim())send('chat',{message:input.value.trim()})};
+ updateClock();startPoll();
+}
+function chatHTML(){return room?.chat?.length?room.chat.slice(-20).map(x=>`<p><strong>${esc(x.name)}:</strong> ${esc(x.message)}</p>`).join(''):'<p>아직 메시지가 없어.</p>'}
+function updateClock(){const el=$('mb-arena-clock');if(!el||!room)return;const now=Date.now()+serverOffset;
+ if(room.phase==='countdown')el.textContent=Math.max(0,Math.ceil((room.startAt-now)/1000))+'초 뒤에 시작...';
+ if(room.phase==='question')el.textContent='⏱ '+Math.max(0,(room.deadlineAt-now)/1000).toFixed(1)+'초';
+ if(room.phase==='review')el.textContent=Math.max(0,Math.ceil((room.reviewEndsAt-now)/1000))+'초 후 '+(room.round+1===room.settings.count?'결과 발표':'다음 문제');
+}
+let pollBusy=false,pollEvery=0;
+function stopPoll(){if(pollTimer)clearTimeout(pollTimer);pollTimer=0}
+function startPoll(){if(pollTimer)return;pollTimer=setTimeout(poll,450)}
+async function poll(){pollTimer=0;if(!roomsDialog.open||screen!=='game'||!roomCode)return;
+ if(!pollBusy){pollBusy=true;try{await updateRoom();if(Date.now()-pulseAt>10000){pulseAt=Date.now();request({action:'pulse',code:roomCode}).catch(()=>{})}}catch(error){message('연결 재시도 중: '+error.message)}finally{pollBusy=false}}
+ if(roomsDialog.open&&screen==='game')pollTimer=setTimeout(poll,800);
+}
+async function updateRoom(){if(!roomCode)return;const code=roomCode;const x=await request(null,code);if(code!==roomCode)return;
+ serverOffset=x.serverNow-Date.now();const phaseBefore=room?.phase,chatBefore=room?.chat.at(-1)?.id;room=x;gameView(false);
+ if(phaseBefore===room.phase&&chatBefore!==room?.chat.at(-1)?.id){const log=$('mb-arena-chatlog');if(log)log.innerHTML=chatHTML()}
+ updateClock();
+}
+async function send(action,extra={}){if(busy||!roomCode)return;busy=true;const code=roomCode;const target=roomsDialog.querySelector('[data-answer],#mb-arena-written button,#mb-arena-ready,#mb-arena-start');
+ // Immediate client visual feedback; server remains the scoring authority.
+ if(action==='answer'&&target){roomsDialog.querySelectorAll('[data-answer],#mb-arena-written button').forEach(b=>b.disabled=true)}
+ try{const x=await request({action,code,...extra});if(code!==roomCode)return;
+  if(x.state){room=x.state;serverOffset=room.serverNow-Date.now();viewKey='';gameView(true)}else await updateRoom();
+  if(action==='answer')message(x.correct?'✅ 정답 제출! +'+x.points+'점':'답변 제출 완료');
+ }catch(error){message(error.message);if(action==='answer')roomsDialog.querySelectorAll('[data-answer],#mb-arena-written button').forEach(b=>b.disabled=false)}finally{busy=false}
+}
+async function leaveRoom(){if(!roomCode){listView();return}const code=roomCode;stopPoll();roomCode=null;room=null;viewKey='';
+ try{await request({action:'leave',code})}catch{/* Local exit should still work. */}
+ if(roomsDialog.open){listView();refresh()}
+}
+async function close(){if(screen==='game'&&roomCode)await leaveRoom();if(roomsDialog.open)roomsDialog.close();stopPoll()}
+async function refresh(){if(!roomsDialog.open||screen!=='list'||refreshing)return;refreshing=true;
+ try{const x=await request();rooms=Array.isArray(x.rooms)?x.rooms:[];drawRooms();message('공개방 목록 갱신 완료')}catch(error){message(error.message)}finally{refreshing=false}
+}
+let opening=false;async function open(){if(opening)return;opening=true;
+ try{const a=await fetch('/api/account',{credentials:'same-origin'});const account=await a.json();
+  if(!account.loggedIn){pendingAccount=true;window.mbOpenAccount?.();return}
+  pendingAccount=false;if(!roomsDialog.open)roomsDialog.showModal();filter='all';query='';listView();await refresh();
+ }catch(error){if(!roomsDialog.open)roomsDialog.showModal();listView();message('계정 연결 오류: '+error.message)}finally{opening=false}
+}
+roomsDialog.addEventListener('cancel',e=>{e.preventDefault();close()});
+document.addEventListener('mb:auth-changed',e=>{if(e.detail?.loggedIn&&pendingAccount){pendingAccount=false;open()}if(!e.detail?.loggedIn)pendingAccount=false});
 window.mbPublicOpen=open;
-document.addEventListener('mb:auth-changed',event=>{
- if(event.detail?.loggedIn&&pendingAccount){pendingAccount=false;open()}
- if(!event.detail?.loggedIn)pendingAccount=false;
-});
-function mount(){
- const row=document.querySelector('#homeScreen .mb-online-actions');
- if(row&&!$('#mb-public-open')){const btn=document.createElement('button');btn.type='button';btn.id='mb-public-open';btn.classList.add('mb-art-button');btn.innerHTML='<img class="mb-art-button-img" src="/ui-assets/public-button-final.png" width="1148" height="292" alt="공개방">';btn.addEventListener('click',open);row.append(btn)}
- for(const side of document.querySelectorAll('.sidebar-nav')){
- if(!side.querySelector('.mb-public-nav')){const btn=document.createElement('button');btn.type='button';btn.className='mb-public-nav';btn.classList.add('mb-art-button');btn.innerHTML='<img class="mb-art-button-img" src="/ui-assets/public-button-final.png" width="1148" height="292" alt="공개방">';btn.addEventListener('click',open);side.append(btn)}
- }
- const mobile=document.querySelector('.mobile-drawer');
- if(mobile&&!mobile.querySelector('.mb-public-nav')){const btn=document.createElement('button');btn.type='button';btn.className='mb-public-nav';btn.classList.add('mb-art-button');btn.innerHTML='<img class="mb-art-button-img" src="/ui-assets/public-button-final.png" width="1148" height="292" alt="공개방">';btn.addEventListener('click',open);mobile.append(btn)}
+function mount(){const row=document.querySelector('#homeScreen .mb-online-actions');
+ if(row&&!document.getElementById('mb-public-open')){const b=document.createElement('button');b.type='button';b.id='mb-public-open';b.className='mb-art-button';b.innerHTML='<img class="mb-art-button-img" src="/ui-assets/public-button-final.png" width="1148" height="292" alt="공개방">';b.addEventListener('click',open);row.append(b)}
+ for(const host of document.querySelectorAll('.sidebar-nav,.mobile-drawer'))if(!host.querySelector('.mb-public-nav')){const b=document.createElement('button');b.type='button';b.className='mb-public-nav mb-art-button';b.innerHTML='<img class="mb-art-button-img" src="/ui-assets/public-button-final.png" width="1148" height="292" alt="공개방">';b.addEventListener('click',open);host.append(b)}
  return !!row;
 }
-mount();const interval=setInterval(()=>{if(mount())clearInterval(interval)},250);setTimeout(()=>clearInterval(interval),16000);
-setInterval(()=>{if(roomsDialog.open&&screen==='list'&&Date.now()-lastCheck>5000)refresh()},6700);
+mount();const mountTimer=setInterval(()=>{if(mount())clearInterval(mountTimer)},300);setTimeout(()=>clearInterval(mountTimer),15000);
+setInterval(()=>{if(roomsDialog.open&&screen==='list')refresh();if(roomsDialog.open&&screen==='game')updateClock()},1250);
 })();
