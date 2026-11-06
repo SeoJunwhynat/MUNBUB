@@ -126,7 +126,7 @@ let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTi
  for(let o of room.objects){if(o.type==='quiz'&&o.cooldownUntil&&o.cooldownUntil<=now){o.cooldownUntil=0;room.version++;}}
  room.elapsed+=dt;if(room.enemy.grace>0){room.enemy.grace=Math.max(0,room.enemy.grace-dt)}else{
   const active=[...room.players.values()].filter(p=>p.alive);if(active.length){let target=active.sort((a,b)=>distance(a,room.enemy)-distance(b,room.enemy))[0];if(now-room.enemy.pathAt>540||!room.enemy.path.length){room.enemy.path=bfsPath(room,room.enemy.x,room.enemy.z,target.x,target.z);room.enemy.pathAt=now;}
-    let [x,z]=room.enemy.path[0]||[target.x,target.z],dx=x-room.enemy.x,dz=z-room.enemy.z,d=Math.hypot(dx,dz);if(d<.3)room.enemy.path.shift();else{let m=Math.min(d,2.05*dt);room.enemy.x+=dx/d*m;room.enemy.z+=dz/d*m;}
+    let [x,z]=room.enemy.path[0]||[target.x,target.z],dx=x-room.enemy.x,dz=z-room.enemy.z,d=Math.hypot(dx,dz);if(d<.3)room.enemy.path.shift();else{let m=Math.min(d,2.05*1.3*dt);room.enemy.x+=dx/d*m;room.enemy.z+=dz/d*m;}
     for(const p of active)if(distance(p,room.enemy)<1.05){p.alive=false;room.version++;}if(active.every(p=>!p.alive)){room.status='ended';room.won=false;room.version++;}
   }
  }}

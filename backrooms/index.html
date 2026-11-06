@@ -210,7 +210,13 @@ function gridDist(ax,az){let d=Array.from({length:WORLD},()=>Array(WORLD).fill(-
 const pos=o=>[(o.x+.5)*CELL,(o.z+.5)*CELL];function gcell(x,z){return [Math.floor(x/CELL),Math.floor(z/CELL)]}function allOf(type){return objects.filter(o=>o.type==='quiz'&&o.kind===type)}function solved(type){return allOf(type).filter(o=>(Number(quizSolved[o.quizId])||0)>=QUESTIONS_PER_TERMINAL).length}
 function progressOf(o){return Math.min(QUESTIONS_PER_TERMINAL,Math.max(0,Number(quizSolved[o.quizId])||0))}
 function answeredOf(type){return allOf(type).reduce((n,o)=>n+progressOf(o),0)}function placements(){let ds=gridDist(1,1),cells=[];for(let z=1;z<WORLD-1;z++)for(let x=1;x<WORLD-1;x++)if(!map[z][x])cells.push({x,z,d:ds[z][x]});cells.sort((a,b)=>b.d-a.d);let far=cells[0],used=[{x:1,z:1},far],exit={type:'exit',x:far.x,z:far.z};let choose=(minD=0)=>{let options=cells.filter(c=>c.d>=minD&&used.every(p=>Math.abs(p.x-c.x)+Math.abs(p.z-c.z)>=7));if(options.length===0)options=cells.filter(c=>used.every(p=>Math.abs(p.x-c.x)+Math.abs(p.z-c.z)>=4));options.sort((a,b)=>Math.min(...used.map(p=>Math.hypot(p.x-a.x,p.z-a.z)))-Math.min(...used.map(p=>Math.hypot(p.x-b.x,p.z-b.z))));let p=options[Math.floor(rnd()*Math.min(8,options.length))]||cells[Math.floor(rnd()*cells.length)];used.push(p);return p};let objectsOut=[];for(let i=0;i<8;i++){let p=choose(8),kind=i<4?'spell':'idiom';objectsOut.push({type:'quiz',quizId:i,kind,x:p.x,z:p.z,question:freshQuestion(kind),cooldownUntil:0})}for(let kind of ['spell','idiom']){let p=choose(12);objectsOut.push({type:'key',kind,x:p.x,z:p.z})}objectsOut.push(exit);let spawn=cells.find(c=>c.d>18&&used.every(p=>Math.abs(p.x-c.x)+Math.abs(p.z-c.z)>=5))||far;return {objectsOut,spawn}}
-function buildWorldGeometry(){let m=mesh();for(let z=0;z<WORLD;z++)for(let x=0;x<WORLD;x++){let xx=x*CELL,zz=z*CELL;if(map[z][x]){box(m,xx,0,zz,xx+CELL,HEIGHT,zz+CELL,0,2,14);continue}planeY(m,xx,zz,xx+CELL,zz+CELL,0,1);planeY(m,xx,zz,xx+CELL,zz+CELL,HEIGHT,2,-1);if((x+z*3)%6===0){box(m,xx+CELL*.19,HEIGHT-.12,zz+CELL*.32,xx+CELL*.81,HEIGHT-.015,zz+CELL*.68,4,4,4,2.3);box(m,xx+CELL*.15,HEIGHT-.19,zz+CELL*.27,xx+CELL*.85,HEIGHT-.12,zz+CELL*.73,13,13,13)}if((x+z)%4===0){box(m,xx,0,zz,xx+.08,HEIGHT,zz+CELL,13,13,13)}}
+function buildWorldGeometry(){let m=mesh();
+// Sealed ceiling behind all original ceiling tiles: never show the black sky at seams.
+for(let z=0;z<WORLD;z++)for(let x=0;x<WORLD;x++){
+ let xx=x*CELL,zz=z*CELL;
+ planeY(m,xx,zz,xx+CELL,zz+CELL,HEIGHT+.025,2,-1);
+}
+for(let z=0;z<WORLD;z++)for(let x=0;x<WORLD;x++){let xx=x*CELL,zz=z*CELL;if(map[z][x]){box(m,xx,0,zz,xx+CELL,HEIGHT,zz+CELL,0,2,14);continue}planeY(m,xx,zz,xx+CELL,zz+CELL,0,1);planeY(m,xx,zz,xx+CELL,zz+CELL,HEIGHT,2,-1);if((x+z*3)%6===0){box(m,xx+CELL*.19,HEIGHT-.12,zz+CELL*.32,xx+CELL*.81,HEIGHT-.015,zz+CELL*.68,4,4,4,2.3);box(m,xx+CELL*.15,HEIGHT-.19,zz+CELL*.27,xx+CELL*.85,HEIGHT-.12,zz+CELL*.73,13,13,13)}if((x+z)%4===0){box(m,xx,0,zz,xx+.08,HEIGHT,zz+CELL,13,13,13)}}
 for(let o of objects){let x=(o.x+.5)*CELL,z=(o.z+.5)*CELL;
 if(o.type==='quiz'){let state=screenState(o),tile=state==='done'?10:state==='lock'?12:progressOf(o)>0?4:7;box(m,x-.67,0,z-.6,x+.67,1.05,z+.6,3,13,3);box(m,x-.56,1.06,z-.5,x+.56,1.29,z+.5,3,3,3);box(m,x-.52,1.24,z-.48,x+.52,2.1,z+.48,3,3,3);box(m,x-.46,1.32,z-.51,x+.46,1.98,z-.475,tile,tile,tile,1.55);box(m,x-.46,1.32,z+.475,x+.46,1.98,z+.51,tile,tile,tile,1.55);box(m,x-.51,1.32,z-.46,x-.475,1.98,z+.46,tile,tile,tile,1.55);box(m,x+.475,1.32,z-.46,x+.51,1.98,z+.46,tile,tile,tile,1.55)}
 if(o.type==='key'){box(m,x-.85,0,z-.85,x+.85,.9,z+.85,3,14,3);box(m,x-.62,.9,z-.62,x+.62,1.1,z+.62,o.kind==='spell'?8:9,13,13,.5);box(m,x-.33,1.2,z-.33,x+.33,1.48,z+.33,11,11,11,1.6)}
@@ -245,7 +251,7 @@ function updateSprint(dt,wantsToSprint){
  return false;
 }
 let last=0,t=0,lastHud=0,walkPhase=0,lastSound=0,lastFallbackFrame=0;function update(dt){elapsed+=dt;let forward=(keys['KeyW']?1:0)-(keys['KeyS']?1:0)-joy.y,strafe=(keys['KeyD']?1:0)-(keys['KeyA']?1:0)+joy.x;let len=Math.hypot(forward,strafe);if(len>0){forward/=Math.max(1,len);strafe/=Math.max(1,len)}let sprint=updateSprint(dt,(keys.ShiftLeft||keys.ShiftRight||runHold)&&len>.1);let speed=sprint?5.75:3.30;let dx=(Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)*speed*dt,dz=(-Math.cos(player.yaw)*forward+Math.sin(player.yaw)*strafe)*speed*dt;const oldPX=player.x,oldPZ=player.z;safeMove(dx,dz);const moving=len>.1&&Math.hypot(player.x-oldPX,player.z-oldPZ)>Math.max(.001,dt*.12);if(moving){walkPhase+=dt*(sprint?14:9);if(elapsed-lastSound>(sprint?.29:.46)){lastSound=elapsed;sound('step',sprint)}}else walkPhase=0;for(let o of objects){if(o.type==='quiz'&&o.cooldownUntil&&performance.now()>=o.cooldownUntil){o.cooldownUntil=0;buildWorldGeometry();}}
-if(online.active){enemy.phase+=dt*7}else if(enemy.grace>0)enemy.grace-=dt;else{enemy.pathTime-=dt;if(enemy.pathTime<=0){enemyPath();enemy.pathTime=.48}let p=enemy.path[0]||[player.x,player.z],vx=p[0]-enemy.x,vz=p[1]-enemy.z,dist=Math.hypot(vx,vz);if(dist<.22){enemy.path.shift()}else{let spd=2.08,delta=Math.min(dist,spd*dt);enemy.x+=vx/dist*delta;enemy.z+=vz/dist*delta}enemy.phase+=dt*7;if(Math.hypot(enemy.x-player.x,enemy.z-player.z)<1.12){end(false);return}}
+if(online.active){enemy.phase+=dt*7*1.3}else if(enemy.grace>0)enemy.grace-=dt;else{enemy.pathTime-=dt;if(enemy.pathTime<=0){enemyPath();enemy.pathTime=.48}let p=enemy.path[0]||[player.x,player.z],vx=p[0]-enemy.x,vz=p[1]-enemy.z,dist=Math.hypot(vx,vz);if(dist<.22){enemy.path.shift()}else{let spd=2.08*1.3,delta=Math.min(dist,spd*dt);enemy.x+=vx/dist*delta;enemy.z+=vz/dist*delta}enemy.phase+=dt*7*1.3;if(Math.hypot(enemy.x-player.x,enemy.z-player.z)<1.12){end(false);return}}
 let near=nearest();$('interact').classList.toggle('hidden',!near);if(near){$('interact').innerHTML=`<span class="key">${coarse?'◎':'E'}</span>${nearText(near)}`};let distance=Math.hypot(enemy.x-player.x,enemy.z-player.z);$('danger').style.opacity=enemy.grace>0?'0':String(Math.max(0,Math.min(.88,(13-distance)/13*.94)));if(elapsed-lastHud>.11){lastHud=elapsed;updateHUD(distance)}if(online.active&&performance.now()-online.lastSend>130){online.lastSend=performance.now();sendMultiPosition()}}
 function nearText(o){if(o.type==='quiz'){let st=screenState(o);return st==='done'?'🟢 3/3 해결한 문제 단말기':st==='lock'?`🔴 잠금 해제까지 ${Math.max(1,Math.ceil((o.cooldownUntil-performance.now())/1000))}초`:`⚪ ${o.kind==='spell'?'맞춤법':'사자성어'} 단말기 (${progressOf(o)}/3)`}if(o.type==='key')return owned[o.kind]?'이미 획득한 열쇠':`${o.kind==='spell'?'맞춤법':'사자성어'}의 방 · 열쇠 확인`;return owned.spell&&owned.idiom?'문이 열렸습니다 · 탈출하기':'출구가 잠겨 있습니다 · 열쇠 2개 필요'}
 function nearest(){let best=null,dist=2.95;for(let o of objects){let dd=Math.hypot(player.x-(o.x+.5)*CELL,player.z-(o.z+.5)*CELL);if(dd<dist){dist=dd;best=o}}return best}
@@ -315,11 +321,28 @@ let jumpscareAt=0,jumpscareTimer=null;
 // reliably restarts at frame one, even after pressing Retry several times.
 const jumpscareGifPath='assets/jumpscare/monster_rush.gif';
 let jumpscareGifBlob=null,jumpscareGifObjectURL=null;
-fetch(jumpscareGifPath).then(response=>{
+// The supplied GIF has 8 frames * 110ms and NETSCAPE2.0 infinite repeat metadata.
+// Strip ONLY that 19-byte application extension; the original frames are untouched.
+async function oneShotJumpscareGif(blob){
+ const bytes=new Uint8Array(await blob.arrayBuffer());
+ const name='NETSCAPE2.0';
+ for(let i=0;i+19<=bytes.length;i++){
+  if(bytes[i]!==0x21||bytes[i+1]!==0xff||bytes[i+2]!==0x0b)continue;
+  let match=true;
+  for(let j=0;j<name.length;j++)if(bytes[i+3+j]!==name.charCodeAt(j)){match=false;break}
+  if(match&&bytes[i+14]===3&&bytes[i+15]===1&&bytes[i+18]===0){
+   return new Blob([bytes.subarray(0,i),bytes.subarray(i+19)],{type:'image/gif'});
+  }
+ }
+ return blob;
+}
+const jumpscareGifReady=fetch(jumpscareGifPath).then(response=>{
  if(!response.ok)throw new Error('Jumpscare GIF unavailable');
  return response.blob();
-}).then(blob=>{jumpscareGifBlob=blob}).catch(()=>{});
+}).then(oneShotJumpscareGif).then(blob=>{jumpscareGifBlob=blob;return blob}).catch(error=>{console.warn('점프스케어 GIF 로딩 실패',error);return null});
+let jumpscarePlaybackId=0;
 function hideJumpscare(){
+ jumpscarePlaybackId++;
  $('jumpscareFx').classList.add('hidden');
  const img=$('jumpscareGif');if(img)img.removeAttribute('src');
  if(jumpscareGifObjectURL){URL.revokeObjectURL(jumpscareGifObjectURL);jumpscareGifObjectURL=null}
@@ -329,13 +352,16 @@ function showJumpscare(){
  const old=$('jumpscareGif');
  const img=document.createElement('img');
  img.id='jumpscareGif';img.alt='괴물이 플레이어를 향해 돌진하는 모습';img.decoding='async';
+ const playback=++jumpscarePlaybackId;
  if(jumpscareGifObjectURL){URL.revokeObjectURL(jumpscareGifObjectURL);jumpscareGifObjectURL=null}
- if(jumpscareGifBlob){
-  jumpscareGifObjectURL=URL.createObjectURL(jumpscareGifBlob);
-  img.src=jumpscareGifObjectURL;
- }else img.src=jumpscareGifPath+'?replay='+Date.now();
  if(old)old.replaceWith(img);else container.append(img);
  container.classList.remove('hidden');
+ const showOnce=()=>{
+  if(playback!==jumpscarePlaybackId||game!=='jumpscare'||!jumpscareGifBlob)return;
+  jumpscareGifObjectURL=URL.createObjectURL(jumpscareGifBlob);
+  img.src=jumpscareGifObjectURL; // no Netscape loop extension: freezes on last frame
+ };
+ if(jumpscareGifBlob)showOnce();else jumpscareGifReady.then(showOnce);
 }
 function finishEnd(won){
  game='ended';hideJumpscare();unlock();showScreen('endScreen');inputMode(false);
@@ -391,7 +417,7 @@ function render(ts){syncSoundscape();syncChaseCues();if(fallback&&ts-lastFallbac
  }
  if(typeof gl.bindVertexArray==='function')gl.bindVertexArray(null);
  gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);
- gl.disable(gl.BLEND);gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.depthMask(true);gl.colorMask(true,true,true,true);
+ gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);gl.disable(gl.SCISSOR_TEST);gl.disable(gl.STENCIL_TEST);gl.frontFace(gl.CCW);gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.depthMask(true);gl.colorMask(true,true,true,true);
  gl.useProgram(prog);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);
  let view=matLook(eye,[eye[0]+forward[0],eye[1]+forward[1],eye[2]+forward[2]]);let proj=matPerspective(game==='jumpscare'?1.06:1.29,canvas.width/Math.max(1,canvas.height),.065,96);gl.uniformMatrix4fv(loc.vp,false,mulMat(proj,view));gl.uniform3fv(loc.eye,eye);gl.uniform3fv(loc.fwd,forward);gl.uniform1f(loc.time,t);gl.uniform1f(loc.flash,player.flash?1:0);gl.uniform1f(loc.fog,30);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);draw(staticBuf);if(online.active){let b=makePeerModels();draw(b);gl.deleteBuffer(b.b)}if((enemy.grace<=0||game==='ended'||game==='jumpscare')&&!window.__backroomsMonsterVisual?.ready){let d=makeEnemy();draw(d);gl.deleteBuffer(d.b)}
  const monsterVisual=window.__backroomsMonsterVisual;

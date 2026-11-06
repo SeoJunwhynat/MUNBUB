@@ -36,6 +36,7 @@ export class BackroomsMonsterVisual {
     try {
       const url=new URL('../assets/monsters/spelling_monster_v3.glb',import.meta.url).href;
       this.controller=await loadSpellingMonster({url,targetHeight:2.90,floorOffset:0.09,castShadow:false});
+      this.controller.setAnimationSpeed(1.3);
       this.bridge=new BackroomsMonsterBridge(this.controller);
       this.scene.add(this.controller.object);
       this.controller.object.visible=false;
