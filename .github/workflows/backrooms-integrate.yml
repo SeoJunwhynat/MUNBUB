@@ -1,0 +1,96 @@
+name: Integrate supplied Backrooms v3 into Matchunbeom
+
+on:
+  push:
+    branches:
+      - migration/render-neon
+    paths:
+      - backrooms_update.zip
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: matchunbeom-backrooms-integration
+  cancel-in-progress: false
+
+jobs:
+  verify-and-integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the existing Render production branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: true
+          ref: migration/render-neon
+      - name: Validate ZIP without extracting arbitrary files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f backrooms_update.zip
+          echo '65a242aff43e70b870b118dc235542e0b9251ffe24528440bb4e118c834327c9  backrooms_update.zip' | sha256sum -c -
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import stat
+          allowed = {
+            'README_최신맛춘범_백룸통합.md',
+            'SOURCE_INTEGRITY.md',
+            'apply_to_latest.py',
+            'backrooms/README_시작방법.txt',
+            'backrooms/bank.json',
+            'backrooms/index.html',
+            'backrooms/package.json',
+            'backrooms/server.js',
+            'deploy_to_render_mac_linux.sh',
+            'deploy_to_render_windows.bat',
+            'munbub_backrooms_entry_20261106.js',
+            'tests/backrooms-integration.test.mjs',
+          }
+          with ZipFile('backrooms_update.zip') as archive:
+              entries=archive.infolist()
+              assert len(entries)==len(allowed)
+              assert {item.filename for item in entries}==allowed
+              assert sum(item.file_size for item in entries)<2_000_000
+              for item in entries:
+                  assert not item.is_dir()
+                  assert (item.external_attr >> 16) & 0o170000 != stat.S_IFLNK
+                  dest=Path('_backrooms_import')/item.filename
+                  dest.parent.mkdir(parents=True,exist_ok=True)
+                  dest.write_bytes(archive.read(item))
+          PY
+      - name: Merge Backrooms without replacing existing accounts, rankings or duels
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 _backrooms_import/apply_to_latest.py .
+          git diff --check
+      - name: Install Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Verify JavaScript and run full regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run check
+          npm test
+      - name: Commit verified changes and trigger Render auto-deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- server.js index.html package.json backrooms/ munbub_backrooms_entry_20261106.js tests/backrooms-integration.test.mjs
+          git rm -- backrooms_update.zip
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'Backrooms files already integrated'
+          else
+            git commit -m "Integrate login-linked 3D Backrooms 4-player co-op mode"
+            git push origin HEAD:migration/render-neon
+          fi
