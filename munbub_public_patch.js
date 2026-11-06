@@ -90,10 +90,18 @@ const moreCss=document.createElement('style');moreCss.id='mb-public-arena-four-s
  #mb-public-dialog .mb-arena-stage .mb-arena-options{gap:7px;margin-top:12px}
  #mb-public-dialog .mb-pub-room{grid-template-columns:minmax(0,1fr) auto auto}
 }
+#mb-public-dialog .mb-arena-settings-summary{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;background:#fff0d6;border:2px solid #b48a6c;border-radius:9px;padding:9px 12px;margin:10px 0;font-weight:800}
+#mb-public-dialog .mb-arena-settings-form{background:#f7e7cf;border:2px solid #c39a7d;border-radius:10px;padding:12px;margin:8px 0}
+#mb-public-dialog .mb-arena-settings-form h4{margin:0 0 10px;font-size:16px}
+#mb-public-dialog .mb-arena-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#mb-public-dialog .mb-arena-option{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700}
+#mb-public-dialog .mb-arena-option select{width:100%;min-width:0;max-width:100%;border:2px solid #af866c;border-radius:6px;background:#fff9ec;color:#3d2924;padding:8px;font:inherit}
+@media(max-width:600px){#mb-public-dialog .mb-arena-settings-grid{grid-template-columns:1fr}}
 `;document.head.append(moreCss);
 let rooms=[],filter='all',query='',screen='list',busy=false,refreshing=false,pendingAccount=false;
 let roomCode=null,room=null,viewKey='',pollTimer=0,pulseAt=0,serverOffset=0,lastRoomRefresh=0;
-const typeNames={mixed:'혼합',spelling:'맞춤법',idiom:'사자성어'};
+const typeNames={mixed:'혼합',spelling:'맞춤법',idiom:'한자성어'};
+const formNames={auto:'자동 혼합',two:'2지선다',four:'4지선다',text:'서술형'};
 const emotes={wave:'👋',cheer:'👏',laugh:'😄',wow:'😮',cry:'😢',fire:'🔥',thumbs:'👍',thinking:'🤔',cool:'😎',sleep:'💤',love:'💗',angry:'😠'};
 function button(label,id,cls=''){return `<button type="button" class="mb-pub-btn ${cls}" id="${id}">${label}</button>`}
 function shell(body){if(!roomsDialog.isConnected)document.body.append(roomsDialog);
@@ -107,7 +115,7 @@ async function request(body,code){const url='/api/public-arena'+(code?'?code='+e
 }
 function matches(){return rooms.filter(r=>(filter==='all'||(filter==='waiting'?r.status==='waiting':r.type===filter))&&(!query||(r.name+' '+r.host).toLowerCase().includes(query.toLowerCase())))}
 function drawRooms(){const el=$('mb-pub-list');if(!el)return;
- const shown=matches();el.innerHTML=shown.length?shown.map(r=>`<article class="mb-pub-room"><div><strong>📜 ${esc(r.name)}</strong><small>방장 ${esc(r.host)} · ${typeNames[r.type]||'혼합'} · ${r.count}문제 · ${r.seconds}초</small></div><span class="mb-pub-people">${r.players}/${r.capacity}</span><button type="button" class="mb-pub-btn ${r.status==='waiting'?'primary':''}" data-join="${esc(r.code)}" ${r.status!=='waiting'?'disabled':''}>${r.status==='waiting'?'입장':r.status==='full'?'정원 마감':'대전 중'}</button></article>`).join(''):'<p class="mb-pub-note">조건에 맞는 공개방이 없어. 새 방을 만들어 봐!</p>';
+ const shown=matches();el.innerHTML=shown.length?shown.map(r=>`<article class="mb-pub-room"><div><strong>📜 ${esc(r.name)}</strong><small>방장 ${esc(r.host)} · ${typeNames[r.type]||'혼합'} · ${formNames[r.form]||'자동 혼합'} · ${r.count}문제 · ${r.seconds}초</small></div><span class="mb-pub-people">${r.players}/${r.capacity}</span><button type="button" class="mb-pub-btn ${r.status==='waiting'?'primary':''}" data-join="${esc(r.code)}" ${r.status!=='waiting'?'disabled':''}>${r.status==='waiting'?'입장':r.status==='full'?'정원 마감':'대전 중'}</button></article>`).join(''):'<p class="mb-pub-note">조건에 맞는 공개방이 없어. 새 방을 만들어 봐!</p>';
  const count=$('mb-pub-count');if(count)count.textContent=`공개방 ${rooms.length}개 · 입장 가능 ${rooms.filter(r=>r.status==='waiting').length}개`;
 }
 function listView(){screen='list';roomCode=null;room=null;viewKey='';stopPoll();
@@ -121,7 +129,7 @@ function listView(){screen='list';roomCode=null;room=null;viewKey='';stopPoll();
 function createView(){screen='create';shell(`<div class="mb-pub-backrow">${button('← 방 목록','mb-pub-back')}</div><section class="mb-pub-panel"><h3>🏮 공개방 만들기</h3><form id="mb-pub-createform" class="mb-pub-form">
  <div class="mb-pub-field"><label for="mb-pub-name">방 제목</label><input id="mb-pub-name" maxlength="36" value="국어 4인 대결!" required></div>
  <div class="mb-pub-field"><label for="mb-pub-capacity">최대 인원</label><select id="mb-pub-capacity"><option>2</option><option>3</option><option selected>4</option></select></div>
- <div class="mb-pub-field"><label for="mb-pub-type">문제 유형</label><select id="mb-pub-type"><option value="mixed">맞춤법+사자성어</option><option value="spelling">맞춤법</option><option value="idiom">사자성어</option></select></div>
+ <div class="mb-pub-field"><label for="mb-pub-type">문제 유형 선택</label><select id="mb-pub-type"><option value="mixed">맞춤법+사자성어</option><option value="spelling">맞춤법</option><option value="idiom">한자성어</option></select></div>
  <div class="mb-pub-field"><label for="mb-pub-form">문제 형식</label><select id="mb-pub-form"><option value="auto">문제별 자동</option><option value="two">2지선다</option><option value="four">4지선다</option><option value="text">서술형</option></select></div>
  <div class="mb-pub-field"><label for="mb-pub-amount">문제 수</label><select id="mb-pub-amount"><option>5</option><option selected>10</option><option>15</option><option>20</option><option>30</option></select></div>
  <div class="mb-pub-field"><label for="mb-pub-seconds">문제당 시간</label><select id="mb-pub-seconds"><option>10</option><option>15</option><option selected>25</option><option>30</option><option>40</option><option>60</option></select></div>
@@ -152,8 +160,25 @@ function choices(q){const answer=q.type==='idiom'?q.answer:(q.answers||[])[0]||q
  const result=[answer,...candidates.slice(0,n-1)];for(let i=result.length-1;i>0;i--){let j=Math.floor(rnd()*(i+1));[result[i],result[j]]=[result[j],result[i]]}
  return result;
 }
+function settingSelect(id,label,choices,current){
+ return `<label class="mb-arena-option"><span>${esc(label)}</span><select id="${id}">${choices.map(([value,name])=>`<option value="${value}" ${String(current)===value?'selected':''}>${esc(name)}</option>`).join('')}</select></label>`;
+}
+function lobbySettings(){
+ const setting=room.settings;
+ const selected=`${typeNames[setting.type]||'혼합'} · ${formNames[setting.form]||'자동 혼합'} · ${setting.count}문제 · ${setting.seconds}초`;
+ const summary=`<div class="mb-arena-settings-summary"><strong>📖 이번 대전 문제 유형</strong><span>${esc(selected)}</span></div>`;
+ if(room.me!==room.hostId)return summary+'<p class="mb-pub-note">방장이 문제 유형을 변경할 수 있어. 변경하면 준비 상태가 초기화돼.</p>';
+ return summary+`<form id="mb-arena-settings-form" class="mb-arena-settings-form">
+ <h4>⚙ 방장 문제 유형 설정</h4><div class="mb-arena-settings-grid">
+ ${settingSelect('mb-arena-edit-type','출제 범위',[['mixed','맞춤법 + 한자성어'],['spelling','맞춤법만'],['idiom','한자성어만']],setting.type)}
+ ${settingSelect('mb-arena-edit-form','문제 형식',[['auto','자동 혼합'],['two','2지선다'],['four','4지선다'],['text','서술형']],setting.form)}
+ ${settingSelect('mb-arena-edit-count','문제 수',[5,10,15,20,30].map(n=>[String(n),String(n)+'문제']),setting.count)}
+ ${settingSelect('mb-arena-edit-seconds','문제당 시간',[10,15,25,30,40,60].map(n=>[String(n),String(n)+'초']),setting.seconds)}
+ </div><p class="mb-pub-note">변경한 설정은 참가자 전원에게 적용돼. 적용하면 모두 다시 준비해야 해.</p>
+ <button type="submit" class="mb-pub-btn primary">✓ 문제 유형 적용</button></form>`;
+}
 function stage(){const p=room.players.find(p=>p.id===room.me);if(!p)return '';
- if(room.phase==='lobby')return `<h3>🏮 ${esc(room.name)}</h3><p>방 코드 <b>${esc(room.code)}</b> · 참가 ${room.players.filter(x=>!x.left).length}/${room.capacity}명</p><p>최소 2명 입장한 뒤 모두 준비하면 방장이 시작할 수 있어.</p><div class="mb-pub-actions">${button(p.ready?'✓ 준비 취소':'✓ 준비 완료','mb-arena-ready','primary')}${room.me===room.hostId?button('▶ 대전 시작','mb-arena-start'):''}${button('📋 코드 복사','mb-arena-copy','pale')}</div>`;
+ if(room.phase==='lobby')return `<h3>🏮 ${esc(room.name)}</h3><p>방 코드 <b>${esc(room.code)}</b> · 참가 ${room.players.filter(x=>!x.left).length}/${room.capacity}명</p><p>최소 2명 입장한 뒤 모두 준비하면 방장이 시작할 수 있어.</p>${lobbySettings()}<div class="mb-pub-actions">${button(p.ready?'✓ 준비 취소':'✓ 준비 완료','mb-arena-ready','primary')}${room.me===room.hostId?button('▶ 대전 시작','mb-arena-start'):''}${button('📋 코드 복사','mb-arena-copy','pale')}</div>`;
  if(room.phase==='countdown')return `<h3>⚔ 대결 준비</h3><p class="mb-arena-clock" id="mb-arena-clock">5초 뒤에 시작...</p><p>모든 플레이어가 같은 문제를 풀어!</p>`;
  if(room.phase==='question'){
   const q=getQuestion();if(!q)return `<p>문제 데이터를 불러오지 못했어. 화면을 새로고침해 줘.</p>`;
@@ -171,13 +196,20 @@ function stage(){const p=room.players.find(p=>p.id===room.me);if(!p)return '';
  return '';
 }
 function gameView(force){if(!room||!roomCode)return;
- screen='game';const key=[room.phase,room.round,room.players.map(p=>[p.id,p.ready,p.left,p.answered].join(':')).join('|'),room.chat.at(-1)?.id||''].join('~');
+ screen='game';const key=[room.phase,room.round,room.players.map(p=>[p.id,p.ready,p.left,p.answered].join(':')).join('|'),room.chat.at(-1)?.id||'',JSON.stringify(room.settings)].join('~');
  if(!force&&viewKey===key){const hud=$('mb-arena-hud');if(hud)hud.innerHTML=scoreCards();return}
  viewKey=key;
- const body=`<div class="mb-pub-actions">${button('← 방 나가기','mb-arena-leave')}${button('⟳ 동기화','mb-arena-refresh','pale')}</div><p class="mb-pub-note">${esc(room.name)} · ${room.players.filter(p=>!p.left).length}/${room.capacity}명 · ${room.settings.count}문제 · ${room.settings.seconds}초</p><section id="mb-arena-hud" class="mb-arena-hud">${scoreCards()}</section><div class="mb-arena-stage">${stage()}</div><div class="mb-arena-reactions">${Object.entries(emotes).map(([k,v])=>`<button type="button" class="mb-pub-btn pale" data-emote="${k}" aria-label="${k}">${v}</button>`).join('')}</div><section class="mb-arena-chat"><strong>💬 대기실·대전 채팅</strong><div class="mb-arena-messages" id="mb-arena-chatlog">${chatHTML()}</div><form id="mb-arena-chat-form"><input id="mb-arena-chat-input" maxlength="80" placeholder="80자 이내" autocomplete="off"><button type="submit" class="mb-pub-btn pale">전송</button></form></section>`;
+ const body=`<div class="mb-pub-actions">${button('← 방 나가기','mb-arena-leave')}${button('⟳ 동기화','mb-arena-refresh','pale')}</div><p class="mb-pub-note">${esc(room.name)} · ${room.players.filter(p=>!p.left).length}/${room.capacity}명 · ${typeNames[room.settings.type]||'혼합'} · ${formNames[room.settings.form]||'자동 혼합'} · ${room.settings.count}문제 · ${room.settings.seconds}초</p><section id="mb-arena-hud" class="mb-arena-hud">${scoreCards()}</section><div class="mb-arena-stage">${stage()}</div><div class="mb-arena-reactions">${Object.entries(emotes).map(([k,v])=>`<button type="button" class="mb-pub-btn pale" data-emote="${k}" aria-label="${k}">${v}</button>`).join('')}</div><section class="mb-arena-chat"><strong>💬 대기실·대전 채팅</strong><div class="mb-arena-messages" id="mb-arena-chatlog">${chatHTML()}</div><form id="mb-arena-chat-form"><input id="mb-arena-chat-input" maxlength="80" placeholder="80자 이내" autocomplete="off"><button type="submit" class="mb-pub-btn pale">전송</button></form></section>`;
  shell(body);$('mb-arena-leave').onclick=leaveRoom;$('mb-arena-refresh').onclick=updateRoom;
  $('mb-arena-ready')?.addEventListener('click',()=>send('ready',{ready:!room.players.find(x=>x.id===room.me)?.ready}));
  $('mb-arena-start')?.addEventListener('click',()=>send('start'));
+ $('mb-arena-settings-form')?.addEventListener('submit',e=>{
+  e.preventDefault();
+  const settings={type:$('#mb-arena-edit-type').value,form:$('#mb-arena-edit-form').value,
+   count:Number($('#mb-arena-edit-count').value),seconds:Number($('#mb-arena-edit-seconds').value)};
+  if(JSON.stringify(settings)===JSON.stringify(room.settings)){message('현재 선택된 문제 유형이야.');return}
+  send('settings',{settings});
+ });
  $('mb-arena-copy')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(room.code);message('코드가 복사됐어.')}catch{message('방 코드: '+room.code)}});
  $('mb-arena-review')?.addEventListener('click',()=>send('reviewReady'));
  $('mb-arena-again')?.addEventListener('click',leaveRoom);

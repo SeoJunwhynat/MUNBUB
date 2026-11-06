@@ -72,3 +72,27 @@ test('all readiness, synchronized clock and server graded points',async()=>{
  assert.equal((await call(actors[4],null,{code})).status,403);
  assert.equal((await call(actors[4],{action:'answer',code,index:0,answer:'correct'})).status,403);
 });
+
+
+test('public arena settings updates are server-generated and shared with all participants',async()=>{
+ const {call,actors,objects}=await fixture();
+ const initial={count:5,seconds:25,type:'mixed',form:'auto'};
+ const create=await call(actors[0],{action:'create',capacity:4,settings:initial});
+ const code=create.code;
+ await call(actors[1],{action:'join',code});
+ await call(actors[0],{action:'ready',code,ready:true});
+ await call(actors[1],{action:'ready',code,ready:true});
+ const next={count:5,seconds:40,type:'idiom',form:'text'};
+ const forbidden=await call(actors[1],{action:'settings',code,settings:next,questions:['s1']});
+ assert.equal(forbidden.status,403);
+ const result=await call(actors[0],{action:'settings',code,settings:next,questions:['s1']});
+ assert.equal(result.status,200);assert.equal(result.state.settings.type,'idiom');
+ assert.equal(result.state.settings.form,'text');
+ assert.ok(result.state.players.every(p=>!p.ready));
+ const stored=objects.get('arena4/'+code);
+ assert.equal(stored.questions.length,5);assert.ok(stored.questions.every(k=>k.startsWith('i')));
+ const guest=await call(actors[1],null,{code});
+ assert.equal(guest.settings.seconds,40);assert.equal(guest.settings.type,'idiom');
+ assert.equal((await call(actors[0],{action:'start',code})).status,409);
+ assert.equal((await call(actors[0],{action:'settings',code,settings:{...next,type:'invalid'}})).status,400);
+});

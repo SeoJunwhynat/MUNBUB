@@ -70,3 +70,26 @@ test('departure during match prevents hanging and private rooms are not changed'
  assert.equal(r.phase,'finished');assert.equal(view(r,'p0',now+6501).winnerIds[0],'p0');
  assert.equal(view(r,'p1',now+6501),null);
 });
+
+
+test('host may change lobby question scope and answer format, resetting all ready flags',()=>{
+ const r=setup();go(r,members[1],'join');
+ go(r,members[0],'ready',{ready:true});go(r,members[1],'ready',{ready:true});
+ const next={count:5,seconds:30,type:'idiom',form:'text'};
+ const ids=['i001','i002','i003','i004','i005'];
+ assert.throws(()=>go(r,members[1],'settings',{settings:next,questions:ids}),/방장만/);
+ const result=go(r,members[0],'settings',{settings:next,questions:ids});
+ assert.equal(result.readinessReset,true);assert.deepEqual(r.settings,next);
+ assert.deepEqual(r.questions,ids);assert.ok(r.players.every(p=>!p.ready));
+ assert.throws(()=>go(r,members[0],'start'),/모두 준비/);
+ for(const user of members.slice(0,2))go(r,user,'ready',{ready:true});
+ go(r,members[0],'start');
+ assert.throws(()=>go(r,members[0],'settings',{settings:next,questions:ids}),/시작 후/);
+});
+test('reject malformed lobby formats and untrusted question lists',()=>{
+ const r=setup();
+ const next={count:5,seconds:25,type:'spelling',form:'two'};
+ assert.throws(()=>go(r,members[0],'settings',{settings:{...next,type:'unknown'},questions:['s1','s2','s3','s4','s5']}),/문제 유형/);
+ assert.throws(()=>go(r,members[0],'settings',{settings:next,questions:['s1','s1','s2','s3','s4']}),/문제 목록/);
+ assert.equal(r.settings.type,'mixed');
+});

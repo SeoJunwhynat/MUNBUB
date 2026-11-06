@@ -90,7 +90,15 @@ export default async function handler(req,res){
   }
   const code=String(body.code||'').trim().toUpperCase();
   if(!CODE_RE.test(code))return response(res,400,{error:'8자리 방 코드를 확인해 줘.'});
-  const result=await actionRoom(code,{id:me.id,name:me.name,title:String(body.title||'국어 새내기').slice(0,30)},action,body);
+  // Regenerate the quiz on the server when the host updates room settings.
+  // A browser must never choose or overwrite the question IDs itself.
+  let payload=body;
+  if(action==='settings'){
+   const updated=settingsOf(body.settings);
+   if(!updated)return response(res,400,{error:'문제 유형·답변 방식·문제 수·시간을 확인해 줘.'});
+   payload={...body,settings:updated,questions:drawQuestions(updated)};
+  }
+  const result=await actionRoom(code,{id:me.id,name:me.name,title:String(body.title||'국어 새내기').slice(0,30)},action,payload);
   return response(res,result.status,result.error?{error:result.error}:result);
  }catch(error){console.error('Public arena',error?.name||'UnknownError');return response(res,503,{error:'공개방 서버에 연결하지 못했어.'})}
 }
