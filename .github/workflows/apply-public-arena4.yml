@@ -63,6 +63,7 @@ jobs:
         run: |
           set -euo pipefail
           node --version
+          npm install --ignore-scripts --no-audit --no-fund
           npm run check
           npm test
       - name: Commit tested changes for Render auto-deploy
