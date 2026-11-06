@@ -38,7 +38,7 @@ css.textContent=`
 #mb-title-dialog .mb-title-choice small{color:#805d4a;line-height:1.4}
 #mb-title-dialog .mb-title-choice.equipped{background:#e8d6a3;border-color:#8d5c37;outline:2px solid #f7c678}
 #mb-title-dialog .mb-title-choice:disabled{opacity:.55;filter:grayscale(.65);cursor:default}
-#homeScreen .mb-online-actions #mb-title-open{min-height:52px!important;display:grid;place-items:center;font-size:clamp(13px,1.15vw,17px)!important;background:linear-gradient(#ffedcf,#e4b88b)!important;color:#422b29!important;border:4px double #96674c!important;border-radius:13px!important}
+/* Original temporary title button theme removed: the PNG-only art button owns this view. */
 @media(max-width:600px){#mb-title-dialog .mb-title-list{grid-template-columns:1fr}#mb-title-dialog{padding:12px}}
 `;document.head.append(css);
 const dialog=document.createElement('dialog');dialog.id='mb-title-dialog';dialog.setAttribute('aria-label','칭호 선택');
