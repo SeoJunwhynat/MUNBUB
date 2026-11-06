@@ -1,0 +1,81 @@
+name: Apply reviewed four-player public arena
+on:
+  push:
+    branches: [migration/render-neon]
+    paths:
+      - 'scripts/mb_public4_payload.br.b64'
+      - '.github/workflows/apply-public-arena4.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apply-public-arena-4p
+  cancel-in-progress: false
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: true
+      - name: Verify and unpack approved source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64,hashlib
+          from pathlib import Path
+          encoded=Path('scripts/mb_public4_payload.br.b64').read_text().strip()
+          packed=base64.b64decode(encoded,validate=True)
+          assert hashlib.sha256(packed).hexdigest()=='5428783ff08800a473fa4b09f0730d676e1571cae314c6c55bf29df23fb3828b', 'Unexpected payload hash'
+          Path('public4_payload.br').write_bytes(packed)
+          PY
+          node -e "const fs=require('node:fs'),z=require('node:zlib');fs.writeFileSync('public4_payload.tar',z.brotliDecompressSync(fs.readFileSync('public4_payload.br')))"
+          python3 - <<'PY'
+          from pathlib import Path
+          import tarfile
+          allowed={
+            'api/public-arena.js',
+            'lib/mb-arena-engine.js',
+            'munbub_public_patch.js',
+            'tests/public-arena4.test.mjs',
+            'tests/public-arena-api.test.mjs',
+            'scripts/apply_public4.py',
+            'PUBLIC4_RELEASE_NOTES.md'
+          }
+          with tarfile.open('public4_payload.tar','r:') as src:
+              members=src.getmembers()
+              if {m.name for m in members}!=allowed or any(not m.isfile() for m in members):
+                  raise SystemExit('Payload contained unknown or unsafe paths')
+              for m in members:
+                  dest=Path(m.name)
+                  dest.parent.mkdir(parents=True,exist_ok=True)
+                  dest.write_bytes(src.extractfile(m).read())
+          PY
+          python3 scripts/apply_public4.py
+          rm -f public4_payload.tar public4_payload.br
+      - name: Verify compatibility and 4-player concurrency
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --version
+          npm run check
+          npm test
+      - name: Commit tested changes for Render auto-deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- api/public-arena.js lib/mb-arena-engine.js munbub_public_patch.js tests/public-arena4.test.mjs tests/public-arena-api.test.mjs scripts/apply_public4.py PUBLIC4_RELEASE_NOTES.md server.js package.json
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo "No new changes to deploy"
+          else
+            git commit -m "Add Neon-backed 2–4 player public arena without changing 1v1"
+            git push origin HEAD:migration/render-neon
+          fi
