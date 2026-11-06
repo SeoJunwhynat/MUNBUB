@@ -1,7 +1,7 @@
 /* Private invite-code 1v1 quiz. Neither player's records overwrite the other's. */
 import { randomBytes, randomInt } from 'node:crypto';
 import { list, put, del } from '@vercel/blob';
-import { configured, noCache, sameOrigin, session, token, verify, readPrivate, writePrivate, answerCorrect, duelQuestionIds } from '../lib/mb-server.js';
+import { configured, noCache, sameOrigin, session, token, verify, readPrivate, writePrivate, answerCorrect, duelQuestionIds, duelFinalIdiomIds } from '../lib/mb-server.js';
 
 const PREFIX='duels/';
 const TITLE_NAMES=new Set(['국어 새내기','훈민정음 수련생','맞춤법 탐험가','정답 감별사','문제 사냥꾼','시간의 지배자','사자성어 도전자','국어 고수','백문백답','연승 장인','말풍선 장인']);
@@ -62,7 +62,7 @@ async function readLobby(code,room,guest){
 
 function pickQuestions(settings){
  const sp=duelQuestionIds().filter(k=>/^s[0-9]+$/.test(k));
- const id=duelQuestionIds().filter(k=>/^i[0-9]+$/.test(k)&&Number(k.slice(1))<=95);
+ const id=duelFinalIdiomIds(); // Exactly the final workbook's 100 idioms (including legacy IDs >95).
  const sample=(arr,n)=>{
   const a=[...arr];for(let i=0;i<n;i++){const j=i+randomInt(a.length-i);[a[i],a[j]]=[a[j],a[i]]}
   return a.slice(0,n);
