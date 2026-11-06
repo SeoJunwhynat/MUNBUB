@@ -1,0 +1,5 @@
+요청 반영 내용
+1) 하드코어 배경 -> 새 scene_hard.webp 교체
+2) 무한모드 배경 -> 새 scene_infinite.webp 교체
+3) 4인 공개방 문제 유형/문제 형식 표시와 선택 문구를 1대1 모드와 동일한 용어로 통일
+4) public-arena API 파일 포함 및 Render server.js 라우트 추가

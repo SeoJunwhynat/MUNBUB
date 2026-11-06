@@ -32,7 +32,7 @@ test('require signed taste account, keep nickname, and do not trust client answe
  const invalid=await api(null,'create',{name:'변조자',world:world()});assert.equal(invalid.status,401);
  const created=await api('a0','create',{name:'변조자',world:world()});assert.equal(created.status,200);
  assert.equal(created.room.players[0].name,'사용자a0');
- assert.equal(created.room.objects[0].question.q,'다음 중 올바른 맞춤법은?');
+ assert.match(created.room.objects[0].question.q,/___/);
  assert.ok(!('answer' in created.room.objects[0].question));
  assert.ok(!('accepted' in created.room.objects[0].question));
  assert.ok(!('exp' in created.room.objects[0].question));
@@ -75,7 +75,19 @@ test('shared terminal correctness, cooldown and server-only solutions',async()=>
  assert.equal((await api('a0','action',{code,type:'answer',quizId:q.quizId,choice:0})).status,400);
  q.cooldownUntil=0;const answer=q.question.accepted[0];
  const success=await api('a0','action',{code,type:'answer',quizId:q.quizId,choice:answer});
- assert.equal(success.correct,true);assert.equal(room.quizSolved[q.quizId],true);
+ assert.equal(success.correct,true);assert.equal(success.progress,1);assert.equal(room.quizSolved[q.quizId],1);
+ assert.equal(success.finished,false);assert.ok(success.nextQuestion);assert.notEqual(q.question.id,previous);
+ const ids=new Set([previous]);
+ for(let level=2;level<=3;level++){
+   ids.add(q.question.id);
+   const next=await api('a0','action',{code,type:'answer',quizId:q.quizId,choice:q.question.accepted[0]});
+   assert.equal(next.status,200);assert.equal(next.correct,true);assert.equal(next.progress,level);
+   assert.equal(next.finished,level===3);
+   assert.equal(room.quizSolved[q.quizId],level);
+   if(level<3)assert.ok(next.nextQuestion);
+   else assert.equal(next.nextQuestion,null);
+ }
+ assert.equal(ids.size,3, 'three unique questions in each terminal');
  assert.equal((await api('a0','action',{code,type:'answer',quizId:q.quizId,choice:answer})).status,400);
 });
 
@@ -100,7 +112,7 @@ test('only correct keys unlock exit; room clears on all leaves',async()=>{
  const p=[...room.players.values()][0];const k=room.objects.find(x=>x.type==='key'&&x.kind==='spell');
  p.x=(k.x+.5)*4;p.z=(k.z+.5)*4;
  assert.equal((await api('a0','action',{code,type:'collect',kind:'spell'})).status,400);
- for(const q of room.objects.filter(o=>o.type==='quiz'))room.quizSolved[q.quizId]=true;
+ for(const q of room.objects.filter(o=>o.type==='quiz'))room.quizSolved[q.quizId]=3;
  assert.equal((await api('a0','action',{code,type:'collect',kind:'spell'})).status,200);
  assert.equal(room.owned.spell,true);
  assert.equal((await api('a0','action',{code,type:'escape'})).status,400);
