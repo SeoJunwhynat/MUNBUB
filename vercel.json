@@ -10,8 +10,18 @@
       "permanent": false
     },
     {
-      "source": "/:path*",
-      "destination": "https://matchunbeom-render.onrender.com/:path*",
+      "source": "/backrooms",
+      "destination": "https://matchunbeom-render.onrender.com/backrooms/",
+      "permanent": false
+    },
+    {
+      "source": "/backrooms/",
+      "destination": "https://matchunbeom-render.onrender.com/backrooms/",
+      "permanent": false
+    },
+    {
+      "source": "/(.*)",
+      "destination": "https://matchunbeom-render.onrender.com/",
       "permanent": false
     }
   ]
