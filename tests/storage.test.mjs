@@ -67,7 +67,7 @@ async function fixture(databaseEnabled=true) {
     },{context,identifier:name});
     modules.set(name,mod);
   }
-  synthetic('@neondatabase/serverless',{neon:()=>sql});
+  synthetic('@neondatabase/serverless',{neon:()=>({query:sql})});
   synthetic('@vercel/blob',blob);
   const code=await readFile(new URL('../lib/mb-storage.js',import.meta.url),'utf8');
   const module=new vm.SourceTextModule(code,{context,identifier:'mb-storage'});
