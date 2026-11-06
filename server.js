@@ -46,6 +46,7 @@ async function handle(req,res){
   let pathname;
   try{pathname=decodeURIComponent(url.pathname)}catch{return json(res,400,{error:'Bad URL encoding'})}
   if(pathname.includes('\\')||pathname.includes('\0')||pathname.split('/').includes('..'))return json(res,404,{error:'Not found'});
+  if(pathname==='/healthz')return json(res,200,{status:'up'});
   if(pathname==='/moved'){
     const page='<!doctype html><html lang="ko"><meta charset="utf-8"><meta http-equiv="refresh" content="2;url=/"><title>이전되었습니다</title><body>맛춘범은 Render로 이전되었습니다. <a href="/">홈으로 이동</a></body></html>';
     res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});return res.end(page);
