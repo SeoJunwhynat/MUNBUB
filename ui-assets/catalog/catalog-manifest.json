@@ -1,0 +1,544 @@
+{
+  "version": "2026-11-06",
+  "achievements": [
+    {
+      "id": "visit1",
+      "name": "출석 완료",
+      "condition": "맛춘범에 접속하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_01_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_01_locked.png"
+      }
+    },
+    {
+      "id": "visit3",
+      "name": "단골손님",
+      "condition": "서로 다른 날이 아니어도 총 3회 접속하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_02_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_02_locked.png"
+      }
+    },
+    {
+      "id": "quiz1",
+      "name": "첫 도전",
+      "condition": "문제 풀이 시작하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_03_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_03_locked.png"
+      }
+    },
+    {
+      "id": "answer1",
+      "name": "첫 문제 완료",
+      "condition": "문제 1개 풀기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_04_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_04_locked.png"
+      }
+    },
+    {
+      "id": "right1",
+      "name": "첫 정답",
+      "condition": "처음으로 정답 맞히기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_05_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_05_locked.png"
+      }
+    },
+    {
+      "id": "wrong1",
+      "name": "오답도 경험치",
+      "condition": "오답 1개 기록하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_06_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_06_locked.png"
+      }
+    },
+    {
+      "id": "answers10",
+      "name": "워밍업 끝",
+      "condition": "문제 10개 풀기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_07_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_07_locked.png"
+      }
+    },
+    {
+      "id": "answers50",
+      "name": "문제 사냥꾼",
+      "condition": "문제 50개 풀기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_08_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_08_locked.png"
+      }
+    },
+    {
+      "id": "answers100",
+      "name": "백문이 불여일풀",
+      "condition": "문제 100개 풀기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_09_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_09_locked.png"
+      }
+    },
+    {
+      "id": "right30",
+      "name": "정답 감별사",
+      "condition": "정답 30개 맞히기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_10_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_10_locked.png"
+      }
+    },
+    {
+      "id": "streak3",
+      "name": "3연승",
+      "condition": "3문제 연속 정답",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_11_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_11_locked.png"
+      }
+    },
+    {
+      "id": "streak7",
+      "name": "정답 급행열차",
+      "condition": "7문제 연속 정답",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_12_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_12_locked.png"
+      }
+    },
+    {
+      "id": "streak15",
+      "name": "연승 폭주 기관차",
+      "condition": "15문제 연속 정답",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_13_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_13_locked.png"
+      }
+    },
+    {
+      "id": "chat1",
+      "name": "말 좀 걸어 봐",
+      "condition": "캐릭터를 1회 클릭하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_14_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_14_locked.png"
+      }
+    },
+    {
+      "id": "chat10",
+      "name": "수다 동료",
+      "condition": "캐릭터를 10회 클릭하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_15_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_15_locked.png"
+      }
+    },
+    {
+      "id": "chat30",
+      "name": "드립 배추국",
+      "condition": "캐릭터를 50회 클릭하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_16_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_16_locked.png"
+      }
+    },
+    {
+      "id": "timed1",
+      "name": "시간과의 승부",
+      "condition": "시간제한 도전 시작하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_17_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_17_locked.png"
+      }
+    },
+    {
+      "id": "visit5",
+      "name": "단골 입장",
+      "condition": "누적 5회 방문",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_18_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_18_locked.png"
+      }
+    },
+    {
+      "id": "visit10",
+      "name": "열 번째 출석",
+      "condition": "누적 10회 방문",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_19_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_19_locked.png"
+      }
+    },
+    {
+      "id": "visit25",
+      "name": "국어밥 주민",
+      "condition": "누적 25회 방문",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_20_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_20_locked.png"
+      }
+    },
+    {
+      "id": "quiz3",
+      "name": "세 번째 판",
+      "condition": "퀴즈 3회 시작",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_21_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_21_locked.png"
+      }
+    },
+    {
+      "id": "quiz10",
+      "name": "퀴즈 수집가",
+      "condition": "퀴즈 10회 시작",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_22_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_22_locked.png"
+      }
+    },
+    {
+      "id": "quiz25",
+      "name": "고인물 입문",
+      "condition": "퀴즈 25회 시작",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_23_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_23_locked.png"
+      }
+    },
+    {
+      "id": "timed3",
+      "name": "시간 압박 숙련",
+      "condition": "시간제한 3회 시작",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_24_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_24_locked.png"
+      }
+    },
+    {
+      "id": "timed10",
+      "name": "타임어택 장인",
+      "condition": "시간제한 10회 시작",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_25_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_25_locked.png"
+      }
+    },
+    {
+      "id": "answers5",
+      "name": "몸풀기",
+      "condition": "누적 5문제 풀이",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_26_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_26_locked.png"
+      }
+    },
+    {
+      "id": "answers25",
+      "name": "국어 시동",
+      "condition": "누적 25문제 풀이",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_27_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_27_locked.png"
+      }
+    },
+    {
+      "id": "answers200",
+      "name": "문제책 정복자",
+      "condition": "누적 200문제 풀이",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_28_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_28_locked.png"
+      }
+    },
+    {
+      "id": "answers500",
+      "name": "문제은행 탐험가",
+      "condition": "누적 500문제 풀이",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_29_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_29_locked.png"
+      }
+    },
+    {
+      "id": "answers1000",
+      "name": "천 문제의 기록",
+      "condition": "누적 1,000문제 풀이",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_30_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_30_locked.png"
+      }
+    },
+    {
+      "id": "right5",
+      "name": "첫 다섯 정답",
+      "condition": "누적 정답 5개",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_31_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_31_locked.png"
+      }
+    },
+    {
+      "id": "right10",
+      "name": "정답 감별력",
+      "condition": "누적 정답 10개",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_32_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_32_locked.png"
+      }
+    },
+    {
+      "id": "right50",
+      "name": "50 정답 달성",
+      "condition": "누적 정답 50개",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_33_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_33_locked.png"
+      }
+    },
+    {
+      "id": "right100",
+      "name": "정답 100개",
+      "condition": "누적 정답 100개",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_34_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_34_locked.png"
+      }
+    },
+    {
+      "id": "right300",
+      "name": "국어 달인 수련",
+      "condition": "누적 정답 300개",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_35_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_35_locked.png"
+      }
+    },
+    {
+      "id": "wrong5",
+      "name": "함정 분석가",
+      "condition": "누적 오답 5개",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_36_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_36_locked.png"
+      }
+    },
+    {
+      "id": "wrong20",
+      "name": "오답 기록 박사",
+      "condition": "누적 오답 20개",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_37_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_37_locked.png"
+      }
+    },
+    {
+      "id": "streak2",
+      "name": "연승의 싹",
+      "condition": "2문제 연속 정답",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_38_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_38_locked.png"
+      }
+    },
+    {
+      "id": "streak5",
+      "name": "5연승",
+      "condition": "5문제 연속 정답",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_39_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_39_locked.png"
+      }
+    },
+    {
+      "id": "streak10",
+      "name": "열 번의 집중력",
+      "condition": "10문제 연속 정답",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_40_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_40_locked.png"
+      }
+    },
+    {
+      "id": "streak20",
+      "name": "연승 전설",
+      "condition": "20문제 연속 정답",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_41_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_41_locked.png"
+      }
+    },
+    {
+      "id": "chat5",
+      "name": "수다 시작",
+      "condition": "캐릭터를 5회 클릭하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_42_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_42_locked.png"
+      }
+    },
+    {
+      "id": "chat20",
+      "name": "말풍선 단골",
+      "condition": "캐릭터를 20회 클릭하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_43_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_43_locked.png"
+      }
+    },
+    {
+      "id": "chat50",
+      "name": "드립 방송국",
+      "condition": "캐릭터를 50회 클릭하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_44_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_44_locked.png"
+      }
+    },
+    {
+      "id": "chat100",
+      "name": "백 번의 드립",
+      "condition": "캐릭터를 100회 클릭하기",
+      "images": {
+        "earned": "/ui-assets/catalog/achievements/achievement_45_earned.png",
+        "locked": "/ui-assets/catalog/achievements/achievement_45_locked.png"
+      }
+    }
+  ],
+  "titles": [
+    {
+      "id": "title_01",
+      "name": "국어 새내기",
+      "condition": "기본 칭호",
+      "images": {
+        "earned": "/ui-assets/catalog/titles/title_01_earned.png",
+        "locked": "/ui-assets/catalog/titles/title_01_locked.png",
+        "selected": "/ui-assets/catalog/titles/title_01_selected.png",
+        "icon": "/ui-assets/catalog/titles/title_01_icon.png",
+        "icon_locked": "/ui-assets/catalog/titles/title_01_icon_locked.png"
+      }
+    },
+    {
+      "id": "title_02",
+      "name": "훈민정음 수련생",
+      "condition": "첫 문제 풀기",
+      "images": {
+        "earned": "/ui-assets/catalog/titles/title_02_earned.png",
+        "locked": "/ui-assets/catalog/titles/title_02_locked.png",
+        "selected": "/ui-assets/catalog/titles/title_02_selected.png",
+        "icon": "/ui-assets/catalog/titles/title_02_icon.png",
+        "icon_locked": "/ui-assets/catalog/titles/title_02_icon_locked.png"
+      }
+    },
+    {
+      "id": "title_03",
+      "name": "맞춤법 탐험가",
+      "condition": "문제 10개 풀기",
+      "images": {
+        "earned": "/ui-assets/catalog/titles/title_03_earned.png",
+        "locked": "/ui-assets/catalog/titles/title_03_locked.png",
+        "selected": "/ui-assets/catalog/titles/title_03_selected.png",
+        "icon": "/ui-assets/catalog/titles/title_03_icon.png",
+        "icon_locked": "/ui-assets/catalog/titles/title_03_icon_locked.png"
+      }
+    },
+    {
+      "id": "title_04",
+      "name": "정답 감별사",
+      "condition": "정답 30개 맞히기",
+      "images": {
+        "earned": "/ui-assets/catalog/titles/title_04_earned.png",
+        "locked": "/ui-assets/catalog/titles/title_04_locked.png",
+        "selected": "/ui-assets/catalog/titles/title_04_selected.png",
+        "icon": "/ui-assets/catalog/titles/title_04_icon.png",
+        "icon_locked": "/ui-assets/catalog/titles/title_04_icon_locked.png"
+      }
+    },
+    {
+      "id": "title_05",
+      "name": "문제 사냥꾼",
+      "condition": "문제 50개 풀기",
+      "images": {
+        "earned": "/ui-assets/catalog/titles/title_05_earned.png",
+        "locked": "/ui-assets/catalog/titles/title_05_locked.png",
+        "selected": "/ui-assets/catalog/titles/title_05_selected.png",
+        "icon": "/ui-assets/catalog/titles/title_05_icon.png",
+        "icon_locked": "/ui-assets/catalog/titles/title_05_icon_locked.png"
+      }
+    },
+    {
+      "id": "title_06",
+      "name": "시간의 지배자",
+      "condition": "시간제한 10회 도전",
+      "images": {
+        "earned": "/ui-assets/catalog/titles/title_06_earned.png",
+        "locked": "/ui-assets/catalog/titles/title_06_locked.png",
+        "selected": "/ui-assets/catalog/titles/title_06_selected.png",
+        "icon": "/ui-assets/catalog/titles/title_06_icon.png",
+        "icon_locked": "/ui-assets/catalog/titles/title_06_icon_locked.png"
+      }
+    },
+    {
+      "id": "title_07",
+      "name": "사자성어 도전자",
+      "condition": "퀴즈 10회 도전",
+      "images": {
+        "earned": "/ui-assets/catalog/titles/title_07_earned.png",
+        "locked": "/ui-assets/catalog/titles/title_07_locked.png",
+        "selected": "/ui-assets/catalog/titles/title_07_selected.png",
+        "icon": "/ui-assets/catalog/titles/title_07_icon.png",
+        "icon_locked": "/ui-assets/catalog/titles/title_07_icon_locked.png"
+      }
+    },
+    {
+      "id": "title_08",
+      "name": "국어 고수",
+      "condition": "문제 100개 풀기",
+      "images": {
+        "earned": "/ui-assets/catalog/titles/title_08_earned.png",
+        "locked": "/ui-assets/catalog/titles/title_08_locked.png",
+        "selected": "/ui-assets/catalog/titles/title_08_selected.png",
+        "icon": "/ui-assets/catalog/titles/title_08_icon.png",
+        "icon_locked": "/ui-assets/catalog/titles/title_08_icon_locked.png"
+      }
+    },
+    {
+      "id": "title_09",
+      "name": "백문백답",
+      "condition": "문제 200개 풀기",
+      "images": {
+        "earned": "/ui-assets/catalog/titles/title_09_earned.png",
+        "locked": "/ui-assets/catalog/titles/title_09_locked.png",
+        "selected": "/ui-assets/catalog/titles/title_09_selected.png",
+        "icon": "/ui-assets/catalog/titles/title_09_icon.png",
+        "icon_locked": "/ui-assets/catalog/titles/title_09_icon_locked.png"
+      }
+    },
+    {
+      "id": "title_10",
+      "name": "연승 장인",
+      "condition": "최고 연속 정답 10개",
+      "images": {
+        "earned": "/ui-assets/catalog/titles/title_10_earned.png",
+        "locked": "/ui-assets/catalog/titles/title_10_locked.png",
+        "selected": "/ui-assets/catalog/titles/title_10_selected.png",
+        "icon": "/ui-assets/catalog/titles/title_10_icon.png",
+        "icon_locked": "/ui-assets/catalog/titles/title_10_icon_locked.png"
+      }
+    },
+    {
+      "id": "title_11",
+      "name": "말풍선 장인",
+      "condition": "캐릭터와 50회 대화",
+      "images": {
+        "earned": "/ui-assets/catalog/titles/title_11_earned.png",
+        "locked": "/ui-assets/catalog/titles/title_11_locked.png",
+        "selected": "/ui-assets/catalog/titles/title_11_selected.png",
+        "icon": "/ui-assets/catalog/titles/title_11_icon.png",
+        "icon_locked": "/ui-assets/catalog/titles/title_11_icon_locked.png"
+      }
+    }
+  ]
+}

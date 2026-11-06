@@ -1,0 +1,13 @@
+# Render Blueprint for a new service. For an existing service, set the same build/start commands.
+services:
+  - type: web
+    name: matchunbeom
+    runtime: node
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BLOB_READ_WRITE_TOKEN
+        sync: false

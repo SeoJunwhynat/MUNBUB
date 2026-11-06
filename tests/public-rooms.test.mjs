@@ -6,6 +6,7 @@ import * as crypto from 'node:crypto';
 
 // Exercise the real handlers with isolated storage, never live accounts/rooms.
 async function fixture(){
+ const finalIdiomIds=JSON.parse(await readFile(new URL('../idiom_final_100.json',import.meta.url),'utf8')).map(x=>x.id);
  const files=new Map();
  const clone=value=>value==null?null:structuredClone(value);
  const readPrivate=async path=>{await Promise.resolve();return clone(files.get(path))};
@@ -18,7 +19,8 @@ async function fixture(){
  const blob={list,put:async(path,text,options={})=>writePrivate(path,JSON.parse(text),{overwrite:options.allowOverwrite===true}),del:async(path)=>{if(Array.isArray(path)){path.forEach(p=>files.delete(p))}else files.delete(path)}};
  const server={configured:()=>true,noCache:()=>{},sameOrigin:()=>true,session:req=>req.user,
   token:claim=>JSON.stringify(claim),verify:claim=>JSON.parse(claim),readPrivate,writePrivate,
-  answerCorrect:()=>true,duelQuestionIds:()=>[...Array.from({length:156},(_,i)=>'s'+(i+1)),...Array.from({length:95},(_,i)=>'i'+(i+1))]};
+  answerCorrect:()=>true,duelQuestionIds:()=>[...Array.from({length:156},(_,i)=>'s'+(i+1)),...finalIdiomIds],
+  duelFinalIdiomIds:()=>[...finalIdiomIds]};
  const context=vm.createContext({console,Date,JSON,Response,Buffer,setTimeout,clearTimeout});
  const modules=new Map();
  function synthetic(name,exports){
