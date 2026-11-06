@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const routes = new Set([
-  'account', 'duel', 'health', 'leaderboard', 'public-rooms', 'ranked', 'score'
+  'account', 'duel', 'health', 'leaderboard', 'public-rooms', 'public-arena', 'ranked', 'score'
 ]);
 
 const contentTypes = new Map([
