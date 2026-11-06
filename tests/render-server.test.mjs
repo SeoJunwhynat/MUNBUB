@@ -13,6 +13,12 @@ test('Render serves the game assets, routes APIs and blocks private files',async
     const text=await home.text();
     assert.ok(text.length>10000,'complete game HTML is served');
 
+    const moved=await fetch(base+'/moved');
+    assert.equal(moved.status,200);
+    const movedHtml=await moved.text();
+    assert.match(movedHtml,/이전되었습니다/);
+    assert.match(movedHtml,/http-equiv="refresh"/);
+
     const ui=await fetch(base+'/ui-assets/scene_spelling.webp',{method:'HEAD'});
     assert.equal(ui.status,200);
     assert.match(ui.headers.get('content-type')||'',/image\/webp/);
