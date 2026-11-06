@@ -45,7 +45,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
+          # Stage only the verified latest frontend; never commit npm dependencies,
+          # private credentials, or stale Vercel backend files.
+          git add -A -- index.html idiom_final_100.json tests/idiom-final.test.mjs ui-assets/catalog ':(glob)munbub_*.js' ':(glob)munbub_*.css'
           if git diff --cached --quiet; then
             echo "Latest frontend already imported."
           else
