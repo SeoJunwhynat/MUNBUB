@@ -96,3 +96,22 @@ test('public arena settings updates are server-generated and shared with all par
  assert.equal((await call(actors[0],{action:'start',code})).status,409);
  assert.equal((await call(actors[0],{action:'settings',code,settings:{...next,type:'invalid'}})).status,400);
 });
+
+test('public 2-4 player API stores new display modes and sends objective format for idioms',async()=>{
+ const {call,actors,objects}=await fixture();
+ const config={count:5,seconds:25,type:'idiom',form:'choice'};
+ const create=await call(actors[0],{action:'create',capacity:4,settings:config});
+ assert.equal(create.status,201);
+ assert.equal(create.state.questionFormat,'four');
+ await call(actors[1],{action:'join',code:create.code});
+ const settings={count:5,seconds:25,type:'spelling',form:'combined'};
+ const update=await call(actors[0],{action:'settings',code:create.code,settings});
+ assert.equal(update.status,200);
+ assert.equal(update.state.settings.form,'combined');
+ assert.equal(update.state.questionFormat,'two');
+ const stored=objects.get('arena4/'+create.code);
+ assert.equal(stored.settings.form,'combined');
+ assert.ok(stored.questions.every(q=>q.startsWith('s')));
+ const guest=await call(actors[1],null,{code:create.code});
+ assert.equal(guest.questionFormat,'two');
+});

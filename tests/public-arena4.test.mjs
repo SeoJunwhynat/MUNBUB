@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRoom,perform,settle,view} from '../lib/mb-arena-engine.js';
+import {createRoom,perform,settle,view,settingsOf,questionForm} from '../lib/mb-arena-engine.js';
 const now=Date.now();
 const members=Array.from({length:5},(_,i)=>({id:'p'+i,name:'선비'+i,title:'국어 새내기'}));
 const settings={count:5,seconds:25,type:'mixed',form:'four'};
@@ -92,4 +92,24 @@ test('reject malformed lobby formats and untrusted question lists',()=>{
  assert.throws(()=>go(r,members[0],'settings',{settings:{...next,type:'unknown'},questions:['s1','s2','s3','s4','s5']}),/문제 유형/);
  assert.throws(()=>go(r,members[0],'settings',{settings:next,questions:['s1','s1','s2','s3','s4']}),/문제 목록/);
  assert.equal(r.settings.type,'mixed');
+});
+
+test('new public mode selector validates only supported categories and keeps legacy rooms',()=>{
+ for(const form of ['text','choice','combined'])for(const type of ['spelling','idiom','mixed']){
+  assert.equal(settingsOf({count:5,seconds:25,type,form})?.form,form);
+ }
+ assert.equal(settingsOf({count:5,seconds:25,type:'idiom',form:'essay'}),null);
+ for(const legacy of ['auto','two','four'])assert.ok(settingsOf({count:5,seconds:25,type:'mixed',form:legacy}));
+});
+test('question format is identical for guests and host and follows category',()=>{
+ const r=setup();r.settings={count:5,seconds:25,type:'mixed',form:'choice'};
+ go(r,members[1],'join');
+ assert.equal(view(r,'p0',now).questionFormat,'two');
+ assert.equal(view(r,'p1',now).questionFormat,'two');
+ r.round=1;
+ assert.equal(view(r,'p1',now).questionFormat,'four');
+ assert.equal(questionForm({...r.settings,form:'text'},0,'i001'),'text');
+ r.settings.form='combined';
+ assert.deepEqual(r.questions.map((id,i)=>questionForm(r.settings,i,id)),['two','text','two','text','two']);
+ assert.equal(questionForm({form:'auto'},4,'s5'),'text');
 });

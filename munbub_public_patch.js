@@ -100,8 +100,8 @@ const moreCss=document.createElement('style');moreCss.id='mb-public-arena-four-s
 `;document.head.append(moreCss);
 let rooms=[],filter='all',query='',screen='list',busy=false,refreshing=false,pendingAccount=false;
 let roomCode=null,room=null,viewKey='',pollTimer=0,pulseAt=0,serverOffset=0,lastRoomRefresh=0;
-const typeNames={mixed:'혼합',spelling:'맞춤법',idiom:'한자성어'};
-const formNames={auto:'자동 혼합',two:'2지선다',four:'4지선다',text:'서술형'};
+const typeNames={mixed:'혼합',spelling:'헷갈리는 맞춤법',idiom:'사자성어'};
+const formNames={text:'서술형',choice:'객관식',combined:'서술형+객관식',auto:'문제별 자동',two:'2지선다',four:'4지선다'};
 const emotes={wave:'👋',cheer:'👏',laugh:'😄',wow:'😮',cry:'😢',fire:'🔥',thumbs:'👍',thinking:'🤔',cool:'😎',sleep:'💤',love:'💗',angry:'😠'};
 function button(label,id,cls=''){return `<button type="button" class="mb-pub-btn ${cls}" id="${id}">${label}</button>`}
 function shell(body){if(!roomsDialog.isConnected)document.body.append(roomsDialog);
@@ -115,11 +115,11 @@ async function request(body,code){const url='/api/public-arena'+(code?'?code='+e
 }
 function matches(){return rooms.filter(r=>(filter==='all'||(filter==='waiting'?r.status==='waiting':r.type===filter))&&(!query||(r.name+' '+r.host).toLowerCase().includes(query.toLowerCase())))}
 function drawRooms(){const el=$('mb-pub-list');if(!el)return;
- const shown=matches();el.innerHTML=shown.length?shown.map(r=>`<article class="mb-pub-room"><div><strong>📜 ${esc(r.name)}</strong><small>방장 ${esc(r.host)} · ${typeNames[r.type]||'혼합'} · ${formNames[r.form]||'자동 혼합'} · ${r.count}문제 · ${r.seconds}초</small></div><span class="mb-pub-people">${r.players}/${r.capacity}</span><button type="button" class="mb-pub-btn ${r.status==='waiting'?'primary':''}" data-join="${esc(r.code)}" ${r.status!=='waiting'?'disabled':''}>${r.status==='waiting'?'입장':r.status==='full'?'정원 마감':'대전 중'}</button></article>`).join(''):'<p class="mb-pub-note">조건에 맞는 공개방이 없어. 새 방을 만들어 봐!</p>';
+ const shown=matches();el.innerHTML=shown.length?shown.map(r=>`<article class="mb-pub-room"><div><strong>📜 ${esc(r.name)}</strong><small>방장 ${esc(r.host)} · ${typeNames[r.type]||'혼합'} · ${formNames[r.form]||'서술형+객관식'} · ${r.count}문제 · ${r.seconds}초</small></div><span class="mb-pub-people">${r.players}/${r.capacity}</span><button type="button" class="mb-pub-btn ${r.status==='waiting'?'primary':''}" data-join="${esc(r.code)}" ${r.status!=='waiting'?'disabled':''}>${r.status==='waiting'?'입장':r.status==='full'?'정원 마감':'대전 중'}</button></article>`).join(''):'<p class="mb-pub-note">조건에 맞는 공개방이 없어. 새 방을 만들어 봐!</p>';
  const count=$('mb-pub-count');if(count)count.textContent=`공개방 ${rooms.length}개 · 입장 가능 ${rooms.filter(r=>r.status==='waiting').length}개`;
 }
 function listView(){screen='list';roomCode=null;room=null;viewKey='';stopPoll();
- shell(`<div class="mb-pub-actions">${button('⟳ 새로고침','mb-pub-refresh')}${button('🗝 공개방 코드 입장','mb-pub-code')}${button('＋ 방 만들기','mb-pub-create','primary')}</div><p class="mb-pub-note">2~4명이 함께 대결해! 일반 친구 초대 1대1 코드는 별도의 1대1 설정에서 입장해 줘.</p><div class="mb-pub-layout"><section class="mb-pub-panel"><div class="mb-pub-searchline"><input id="mb-pub-search" placeholder="방 제목·방장 검색" value="${esc(query)}">${button('⚡ 빠른 입장','mb-pub-quick','pale')}</div><div class="mb-pub-filters">${['all','waiting','spelling','idiom','mixed'].map((v,i)=>`<button class="mb-pub-filter ${filter===v?'active':''}" data-filter="${v}">${['전체','입장 가능','맞춤법','사자성어','혼합'][i]}</button>`).join('')}</div><div id="mb-pub-list"></div><p id="mb-pub-count" class="mb-pub-stats"></p></section><aside class="mb-pub-panel mb-pub-side"><h3>📖 4인 공개방</h3><p>최대 4명 입장 · 방장이 최소 2명 준비 완료 후 시작<br>모두 같은 문제를 풀고 서버 채점으로 점수 결정<br>점수판 · 이모티콘 · 채팅 · 최종 순위 지원</p></aside></div>`);
+ shell(`<div class="mb-pub-actions">${button('⟳ 새로고침','mb-pub-refresh')}${button('🗝 공개방 코드 입장','mb-pub-code')}${button('＋ 방 만들기','mb-pub-create','primary')}</div><p class="mb-pub-note">2~4명이 함께 대결해! 일반 친구 초대 1대1 코드는 별도의 1대1 설정에서 입장해 줘.</p><div class="mb-pub-layout"><section class="mb-pub-panel"><div class="mb-pub-searchline"><input id="mb-pub-search" placeholder="방 제목·방장 검색" value="${esc(query)}">${button('⚡ 빠른 입장','mb-pub-quick','pale')}</div><div class="mb-pub-filters">${['all','waiting','spelling','idiom','mixed'].map((v,i)=>`<button class="mb-pub-filter ${filter===v?'active':''}" data-filter="${v}">${['전체','입장 가능','헷갈리는 맞춤법','사자성어','혼합'][i]}</button>`).join('')}</div><div id="mb-pub-list"></div><p id="mb-pub-count" class="mb-pub-stats"></p></section><aside class="mb-pub-panel mb-pub-side"><h3>📖 4인 공개방</h3><p>최대 4명 입장 · 방장이 최소 2명 준비 완료 후 시작<br>모두 같은 문제를 풀고 서버 채점으로 점수 결정<br>점수판 · 이모티콘 · 채팅 · 최종 순위 지원</p></aside></div>`);
  $('mb-pub-search').oninput=e=>{query=e.target.value;drawRooms()};$('mb-pub-refresh').onclick=refresh;
  $('mb-pub-quick').onclick=()=>{const r=matches().find(r=>r.status==='waiting');r?join(r.code):message('입장 가능한 방이 없어.')};
  $('mb-pub-code').onclick=codeView;$('mb-pub-create').onclick=createView;
@@ -129,8 +129,8 @@ function listView(){screen='list';roomCode=null;room=null;viewKey='';stopPoll();
 function createView(){screen='create';shell(`<div class="mb-pub-backrow">${button('← 방 목록','mb-pub-back')}</div><section class="mb-pub-panel"><h3>🏮 공개방 만들기</h3><form id="mb-pub-createform" class="mb-pub-form">
  <div class="mb-pub-field"><label for="mb-pub-name">방 제목</label><input id="mb-pub-name" maxlength="36" value="국어 4인 대결!" required></div>
  <div class="mb-pub-field"><label for="mb-pub-capacity">최대 인원</label><select id="mb-pub-capacity"><option>2</option><option>3</option><option selected>4</option></select></div>
- <div class="mb-pub-field"><label for="mb-pub-type">문제 유형 선택</label><select id="mb-pub-type"><option value="mixed">맞춤법+사자성어</option><option value="spelling">맞춤법</option><option value="idiom">한자성어</option></select></div>
- <div class="mb-pub-field"><label for="mb-pub-form">문제 형식</label><select id="mb-pub-form"><option value="auto">문제별 자동</option><option value="two">2지선다</option><option value="four">4지선다</option><option value="text">서술형</option></select></div>
+ <div class="mb-pub-field"><label for="mb-pub-form">문제 방식 (대분류)</label><select id="mb-pub-form"><option value="text">서술형</option><option value="choice">객관식</option><option value="combined" selected>서술형+객관식</option></select></div>
+ <div class="mb-pub-field"><label for="mb-pub-type">세부 문제 유형</label><select id="mb-pub-type"><option value="spelling">헷갈리는 맞춤법</option><option value="idiom">사자성어</option><option value="mixed" selected>혼합</option></select></div>
  <div class="mb-pub-field"><label for="mb-pub-amount">문제 수</label><select id="mb-pub-amount"><option>5</option><option selected>10</option><option>15</option><option>20</option><option>30</option></select></div>
  <div class="mb-pub-field"><label for="mb-pub-seconds">문제당 시간</label><select id="mb-pub-seconds"><option>10</option><option>15</option><option selected>25</option><option>30</option><option>40</option><option>60</option></select></div>
  <button class="mb-pub-btn primary" type="submit">✓ 공개방 생성</button></form></section>`);
@@ -149,8 +149,21 @@ async function join(code){if(busy)return;code=String(code||'').trim().toUpperCas
 }
 function scoreCards(){return room.players.map(p=>`<article class="mb-arena-person ${p.id===room.me?'mine':''}" data-pid="${esc(p.id)}"><strong>${p.id===room.hostId?'👑 ':''}${esc(p.name)}${p.id===room.me?' (나)':''}</strong><small>${esc(p.title||'국어 새내기')}</small><span class="mb-arena-score">${p.score}점</span><span class="mb-arena-mini">${p.left?'퇴장':room.phase==='lobby'?(p.ready?'✅ 준비 완료':'⏳ 준비 중'):(p.answered?'✓ 제출 완료':'풀이 중')}</span>${p.lastEmote&&Date.now()-p.lastEmote.at<4200?`<span class="mb-arena-emote">${emotes[p.lastEmote.id]||'👋'}</span>`:''}</article>`).join('')}
 function getQuestion(){try{return typeof MAP!=='undefined'?MAP.get(room.questionId):null}catch{return null}}
-function chosenForm(){if(room.settings.form!=='auto')return room.settings.form;return room.round%5===4?'text':room.round%4===0?'two':'four'}
+function chosenForm(){
+ // The server selects the same question format for every participant.
+ if(['text','two','four'].includes(room.questionFormat))return room.questionFormat;
+ const form=room.settings.form;
+ if(form==='text'||form==='two'||form==='four')return form;
+ const objective=String(room.questionId||'').startsWith('i')?'four':'two';
+ if(form==='choice')return objective;
+ if(form==='combined')return room.round%2===1?'text':objective;
+ return room.round%5===4?'text':room.round%4===0?'two':'four';
+}
 function choices(q){const answer=q.type==='idiom'?q.answer:(q.answers||[])[0]||q.answer;
+ // Match the existing 1v1 spelling behavior: its two real options form the objective question.
+ if(q.type==='spelling'&&chosenForm()==='two'&&Array.isArray(q.options)&&q.options.length===2){
+  const pair=[...q.options];return pair.every(x=>typeof x==='string')?pair:[];
+ }
  const n=chosenForm()==='two'?2:4;
  const pool=(typeof ALL==='undefined'?[]:ALL).filter(x=>x.type===q.type&&x.id!==q.id).map(x=>x.type==='idiom'?x.answer:(x.answers||[])[0]||x.answer).filter(Boolean);
  // Stable per-room ordering, so both players see the same answer positions.
@@ -161,17 +174,19 @@ function choices(q){const answer=q.type==='idiom'?q.answer:(q.answers||[])[0]||q
  return result;
 }
 function settingSelect(id,label,choices,current){
- return `<label class="mb-arena-option"><span>${esc(label)}</span><select id="${id}">${choices.map(([value,name])=>`<option value="${value}" ${String(current)===value?'selected':''}>${esc(name)}</option>`).join('')}</select></label>`;
+ // Old unstarted rooms can still display their earlier 2/4/auto configuration accurately.
+ const options=choices.some(([value])=>value===String(current))?choices:[[String(current),formNames[current]||String(current)+' (기존 설정)'],...choices];
+ return `<label class="mb-arena-option"><span>${esc(label)}</span><select id="${id}">${options.map(([value,name])=>`<option value="${value}" ${String(current)===value?'selected':''}>${esc(name)}</option>`).join('')}</select></label>`;
 }
 function lobbySettings(){
  const setting=room.settings;
- const selected=`${typeNames[setting.type]||'혼합'} · ${formNames[setting.form]||'자동 혼합'} · ${setting.count}문제 · ${setting.seconds}초`;
+ const selected=`${typeNames[setting.type]||'혼합'} · ${formNames[setting.form]||'서술형+객관식'} · ${setting.count}문제 · ${setting.seconds}초`;
  const summary=`<div class="mb-arena-settings-summary"><strong>📖 이번 대전 문제 유형</strong><span>${esc(selected)}</span></div>`;
  if(room.me!==room.hostId)return summary+'<p class="mb-pub-note">방장이 문제 유형을 변경할 수 있어. 변경하면 준비 상태가 초기화돼.</p>';
  return summary+`<form id="mb-arena-settings-form" class="mb-arena-settings-form">
  <h4>⚙ 방장 문제 유형 설정</h4><div class="mb-arena-settings-grid">
- ${settingSelect('mb-arena-edit-type','출제 범위',[['mixed','맞춤법 + 한자성어'],['spelling','맞춤법만'],['idiom','한자성어만']],setting.type)}
- ${settingSelect('mb-arena-edit-form','문제 형식',[['auto','자동 혼합'],['two','2지선다'],['four','4지선다'],['text','서술형']],setting.form)}
+ ${settingSelect('mb-arena-edit-form','문제 방식 (대분류)',[['text','서술형'],['choice','객관식'],['combined','서술형+객관식']],setting.form)}
+ ${settingSelect('mb-arena-edit-type','세부 문제 유형',[['spelling','헷갈리는 맞춤법'],['idiom','사자성어'],['mixed','혼합']],setting.type)}
  ${settingSelect('mb-arena-edit-count','문제 수',[5,10,15,20,30].map(n=>[String(n),String(n)+'문제']),setting.count)}
  ${settingSelect('mb-arena-edit-seconds','문제당 시간',[10,15,25,30,40,60].map(n=>[String(n),String(n)+'초']),setting.seconds)}
  </div><p class="mb-pub-note">변경한 설정은 참가자 전원에게 적용돼. 적용하면 모두 다시 준비해야 해.</p>
@@ -182,7 +197,7 @@ function stage(){const p=room.players.find(p=>p.id===room.me);if(!p)return '';
  if(room.phase==='countdown')return `<h3>⚔ 대결 준비</h3><p class="mb-arena-clock" id="mb-arena-clock">5초 뒤에 시작...</p><p>모든 플레이어가 같은 문제를 풀어!</p>`;
  if(room.phase==='question'){
   const q=getQuestion();if(!q)return `<p>문제 데이터를 불러오지 못했어. 화면을 새로고침해 줘.</p>`;
-  const form=chosenForm(),title=q.type==='idiom'?'뜻에 맞는 사자성어를 골라 줘.':'문장에 알맞은 표현을 골라 줘.';
+  const form=chosenForm(),title=q.type==='idiom'?(form==='text'?'뜻에 맞는 사자성어를 적어 줘.':'뜻에 맞는 사자성어를 골라 줘.'):(form==='text'?'빈칸에 알맞은 표현을 적어 줘.':'문장에 알맞은 표현을 골라 줘.');
   return `<div class="mb-arena-clock" id="mb-arena-clock" role="timer">⏱ ${room.settings.seconds}초</div><h3>문제 ${room.round+1}/${room.settings.count} · ${title}</h3><p class="mb-arena-question">${esc(q.type==='idiom'?q.meaning:q.prompt)}</p>${p.answered?'<p class="mb-arena-status">✓ 답변 접수 완료 · 다른 플레이어를 기다리는 중</p>':(form==='text'?`<form class="mb-arena-written" id="mb-arena-written"><input id="mb-arena-input" maxlength="100" autocomplete="off" placeholder="정답 입력" required><button class="mb-pub-btn primary" type="submit">제출</button></form>`:`<div class="mb-arena-options">${choices(q).map(x=>`<button type="button" data-answer="${esc(x)}">${esc(x)}</button>`).join('')}</div>`)}<p class="mb-arena-status" id="mb-arena-question-status"></p>`;
  }
  if(room.phase==='review'){
@@ -199,7 +214,7 @@ function gameView(force){if(!room||!roomCode)return;
  screen='game';const key=[room.phase,room.round,room.players.map(p=>[p.id,p.ready,p.left,p.answered].join(':')).join('|'),room.chat.at(-1)?.id||'',JSON.stringify(room.settings)].join('~');
  if(!force&&viewKey===key){const hud=$('mb-arena-hud');if(hud)hud.innerHTML=scoreCards();return}
  viewKey=key;
- const body=`<div class="mb-pub-actions">${button('← 방 나가기','mb-arena-leave')}${button('⟳ 동기화','mb-arena-refresh','pale')}</div><p class="mb-pub-note">${esc(room.name)} · ${room.players.filter(p=>!p.left).length}/${room.capacity}명 · ${typeNames[room.settings.type]||'혼합'} · ${formNames[room.settings.form]||'자동 혼합'} · ${room.settings.count}문제 · ${room.settings.seconds}초</p><section id="mb-arena-hud" class="mb-arena-hud">${scoreCards()}</section><div class="mb-arena-stage">${stage()}</div><div class="mb-arena-reactions">${Object.entries(emotes).map(([k,v])=>`<button type="button" class="mb-pub-btn pale" data-emote="${k}" aria-label="${k}">${v}</button>`).join('')}</div><section class="mb-arena-chat"><strong>💬 대기실·대전 채팅</strong><div class="mb-arena-messages" id="mb-arena-chatlog">${chatHTML()}</div><form id="mb-arena-chat-form"><input id="mb-arena-chat-input" maxlength="80" placeholder="80자 이내" autocomplete="off"><button type="submit" class="mb-pub-btn pale">전송</button></form></section>`;
+ const body=`<div class="mb-pub-actions">${button('← 방 나가기','mb-arena-leave')}${button('⟳ 동기화','mb-arena-refresh','pale')}</div><p class="mb-pub-note">${esc(room.name)} · ${room.players.filter(p=>!p.left).length}/${room.capacity}명 · ${typeNames[room.settings.type]||'혼합'} · ${formNames[room.settings.form]||'서술형+객관식'} · ${room.settings.count}문제 · ${room.settings.seconds}초</p><section id="mb-arena-hud" class="mb-arena-hud">${scoreCards()}</section><div class="mb-arena-stage">${stage()}</div><div class="mb-arena-reactions">${Object.entries(emotes).map(([k,v])=>`<button type="button" class="mb-pub-btn pale" data-emote="${k}" aria-label="${k}">${v}</button>`).join('')}</div><section class="mb-arena-chat"><strong>💬 대기실·대전 채팅</strong><div class="mb-arena-messages" id="mb-arena-chatlog">${chatHTML()}</div><form id="mb-arena-chat-form"><input id="mb-arena-chat-input" maxlength="80" placeholder="80자 이내" autocomplete="off"><button type="submit" class="mb-pub-btn pale">전송</button></form></section>`;
  shell(body);$('mb-arena-leave').onclick=leaveRoom;$('mb-arena-refresh').onclick=updateRoom;
  $('mb-arena-ready')?.addEventListener('click',()=>send('ready',{ready:!room.players.find(x=>x.id===room.me)?.ready}));
  $('mb-arena-start')?.addEventListener('click',()=>send('start'));
@@ -207,7 +222,7 @@ function gameView(force){if(!room||!roomCode)return;
   e.preventDefault();
   const settings={type:$('#mb-arena-edit-type').value,form:$('#mb-arena-edit-form').value,
    count:Number($('#mb-arena-edit-count').value),seconds:Number($('#mb-arena-edit-seconds').value)};
-  if(JSON.stringify(settings)===JSON.stringify(room.settings)){message('현재 선택된 문제 유형이야.');return}
+  if(['type','form','count','seconds'].every(key=>settings[key]===room.settings[key])){message('현재 선택된 문제 유형이야.');return}
   send('settings',{settings});
  });
  $('mb-arena-copy')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(room.code);message('코드가 복사됐어.')}catch{message('방 코드: '+room.code)}});
