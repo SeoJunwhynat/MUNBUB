@@ -1,0 +1,110 @@
+/* 2026-11-06: Single scoped presentation layer for supplied 45 achievements + 11 titles.
+   Existing state tracking, storage keys and game routes remain unchanged. */
+#mb-achievement-dialog.mb-catalog-enabled,
+#mb-title-dialog.mb-catalog-enabled{
+ box-sizing:border-box!important;position:fixed!important;width:min(96vw,1170px)!important;max-width:1170px!important;
+ max-height:min(92dvh,950px)!important;padding:0!important;margin:auto!important;
+ background:linear-gradient(145deg,#ffedcf,#fff8ec 45%,#ffe8c7)!important;
+ color:#422b23!important;border:6px solid #6b4032!important;
+ outline:3px solid #c18a60!important;border-radius:16px!important;
+ box-shadow:0 16px 50px #150b0acc,0 0 0 8px #2c1a15!important;
+ overflow-y:auto!important;overscroll-behavior:contain!important;
+}
+#mb-achievement-dialog.mb-catalog-enabled::backdrop,
+#mb-title-dialog.mb-catalog-enabled::backdrop{background:rgba(14,8,11,.79)!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-award-head,
+#mb-title-dialog.mb-catalog-enabled .mb-title-top{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ background:transparent!important;border:0!important;border-bottom:2px solid #c39a7b!important;
+ padding:17px clamp(12px,2.7vw,24px)!important;gap:14px!important;position:static!important;
+}
+#mb-achievement-dialog.mb-catalog-enabled .mb-award-head h2,
+#mb-title-dialog.mb-catalog-enabled .mb-title-top h2{margin:0!important;font-size:clamp(22px,3.4vw,34px)!important;line-height:1.23!important;color:#503125!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-award-close,
+#mb-title-dialog.mb-catalog-enabled .mb-title-close{
+ flex:none!important;cursor:pointer!important;background:#5b392e!important;color:#fff4df!important;
+ border:0!important;border-radius:9px!important;min-height:38px!important;padding:8px 13px!important;font:800 14px system-ui,sans-serif!important;
+ width:auto!important;height:auto!important;line-height:1.3!important;transform:none!important
+}
+/* Hide ONLY the old visual display nodes. Their logic and state continue to run. */
+#mb-achievement-dialog.mb-catalog-enabled :is(.mb-award-list,.mb-award-desc,.mb-award-summary),
+#mb-title-dialog.mb-catalog-enabled :is(.mb-title-list,.mb-title-hint){display:none!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-book,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-book{padding:12px clamp(10px,2.7vw,24px) 25px!important;background:transparent!important;box-sizing:border-box!important;width:100%!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-toolbar,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:8px 0 9px!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-filters,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-filters{display:flex!important;flex-wrap:wrap!important;gap:7px!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-filter,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-filter{
+ font:800 14px/1.15 system-ui,'Noto Sans KR',sans-serif!important;color:#4d3028!important;
+ background:#fff8e9!important;border:2px solid #b18367!important;border-radius:8px!important;
+ padding:9px 12px!important;margin:0!important;min-width:0!important;height:auto!important;
+ box-shadow:none!important;transform:none!important;cursor:pointer!important;
+}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-filter.active,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-filter.active{background:#60382e!important;color:#fff3e0!important;border-color:#60382e!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-search,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-search{
+ width:min(290px,100%)!important;flex:1 1 170px!important;min-width:155px!important;
+ background:#fff!important;color:#4b3029!important;border:2px solid #b99077!important;
+ border-radius:9px!important;padding:10px 13px!important;font:400 14px/1.3 system-ui,'Noto Sans KR',sans-serif!important;
+ height:auto!important;margin:0!important;box-shadow:none!important;
+}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-count,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-count{margin:3px 0 13px!important;color:#86614e!important;font-size:13px!important;font-weight:800!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-grid,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important;align-items:start!important;max-height:none!important;overflow:visible!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-entry,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-entry{min-width:0!important;width:100%!important;margin:0!important;padding:0!important;display:block!important;visibility:visible!important;opacity:1!important;transform:none!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-card,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-card{
+ position:relative!important;width:100%!important;height:auto!important;display:block!important;margin:0!important;
+ border:0!important;outline-offset:2px!important;padding:0!important;background:transparent!important;
+ box-shadow:none!important;border-radius:10px!important;transform:none!important;filter:none!important;
+ text-align:left!important;cursor:pointer!important;overflow:hidden!important;
+}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-card img,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-card img{display:block!important;width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important;border:0!important;margin:0!important;opacity:1!important;visibility:visible!important;pointer-events:none!important;image-rendering:auto!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-card:focus-visible,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-card:focus-visible{outline:3px solid #d99e39!important;outline-offset:2px!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-card:hover,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-card:hover{filter:brightness(1.04)!important;transform:translateY(-1px)!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-empty,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-empty{grid-column:1/-1!important;text-align:center!important;padding:30px!important;color:#86614e!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-overlay,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-overlay{position:fixed!important;inset:0!important;z-index:10000!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important;background:rgba(20,12,13,.67)!important;box-sizing:border-box!important;overflow:auto!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-overlay[hidden],
+#mb-title-dialog.mb-catalog-enabled .mb-cat-overlay[hidden]{display:none!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-detail,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-detail{
+ background:#fff0d8!important;color:#4b3029!important;border:5px solid #80503c!important;border-radius:14px!important;
+ box-shadow:0 22px 60px #0009!important;padding:16px!important;width:min(560px,100%)!important;max-height:calc(100dvh - 32px)!important;overflow:auto!important;box-sizing:border-box!important;
+}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-detail-head,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-detail-head{display:flex!important;gap:10px!important;align-items:center!important;justify-content:space-between!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-detail-head h3,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-detail-head h3{font-size:20px!important;color:#4b3029!important;margin:0!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-detail-head button,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-detail-head button,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-equip{
+ padding:9px 13px!important;font:800 14px/1.2 system-ui,sans-serif!important;
+ border:0!important;border-radius:8px!important;background:#5b392e!important;color:#fff1df!important;
+ cursor:pointer!important;margin:0!important;height:auto!important;min-height:38px!important;width:auto!important;transform:none!important;
+}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-detail img,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-detail img{display:block!important;width:100%!important;height:auto!important;object-fit:contain!important;margin:14px auto!important}
+#mb-title-dialog.mb-catalog-enabled .mb-cat-equip:disabled{opacity:.55!important;cursor:default!important}
+#mb-achievement-dialog.mb-catalog-enabled .mb-cat-detail p,
+#mb-title-dialog.mb-catalog-enabled .mb-cat-detail p{font-size:14px!important;color:#795643!important;line-height:1.55!important}
+@media(max-width:700px){
+ #mb-achievement-dialog.mb-catalog-enabled,#mb-title-dialog.mb-catalog-enabled{width:calc(100vw - 12px)!important;max-width:none!important;max-height:calc(100dvh - 24px)!important;border-width:4px!important;outline-width:2px!important;border-radius:13px!important}
+ #mb-achievement-dialog.mb-catalog-enabled .mb-award-head,#mb-title-dialog.mb-catalog-enabled .mb-title-top{padding:11px 12px!important;gap:7px!important}
+ #mb-achievement-dialog.mb-catalog-enabled .mb-award-head h2,#mb-title-dialog.mb-catalog-enabled .mb-title-top h2{font-size:clamp(19px,5.2vw,25px)!important}
+ #mb-achievement-dialog.mb-catalog-enabled .mb-cat-book,#mb-title-dialog.mb-catalog-enabled .mb-cat-book{padding:9px!important}
+ #mb-achievement-dialog.mb-catalog-enabled .mb-cat-grid,#mb-title-dialog.mb-catalog-enabled .mb-cat-grid{grid-template-columns:1fr!important;gap:8px!important}
+ #mb-achievement-dialog.mb-catalog-enabled .mb-cat-search,#mb-title-dialog.mb-catalog-enabled .mb-cat-search{flex-basis:100%!important;width:100%!important;min-width:0!important}
+ #mb-achievement-dialog.mb-catalog-enabled .mb-cat-filter,#mb-title-dialog.mb-catalog-enabled .mb-cat-filter{padding:8px 10px!important;font-size:12px!important}
+ #mb-achievement-dialog.mb-catalog-enabled .mb-cat-detail,#mb-title-dialog.mb-catalog-enabled .mb-cat-detail{padding:10px!important;border-width:4px!important}
+}
+@media(prefers-reduced-motion:reduce){#mb-achievement-dialog.mb-catalog-enabled .mb-cat-card:hover,#mb-title-dialog.mb-catalog-enabled .mb-cat-card:hover{transform:none!important}}

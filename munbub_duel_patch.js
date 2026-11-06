@@ -118,6 +118,7 @@
  }
  // 1대1 대결은 홈 캐릭터 아래 버튼에서만 진입한다.
  let roomCode=null,status=null,busy=false,lastViewKey='',phase='lobby',feedback=null,feedbackUntil=0,pollBusy=false,previousSelection=null,serverOffset=0;
+ let routeOrigin='private'; // public browser vs private invite-code setup
  let emoteBusy=false,lastEmoteSentAt=0,lastRemoteEmoteAt=0,recentRemoteEmote=null,signalTickCount=0;
  const perf={requests:0,failed:0,elapsedMs:0,signalRequests:0};
  window.mbDuelMetrics=()=>({...perf,meanRequestMs:perf.requests?Math.round(perf.elapsedMs/perf.requests):0});
@@ -130,7 +131,7 @@
  function makeHeader(){return '<div class="mb-duel-top-controls">'+
   '<button type="button" id="mb-duel-home" aria-label="홈으로 돌아가기"></button>'+
   '<button type="button" id="mb-duel-sound" aria-label="소리 켜기 또는 끄기"></button>'+
-  '<button class="mb-duel-close" type="button" id="mb-duel-close" aria-label="1대1 설정으로 이동"></button>'+
+  '<button class="mb-duel-close" type="button" id="mb-duel-close" aria-label="'+(routeOrigin==='public'?'공개방 목록으로 이동':'1대1 설정으로 이동')+'"></button>'+
   '</div><h2 aria-label="1대1 모드"></h2>'}
  function putHTML(content){
   dialog.classList.toggle('mb-duel-live',content.includes('mb-duel-arena'));
@@ -149,7 +150,7 @@
    if(settings)settings.click();
   });
  }
- function renderNotice(message){putHTML('<div class="mb-duel-panel"><p class="mb-duel-status" id="mb-duel-info">'+esc(message)+'</p><div class="mb-duel-actions"><button type="button" id="mb-duel-back">방 선택으로</button></div></div>');dialog.querySelector('#mb-duel-back')?.addEventListener('click',showLobby)}
+ function renderNotice(message){putHTML('<div class="mb-duel-panel"><p class="mb-duel-status" id="mb-duel-info">'+esc(message)+'</p><div class="mb-duel-actions"><button type="button" id="mb-duel-back">'+(routeOrigin==='public'?'공개방 목록으로':'1대1 설정으로')+'</button></div></div>');dialog.querySelector('#mb-duel-back')?.addEventListener('click',showLobby)}
  async function api(body,code){
   const started=performance.now();perf.requests++;
   const url='/api/duel'+(code?'?code='+encodeURIComponent(code):'');
@@ -164,6 +165,15 @@
   try{const r=await fetch('/api/account',{credentials:'same-origin'});const j=await r.json();return !!j.loggedIn}catch{return false}
  }
  async function showLobby(){
+  // A room entered through the public browser must NEVER fall through to
+  // the private invite-code setup when pressing Back/Settings/Exit.
+  if(routeOrigin==='public'){
+   if(!await leaveCurrentRoom())return;
+   dialog.close(); // closes duel before opening the other modal (no overlap)
+   routeOrigin='private';
+   if(typeof window.mbPublicOpen==='function')await window.mbPublicOpen();
+   return;
+  }
   if(!await leaveCurrentRoom())return;
   roomCode=null;status=null;phase='lobby';feedback=null;lastViewKey='';signalLastAt=0;signalFailures=0;lastOpponentSignal=null;recentRemoteEmote=null;lastRemoteEmoteAt=0;signalTickCount=0;
   const last=localStorage.getItem(currentRoomKey)||'';
@@ -194,6 +204,7 @@
  }
  async function openLobby(){
   if(dialog.open)return;
+  routeOrigin='private';
   previousSelection=window.__mbSelectedMenu?.()||'home';
   // 홈 버튼에서 여는 팝업은 왼쪽 모드 선택 상태를 바꾸지 않는다.
   dialog.showModal();
@@ -215,7 +226,7 @@
  },true);
  dialog.addEventListener('close',()=>{
   reportLeave();
-  if(typeof window.__mbMarkRoute==='function')window.__mbMarkRoute(previousSelection||'home');
+  if(routeOrigin!=='public'&&typeof window.__mbMarkRoute==='function')window.__mbMarkRoute(previousSelection||'home');
   previousSelection=null;
  });
  async function leaveCurrentRoom(){
@@ -871,16 +882,16 @@
  function signalDelay(){
   if(!dialog.open||!roomCode||document.hidden)return 1400;
   if(signalFailures>3)return 2600;
-  if(phase==='question'||phase==='opponent')return 900;
-  if(phase==='review'||phase==='countdown'||phase==='feedback')return 1100;
-  if(phase==='waiting')return 1600;
-  if(phase==='finished')return 2200;
+  if(phase==='question'||phase==='opponent')return 440;
+  if(phase==='review'||phase==='countdown'||phase==='feedback')return 660;
+  if(phase==='waiting')return 900;
+  if(phase==='finished')return 950;
   return 2200;
  }
  function fullDelay(){
   if(!dialog.open||!roomCode||document.hidden)return 4000;
   if(status?.signalTicket&&signalFailures<2)
-   return phase==='results'?18000:9000;
+   return phase==='results'?14000:6500;
   return phase==='waiting'?1000:1300;
  }
  async function backgroundPoll(){
@@ -898,8 +909,19 @@
  },{once:true});
  setInterval(tick,210);
  // Public-room browser is a separate module; route joined games here.
- window.mbDuelEnterRoom=async code=>{
+ window.mbDuelEnterRoom=async (code,{origin='public'}={})=>{
+  routeOrigin=origin==='public'?'public':'private';
+  previousSelection=window.__mbSelectedMenu?.()||'home';
   if(!dialog.open)dialog.showModal();
   await enterRoom(code);
+  // An API failure is shown by updateRoom(); do not quietly close the public
+  // browser and leave the user in a broken or empty duel dialog.
+  if(!status){
+   const failed=roomCode;
+   roomCode=null;
+   dialog.close();
+   routeOrigin='private';
+   throw Error('대기실 상태를 불러오지 못했어. 다시 시도해 줘.'+(failed?' ('+failed+')':''));
+  }
  };
 })();

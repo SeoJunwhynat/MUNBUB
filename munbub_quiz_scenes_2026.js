@@ -6,7 +6,7 @@
  const workspace=document.getElementById('workspace');
  const css=document.createElement('link');css.rel='stylesheet';css.href='./munbub_quiz_scenes_2026.css';css.id='mb-quiz-scenes-css';document.head.append(css);
  const artwork=document.createElement('link');artwork.rel='stylesheet';artwork.href='./munbub_art_refresh_20261106.css';artwork.id='mb-art-refresh-css';document.head.append(artwork);
-
+ 
  // Reuse the one original clock; never add a decorative hourglass or a second countdown.
  const clock=document.getElementById('quizTimer');
  if(clock){
