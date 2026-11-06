@@ -90,8 +90,8 @@ export default async function handler(req,res){
   }
   const code=String(body.code||'').trim().toUpperCase();
   if(!CODE_RE.test(code))return response(res,400,{error:'8자리 방 코드를 확인해 줘.'});
-  // Regenerate the quiz on the server when the host updates room settings.
-  // A browser must never choose or overwrite the question IDs itself.
+  // Never trust question IDs from a browser. Regenerate on the server when
+  // the host updates the room settings and apply them atomically with the lobby.
   let payload=body;
   if(action==='settings'){
    const updated=settingsOf(body.settings);

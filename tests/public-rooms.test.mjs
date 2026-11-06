@@ -6,6 +6,7 @@ import * as crypto from 'node:crypto';
 
 // Exercise the real handlers with isolated storage, never live accounts/rooms.
 async function fixture(){
+ const finalIdiomIds=JSON.parse(await readFile(new URL('../idiom_final_100.json',import.meta.url),'utf8')).map(x=>x.id);
  const files=new Map();
  const clone=value=>value==null?null:structuredClone(value);
  const readPrivate=async path=>{await Promise.resolve();return clone(files.get(path))};
@@ -17,17 +18,16 @@ async function fixture(){
  const list=async({prefix='',limit=1000}={})=>({blobs:[...files.keys()].filter(k=>k.startsWith(prefix)).sort().slice(0,limit).map(pathname=>({pathname}))});
  const blob={list,put:async(path,text,options={})=>writePrivate(path,JSON.parse(text),{overwrite:options.allowOverwrite===true}),del:async(path)=>{if(Array.isArray(path)){path.forEach(p=>files.delete(p))}else files.delete(path)}};
  const server={configured:()=>true,noCache:()=>{},sameOrigin:()=>true,session:req=>req.user,
-  token:claim=>JSON.stringify(claim),verify:claim=>JSON.parse(claim),readPrivate,
-  readPrivateBatch:paths=>Promise.all(paths.map(readPrivate)),writePrivate,
-  answerCorrect:()=>true,duelQuestionIds:()=>[...Array.from({length:156},(_,i)=>'s'+(i+1)),...Array.from({length:95},(_,i)=>'i'+(i+1))],
-  duelFinalIdiomIds:()=>Array.from({length:95},(_,i)=>'i'+(i+1))};
+  token:claim=>JSON.stringify(claim),verify:claim=>JSON.parse(claim),readPrivate,writePrivate,
+  answerCorrect:()=>true,duelQuestionIds:()=>[...Array.from({length:156},(_,i)=>'s'+(i+1)),...finalIdiomIds],
+  duelFinalIdiomIds:()=>[...finalIdiomIds]};
  const context=vm.createContext({console,Date,JSON,Response,Buffer,setTimeout,clearTimeout});
  const modules=new Map();
  function synthetic(name,exports){
   const mod=new vm.SyntheticModule(Object.keys(exports),function(){for(const [k,v] of Object.entries(exports))this.setExport(k,v)},{context,identifier:name});
   modules.set(name,mod);return mod;
  }
- synthetic('node:crypto',crypto);synthetic('../lib/mb-storage.js',blob);synthetic('../lib/mb-server.js',server);
+ synthetic('node:crypto',crypto);synthetic('@vercel/blob',blob);synthetic('../lib/mb-server.js',server);
  async function load(name){
   const source=await readFile(new URL('../api/'+name+'.js',import.meta.url),'utf8');
   const mod=new vm.SourceTextModule(source,{context,identifier:name});
