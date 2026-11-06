@@ -77,6 +77,7 @@ document.head.append(style);
  function frame(title,content){
   dialog.classList.remove('mb-ranked-visual-open');
   dialog.classList.toggle('mb-ranked-playing',active);
+  dialog.classList.remove('mb-ranked-answer-shown');
   dialog.innerHTML='<div class="mb-ranked-head"><h2>'+esc(title)+'</h2><button id="mb-ranked-close" type="button" aria-label="랭킹전 닫기">✕</button></div>'+
    '<div class="mb-ranked-body">'+
    (dialog.dataset.mbRankedMode==='timed60'?'<img class="mb-ranked-hourglass" src="/ui-assets/hourglass_loop.webp" alt="움직이는 모래시계" width="96" height="96">':'')+
@@ -195,10 +196,13 @@ document.head.append(style);
   const options=choices(q);
   const written=q.format==='text'||(!options.length&&q.type!=='idiom');
   frame(MODES[mode].title,stats()+
-   '<p class="mb-ranked-help">문제 '+(answered+1)+' · '+esc(label)+' · '+(written?'서술형':'객관식')+'</p>'+
-   '<div class="mb-ranked-question">'+esc(problem)+'</div>'+
-   (written?'<form id="mb-ranked-write"><input id="mb-ranked-typed" class="mb-ranked-input" maxlength="120" required autocomplete="off" spellcheck="false" placeholder="정답을 직접 입력해 줘"><button class="mb-ranked-primary" type="submit">제출</button></form>':
-    '<div class="mb-ranked-choices">'+options.map(x=>'<button type="button" data-ranked-answer="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div>')+
+   '<div class="mb-ranked-play-layout">'+
+     '<div class="mb-ranked-question-stage"><p class="mb-ranked-help">문제 '+(answered+1)+' · '+esc(label)+' · '+(written?'서술형':'객관식')+'</p>'+
+     '<div class="mb-ranked-question">'+esc(problem)+'</div></div>'+
+     '<div class="mb-ranked-response-stage">'+
+       (written?'<form id="mb-ranked-write"><input id="mb-ranked-typed" class="mb-ranked-input" maxlength="120" required autocomplete="off" spellcheck="false" placeholder="정답을 직접 입력해 줘"><button class="mb-ranked-primary" type="submit">정답 확인</button></form>':
+        '<div class="mb-ranked-choices">'+options.map((x,i)=>'<button type="button" data-ranked-answer="'+esc(x)+'"><b>'+(i+1)+'</b> &nbsp;'+esc(x)+'</button>').join('')+'</div>')+'</div>'+
+     '<section id="mb-ranked-answer-feedback" class="mb-ranked-feedback" hidden aria-live="polite"></section></div>'+
    '<p class="mb-ranked-help" id="mb-ranked-message">서버에서 정답을 확인해. 랭킹전 점수는 계정별 최고 기록만 반영돼.</p>'+
    '<button id="mb-ranked-stop" type="button">도전 종료하고 기록 저장</button>');
   dialog.querySelectorAll('[data-ranked-answer]').forEach(btn=>btn.addEventListener('click',()=>submit(btn.dataset.rankedAnswer)));
@@ -244,14 +248,23 @@ document.head.append(style);
  }
  function showFeedback(){
   const f=lastResult;
-  frame(MODES[mode].title,stats()+'<section class="mb-ranked-feedback">'+
-   '<h3>'+(f.good?'✅ 정답!':'❌ 오답!')+(mode==='hardcore'&&f.good?' +'+f.points+'점':'')+'</h3>'+
+  const panel=$('mb-ranked-answer-feedback');
+  if(!panel){showQuestion();return}
+  panel.hidden=false;
+  panel.innerHTML='<h3>'+(f.good?'✓ 정답!':'↺ 다시 확인해 봐.')+
+   (mode==='hardcore'&&f.good?' +'+f.points+'점':'')+'</h3>'+
    '<p>정답: <strong>'+esc(f.answer)+'</strong></p>'+
    (f.note?'<p>'+esc(f.note)+'</p>':'')+
-   '</section><button id="mb-ranked-next" class="mb-ranked-primary" type="button">다음 혼합문제 ▶</button>'+
-   '<button id="mb-ranked-stop" type="button">도전 종료하고 기록 저장</button>');
+   '<button id="mb-ranked-next" class="mb-ranked-primary" type="button">다음 문제 →</button>';
+  const q=findQ();
+  dialog.querySelectorAll('[data-ranked-answer]').forEach(btn=>{
+   btn.disabled=true;
+   if(q?.answers?.includes(btn.dataset.rankedAnswer)||q?.answer===btn.dataset.rankedAnswer)
+    btn.classList.add('mb-ranked-correct-option');
+  });
+  const typed=$('mb-ranked-typed');if(typed)typed.disabled=true;
+  dialog.classList.add('mb-ranked-answer-shown');
   $('mb-ranked-next')?.addEventListener('click',next);
-  $('mb-ranked-stop')?.addEventListener('click',finish);
  }
  async function next(){
   if(!active||busy)return;
@@ -297,6 +310,16 @@ document.head.append(style);
  dialog.addEventListener('click',e=>{
   if(e.target.closest?.('#mb-ranked-close')){
    stopWithoutPause();dialog.close();
+  }
+ });
+ dialog.addEventListener('keydown',e=>{
+  if(!active||busy||e.altKey||e.ctrlKey||e.metaKey)return;
+  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
+  if(/^[1-4]$/.test(e.key)&&!dialog.classList.contains('mb-ranked-answer-shown')){
+   const answer=dialog.querySelectorAll('[data-ranked-answer]')[Number(e.key)-1];
+   if(answer&&!answer.disabled){e.preventDefault();answer.click()}
+  }else if(e.key==='Enter'&&dialog.classList.contains('mb-ranked-answer-shown')){
+   const next=dialog.querySelector('#mb-ranked-next');if(next){e.preventDefault();next.click()}
   }
  });
  dialog.addEventListener('cancel',()=>stopWithoutPause());

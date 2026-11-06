@@ -275,3 +275,16 @@ body:has(#workspace.mb-playing-scene:not([hidden])) #mb-achievement-toast{
   top:98px!important;right:7px!important;max-width:220px!important;
  }
 }
+
+/* Keep standard-mode answer and explanation text readable even under injected large-text themes. */
+#workspace#workspace.app-shell.mb-playing-scene #view-quiz .feedback:not([hidden]){
+ font-size:clamp(12px,1.1vw,15px)!important;line-height:1.4!important;max-height:min(24dvh,180px)!important;
+ padding:9px 12px!important;overflow-y:auto!important;overflow-wrap:break-word!important;word-break:keep-all!important;
+}
+#workspace#workspace.app-shell.mb-playing-scene #view-quiz .feedback .fb-title{font-size:clamp(14px,1.35vw,18px)!important;line-height:1.4!important;margin:0 0 5px!important}
+#workspace#workspace.app-shell.mb-playing-scene #view-quiz .feedback :is(div,p,span,strong,small,em,li){font-size:inherit!important;line-height:1.4!important;margin-block:0 4px!important}
+#workspace#workspace.app-shell.mb-playing-scene #view-quiz .feedback .mb-deep-note{max-height:115px!important;overflow-y:auto!important;margin-top:5px!important}
+
+/* New art paths prevent old cached images from masking replacement backgrounds. */
+#workspace#workspace.app-shell.mb-playing-scene.mb-scene-infinite:not([hidden]){background-image:url('/ui-assets/scene_infinite_20261106_v2.webp')!important;background-size:cover!important;background-position:center!important}
+#workspace#workspace.app-shell.mb-playing-scene.mb-scene-hard:not([hidden]){background-image:url('/ui-assets/scene_hard_20261106_v2.webp')!important;background-size:cover!important;background-position:center!important}
