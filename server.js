@@ -1,177 +1,118 @@
 /**
- * Render/Node HTTP adapter for the original Vercel-style API handlers.
- * No Express dependency required. Do not expose private files from the repository.
+ * Render adapter for the existing Vercel-style /api modules.
+ * Node >=22, no Express dependency. Keeps the exact routes and request formats.
+ * Login, rankings, duels and public rooms still require a configured Vercel Blob token.
  */
 import { createServer } from 'node:http';
+import { readFile, stat } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
-import { stat } from 'node:fs/promises';
-import { resolve, join, extname } from 'node:path';
+import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import backroomsRelay from './backrooms/server.js';
 import { session, sameOrigin } from './lib/mb-server.js';
-
-const root = fileURLToPath(new URL('.', import.meta.url));
-const routes = new Set([
-  'account', 'duel', 'health', 'leaderboard', 'public-rooms', 'public-arena', 'ranked', 'score'
-]);
-
-const contentTypes = new Map([
-  ['.html', 'text/html; charset=utf-8'],
-  ['.js', 'text/javascript; charset=utf-8'],
-  ['.css', 'text/css; charset=utf-8'],
-  ['.png', 'image/png'],
-  ['.webp', 'image/webp'],
-  ['.gif', 'image/gif'],
-  ['.jpg', 'image/jpeg'],
-  ['.jpeg', 'image/jpeg'],
-  ['.svg', 'image/svg+xml'],
-  ['.mp3', 'audio/mpeg'],
-  ['.wav', 'audio/wav'],
-  ['.ogg', 'audio/ogg'],
-  ['.woff', 'font/woff'],
-  ['.woff2', 'font/woff2']
-]);
-const apiModules = new Map();
-const MAX_BODY = 256 * 1024;
-
-function publicFile(urlPath) {
-  // Allow only the game's known client-side roots; never serve .env, JSON
-  // databases, answer hashes, test code, ZIPs or server-side JavaScript.
-  const safe =
-    (urlPath === '/index.html' || urlPath === '/moved.html') ||
-    /^\/(?:munbub_[\w.-]+\.(?:css|js)|hardcore_image_assets\.js)$/.test(urlPath) ||
-    /^\/ui-assets\/(?:[\w.-]+\/)*[\w.-]+\.(?:png|webp|gif|jpe?g|svg|woff2?)$/i.test(urlPath) ||
-    /^\/ui-assets\/catalog\/[\w.-]+\.json$/i.test(urlPath) ||
-    /^\/assets\/bgm\/[\w.-]+\.(?:mp3|wav|ogg)$/i.test(urlPath);
-  if (!safe) return null;
-  const absolute = resolve(root, '.' + urlPath);
-  if (!absolute.startsWith(root)) return null;
-  return absolute;
+const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)));
+const handlers = new Map();
+const apiRoutes = new Set(['account','duel','health','leaderboard','public-arena','public-rooms','ranked','score']);
+const mime = {
+  '.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
+  '.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8',
+  '.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.jpeg':'image/jpeg',
+  '.gif':'image/gif','.svg':'image/svg+xml','.ico':'image/x-icon',
+  '.mp3':'audio/mpeg','.wav':'audio/wav','.ogg':'audio/ogg','.woff2':'font/woff2',
+  '.webm':'video/webm',
+};
+const hiddenPrefixes=['/api/','/lib/','/tests/','/.','/node_modules/'];
+const prohibitedFiles = new Set(['package.json','package-lock.json','render.yaml','vercel.json','server.js','hard_answer_hashes.json','idiom_final_100.json']);
+function json(res,code,value){res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
+function adapt(res){
+  res.status=function(code){res.statusCode=code;return res;};
+  res.json=function(value){if(!res.headersSent)res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify(value));return res;};
+  res.send=function(value){res.end(value);return res;};
+  return res;
 }
-
-function json(res, statusCode, body) {
-  if (res.writableEnded) return;
-  res.statusCode = statusCode;
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store');
-  res.end(JSON.stringify(body));
+async function parseBody(req){
+  if(req.method!=='POST' && req.method!=='PUT' && req.method!=='PATCH')return undefined;
+  let chunks=[],total=0;
+  for await(const chunk of req){total+=chunk.length;if(total>1024*1024){const error=new Error('Request too large');error.status=413;throw error;}chunks.push(chunk);}
+  if(!chunks.length)return {};
+  const str=Buffer.concat(chunks).toString('utf8');
+  if(!req.headers['content-type']?.includes('application/json'))return str;
+  try{return JSON.parse(str);}catch{const error=new Error('Invalid JSON');error.status=400;throw error;}
 }
-
-async function bodyFor(req) {
-  if (req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'PATCH') return {};
-  const chunks = [];
-  let size = 0;
-  for await (const chunk of req) {
-    size += chunk.length;
-    if (size > MAX_BODY) {
-      const error = new Error('Payload too large');
-      error.httpStatus = 413;
-      throw error;
+async function handle(req,res){
+  adapt(res);
+  let url;
+  try{url=new URL(req.url,'http://localhost')}catch{return json(res,400,{error:'Bad URL'})}
+  let pathname;
+  try{pathname=decodeURIComponent(url.pathname)}catch{return json(res,400,{error:'Bad URL encoding'})}
+  if(pathname.includes('\\')||pathname.includes('\0')||pathname.split('/').includes('..'))return json(res,400,{error:'Invalid path'});
+  if(pathname==='/backrooms'||pathname==='/backrooms/'){
+    if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'GET only'});
+    const filename=resolve(ROOT,'backrooms/index.html');const f=await stat(filename);
+    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Content-Length':f.size,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'});
+    if(req.method==='HEAD')return res.end();
+    return createReadStream(filename).pipe(res);
+  }
+  if(pathname.startsWith('/backrooms/api/')){
+    if(req.method!=='GET'&&req.method!=='POST'&&req.method!=='OPTIONS')return json(res,405,{error:'허용되지 않은 방식이야.'});
+    if(req.method==='OPTIONS')return json(res,405,{error:'허용되지 않은 방식이야.'});
+    if(req.method==='POST'&&!sameOrigin(req))return json(res,403,{error:'잘못된 요청 출처야.'});
+    const identity=session(req);
+    if(!identity)return json(res,401,{ok:false,error:'맛춘범에 로그인해야 협동 모드를 사용할 수 있어.'});
+    // Never trust browser-supplied nicknames: bind every session to a signed taste account ID.
+    req._mbBackroomsUser={id:identity.id,name:identity.name};
+    req.url=req.url.replace(/^\/backrooms(?=\/api\/)/,'');
+    backroomsRelay.server.emit('request',req,res);
+    return;
+  }
+  if(pathname.startsWith('/api/')){
+    const name=pathname.slice(5);
+    if(!apiRoutes.has(name))return json(res,404,{error:'API route not found'});
+    req.query=Object.fromEntries(url.searchParams.entries());
+    try{
+      req.body=await parseBody(req);
+      if(!handlers.has(name))handlers.set(name,(await import(`./api/${name}.js`)).default);
+      return await handlers.get(name)(req,res);
+    }catch(e){
+      if(res.headersSent){res.end();return;}
+      console.error('API failed:',name,e?.message||'unknown error');
+      return json(res,e.status||500,{error:e.status?'요청 데이터 형식이 올바르지 않아.':'서버 내부 오류가 발생했어.'});
     }
-    chunks.push(chunk);
   }
-  const text = Buffer.concat(chunks).toString('utf8');
-  if (!text.trim()) return {};
-  try {
-    const contentType = String(req.headers['content-type'] || '').split(';')[0].trim();
-    if (contentType === 'application/x-www-form-urlencoded') {
-      return Object.fromEntries(new URLSearchParams(text));
-    }
-    return JSON.parse(text);
-  } catch {
-    const error = new Error('Invalid JSON body');
-    error.httpStatus = 400;
-    throw error;
+  // Keep answers and private coop server files inaccessible over HTTP.
+  if(pathname.startsWith('/backrooms/')){
+    // Only expose explicitly approved game assets, never answers or server code.
+    const publicAsset=/^\/backrooms\/(?:assets\/(?:jumpscare\/[A-Za-z0-9_.-]+\.gif|sfx\/[A-Za-z0-9_.-]+\.(?:mp3|wav|ogg)|monsters\/[A-Za-z0-9_.-]+\.glb)|src\/[A-Za-z0-9_.-]+\.mjs)$/i;
+    if(!publicAsset.test(pathname))return json(res,404,{error:'Not found'});
+    if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'GET only'});
+    const filePath=resolve(ROOT,pathname.replace(/^\/+/, ''));
+    if(!filePath.startsWith(ROOT+sep))return json(res,404,{error:'Not found'});
+    let asset;
+    try{asset=await stat(filePath)}catch{return json(res,404,{error:'Not found'})}
+    if(!asset.isFile())return json(res,404,{error:'Not found'});
+    const assetExt=extname(filePath).toLowerCase();
+    const assetType=assetExt==='.glb'?'model/gltf-binary':
+      assetExt==='.mjs'?'text/javascript; charset=utf-8':mime[assetExt];
+    if(!assetType)return json(res,404,{error:'Not found'});
+    res.writeHead(200,{'Content-Type':assetType,'Content-Length':asset.size,
+      'Cache-Control':'public, max-age=300','X-Content-Type-Options':'nosniff'});
+    if(req.method==='HEAD')return res.end();
+    return createReadStream(filePath).on('error',()=>res.destroy()).pipe(res);
   }
+  if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'GET only'});
+  if(pathname==='/'||pathname==='')pathname='/index.html';
+  const rel=pathname.replace(/^\/+/,''),ext=extname(rel).toLowerCase();
+  if(hiddenPrefixes.some(p=>pathname.startsWith(p))||rel.split('/').some(s=>s.startsWith('.'))||prohibitedFiles.has(rel)||!mime[ext])return json(res,404,{error:'Not found'});
+  const path=resolve(ROOT,rel);
+  if(!path.startsWith(ROOT+sep)&&path!==ROOT)return json(res,404,{error:'Not found'});
+  let file;
+  try{file=await stat(path)}catch{return json(res,404,{error:'Not found'})}
+  if(!file.isFile())return json(res,404,{error:'Not found'});
+  const cache=ext==='.html'?'no-store':'public, max-age=300';
+  res.writeHead(200,{'Content-Type':mime[ext],'Content-Length':file.size,'Cache-Control':cache,'X-Content-Type-Options':'nosniff'});
+  if(req.method==='HEAD')return res.end();
+  createReadStream(path).on('error',()=>res.destroy()).pipe(res);
 }
-
-async function serveFile(req, res, urlPath) {
-  if (!['GET', 'HEAD'].includes(req.method)) {
-    res.setHeader('Allow', 'GET, HEAD');
-    return json(res, 405, { error: '허용되지 않은 요청 방식이야.' });
-  }
-  const file = publicFile(urlPath);
-  if (!file) return json(res, 404, { error: '파일을 찾지 못했어.' });
-  try {
-    const info = await stat(file);
-    if (!info.isFile()) return json(res, 404, { error: '파일을 찾지 못했어.' });
-    res.statusCode = 200;
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Content-Type', contentTypes.get(extname(file).toLowerCase()) || 'application/octet-stream');
-    res.setHeader('Content-Length', info.size);
-    res.setHeader('Cache-Control', urlPath === '/index.html' ? 'no-cache' : 'public, max-age=3600');
-    if (req.method === 'HEAD') return res.end();
-    const stream = createReadStream(file);
-    stream.on('error', () => {
-      if (!res.headersSent) json(res, 500, { error: '파일을 읽을 수 없어.' });
-      else res.destroy();
-    });
-    stream.pipe(res);
-  } catch (error) {
-    if (error?.code === 'ENOENT' || error?.code === 'ENOTDIR') return json(res, 404, { error: '파일을 찾지 못했어.' });
-    throw error;
-  }
-}
-
-export function createAppServer() {
-  return createServer(async (req, res) => {
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    try {
-      const url = new URL(req.url || '/', 'http://localhost');
-      let pathname;
-      try { pathname = decodeURIComponent(url.pathname); }
-      catch { return json(res, 400, { error: '올바르지 않은 주소야.' }); }
-      if (pathname === '/healthz' && req.method === 'GET') {
-        return json(res, 200, { status: 'up', service: 'munbub' });
-      }
-      // Backrooms uses the same account cookie but a distinct in-process Node relay.
-      if(pathname==='/backrooms'||pathname==='/backrooms/'){
-        if(!['GET','HEAD'].includes(req.method))return json(res,405,{error:'GET only'});
-        const file=fileURLToPath(new URL('./backrooms/index.html',import.meta.url));
-        const info=await stat(file);
-        res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Content-Length':info.size,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'});
-        if(req.method==='HEAD')return res.end();
-        return createReadStream(file).pipe(res);
-      }
-      if(pathname.startsWith('/backrooms/api/')){
-        if(!['GET','POST'].includes(req.method))return json(res,405,{error:'지원하지 않는 방식이야.'});
-        if(req.method==='POST'&&!sameOrigin(req))return json(res,403,{error:'잘못된 요청 출처야.'});
-        const identity=session(req);
-        if(!identity)return json(res,401,{ok:false,error:'맛춘범에 로그인해야 협동 모드를 사용할 수 있어.'});
-        req._mbBackroomsUser={id:identity.id,name:identity.name};
-        req.url=req.url.replace(/^\/backrooms(?=\/api\/)/,'');
-        backroomsRelay.server.emit('request',req,res);
-        return;
-      }
-      const match = /^\/api\/([a-z-]+)\/?$/.exec(pathname);
-      if (match) {
-        const route = match[1];
-        if (!routes.has(route)) return json(res, 404, { error: 'API를 찾지 못했어.' });
-        if (!apiModules.has(route)) apiModules.set(route, import('./api/' + route + '.js'));
-        const handler = (await apiModules.get(route)).default;
-        req.query = Object.fromEntries(url.searchParams);
-        try { req.body = await bodyFor(req); }
-        catch (error) { return json(res, error.httpStatus || 400, { error: error.message }); }
-        res.status = code => { res.statusCode = code; return res; };
-        res.json = value => { json(res, res.statusCode || 200, value); return res; };
-        await handler(req, res);
-        if (!res.writableEnded) json(res, 500, { error: 'API 응답을 완료하지 못했어.' });
-        return;
-      }
-      if (pathname.startsWith('/api/')) return json(res, 404, { error: 'API를 찾지 못했어.' });
-      return serveFile(req, res, pathname === '/' ? '/index.html' : pathname === '/moved' ? '/moved.html' : pathname);
-    } catch (error) {
-      console.error('Web request failure:', error?.name || 'UnknownError');
-      return json(res, 500, { error: '서버 내부 오류야.' });
-    }
-  });
-}
-
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const port = Number(process.env.PORT || 10000);
-  const server = createAppServer();
-  server.listen(port, '0.0.0.0', () => {
-    console.log('MUNBUB server listening on port', port);
-  });
-  process.on('SIGTERM', () => server.close());
-}
+const port=Number(process.env.PORT)||3000;
+const server=createServer((req,res)=>{handle(req,res).catch(e=>{console.error('Unexpected error',e.message);if(!res.headersSent)json(res,500,{error:'Unexpected error'});else res.destroy();});});
+server.listen(port,'0.0.0.0',()=>console.log(`Matchunbeom Render adapter listening on ${port}`));

@@ -1,6 +1,6 @@
 /* Private invite-code 1v1 quiz. Neither player's records overwrite the other's. */
 import { randomBytes, randomInt } from 'node:crypto';
-import { list, put, del } from '../lib/mb-storage.js';
+import { list, put, del } from '@vercel/blob';
 import { configured, noCache, sameOrigin, session, token, verify, readPrivate, writePrivate, answerCorrect, duelQuestionIds, duelFinalIdiomIds } from '../lib/mb-server.js';
 
 const PREFIX='duels/';
@@ -62,7 +62,7 @@ async function readLobby(code,room,guest){
 
 function pickQuestions(settings){
  const sp=duelQuestionIds().filter(k=>/^s[0-9]+$/.test(k));
- const id=duelFinalIdiomIds();
+ const id=duelFinalIdiomIds(); // Exactly the final workbook's 100 idioms (including legacy IDs >95).
  const sample=(arr,n)=>{
   const a=[...arr];for(let i=0;i<n;i++){const j=i+randomInt(a.length-i);[a[i],a[j]]=[a[j],a[i]]}
   return a.slice(0,n);
@@ -153,7 +153,7 @@ async function state(c,room,guest,me){
 async function sendError(res,code,text){return res.status(code).json({error:text})}
 export default async function handler(req,res){
  noCache(res);
- if(!configured())return sendError(res,503,'대결 서버의 데이터베이스가 연결되지 않았어. Render DATABASE_URL 설정을 확인해 줘.');
+ if(!configured())return sendError(res,503,'대결 서버의 Blob 저장소가 연결되지 않았어. Vercel 설정을 확인해 줘.');
  const me=session(req);
  if(!me)return sendError(res,401,'1대1 대결은 온라인 로그인 후 이용할 수 있어.');
  if(req.method==='GET'){

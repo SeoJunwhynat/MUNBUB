@@ -1,22 +1,13 @@
-# Render Blueprint for the complete MUNBUB game (static UI + Node API).
-# Provision on branch migration/render-neon first. Switch to main only after
-# account, ranking, public rooms and two-player tests pass.
+# Render Blueprint for a new service. For an existing service, set the same build/start commands.
 services:
   - type: web
-    name: matchunbeom-render
+    name: matchunbeom
     runtime: node
-    plan: free
-    region: singapore
-    repo: https://github.com/SeoJunwhynat/MUNBUB
-    branch: migration/render-neon
-    autoDeployTrigger: commit
-    buildCommand: npm install --ignore-scripts --no-audit --no-fund && npm run check && npm test
+    buildCommand: npm install --omit=dev
     startCommand: npm start
-    healthCheckPath: /healthz
+    healthCheckPath: /
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
+      - key: BLOB_READ_WRITE_TOKEN
         sync: false
-      - key: MB_SESSION_SECRET
-        generateValue: true
