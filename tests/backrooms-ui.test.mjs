@@ -1,13 +1,17 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {Script} from 'node:vm';
+import {Script,SourceTextModule} from 'node:vm';
 const html=readFileSync(new URL('../backrooms/index.html',import.meta.url),'utf8');
 
 test('backrooms inline client scripts parse; existing 3D and HUD remain present',()=>{
  const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
  assert.ok(scripts.length>0);
- for(const [,code] of scripts)new Script(code,{filename:'backrooms/index.html'});
+ for(const [tag,code] of scripts){ 
+  if(/<script[^>]*type=["'](?:importmap|application\/json)["']/i.test(tag))continue;
+  if(/<script[^>]*type=["']module["']/i.test(tag))new SourceTextModule(code,{identifier:'backrooms/index.html'});
+  else new Script(code,{filename:'backrooms/index.html'});
+ }
  assert.match(html,/id="gl"/);
  assert.match(html,/id="controlPanel"/);
  assert.match(html,/id="multiplayerBtn"/);

@@ -37,7 +37,7 @@ async function parseBody(req){
   if(!chunks.length)return {};
   const str=Buffer.concat(chunks).toString('utf8');
   if(!req.headers['content-type']?.includes('application/json'))return str;
-  try{return JSON.parse(str);}catch{const error=new Error('Invalid JSON');error.status=400;throw error;}
+  try{return JSON.parse(str);}catch{const error=new Error('Invalid JSON body');error.status=400;throw error;}
 }
 async function handle(req,res){
   adapt(res);
@@ -46,6 +46,10 @@ async function handle(req,res){
   let pathname;
   try{pathname=decodeURIComponent(url.pathname)}catch{return json(res,400,{error:'Bad URL encoding'})}
   if(pathname.includes('\\')||pathname.includes('\0')||pathname.split('/').includes('..'))return json(res,400,{error:'Invalid path'});
+  if(pathname==='/moved'){
+    const page='<!doctype html><html lang="ko"><meta charset="utf-8"><meta http-equiv="refresh" content="2;url=/"><title>이전되었습니다</title><body>맛춘범은 Render로 이전되었습니다. <a href="/">홈으로 이동</a></body></html>';
+    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});return res.end(page);
+  }
   if(pathname==='/backrooms'||pathname==='/backrooms/'){
     if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'GET only'});
     const filename=resolve(ROOT,'backrooms/index.html');const f=await stat(filename);
@@ -76,7 +80,7 @@ async function handle(req,res){
     }catch(e){
       if(res.headersSent){res.end();return;}
       console.error('API failed:',name,e?.message||'unknown error');
-      return json(res,e.status||500,{error:e.status?'요청 데이터 형식이 올바르지 않아.':'서버 내부 오류가 발생했어.'});
+      return json(res,e.status||500,{error:e.status?e.message:'서버 내부 오류가 발생했어.'});
     }
   }
   // Keep answers and private coop server files inaccessible over HTTP.
@@ -113,6 +117,5 @@ async function handle(req,res){
   if(req.method==='HEAD')return res.end();
   createReadStream(path).on('error',()=>res.destroy()).pipe(res);
 }
-const port=Number(process.env.PORT)||3000;
-const server=createServer((req,res)=>{handle(req,res).catch(e=>{console.error('Unexpected error',e.message);if(!res.headersSent)json(res,500,{error:'Unexpected error'});else res.destroy();});});
-server.listen(port,'0.0.0.0',()=>console.log(`Matchunbeom Render adapter listening on ${port}`));
+export function createAppServer(){return createServer((req,res)=>{handle(req,res).catch(e=>{console.error('Unexpected error',e.message);if(!res.headersSent)json(res,500,{error:'Unexpected error'});else res.destroy();});});}
+if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)){const port=Number(process.env.PORT)||3000;const server=createAppServer();server.listen(port,'0.0.0.0',()=>console.log(`Matchunbeom Render adapter listening on ${port}`));}

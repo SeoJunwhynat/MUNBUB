@@ -99,6 +99,8 @@
 @keyframes backroomsFlicker{0%,20%,21%,42%,42.5%,69%,70%,97%,100%{opacity:.24}20.5%,69.4%{opacity:.07}42.2%{opacity:.17}}
 @media(prefers-reduced-motion:reduce){#noise,#fluorescentGlow{animation:none}}
 
+
+.mb-room-browser{border:1px solid #b7a06755;background:#151810a9;padding:12px;margin:14px 0;border-radius:10px;max-height:40vh;overflow:auto}.mb-room-browser-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:8px}.mb-room-list{display:grid;gap:8px;max-height:26vh;overflow-y:auto}.mb-room-card{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px;border:1px solid #e3be6d33;background:#232719;border-radius:8px}.mb-room-card strong{font-size:12px}.mb-room-card button{border:1px solid #e1c782;background:#cda862;color:#262014;border-radius:6px;padding:7px 12px;cursor:pointer}.mb-room-meta{font-size:10px;display:flex;gap:8px;color:#d1c29d}.mb-room-create{display:grid;grid-template-columns:1.7fr 1fr 1fr;gap:10px;margin:8px 0}.mb-room-create label{font-size:12px}.mb-room-create input,.mb-room-create select{display:block;width:100%;min-height:40px;padding:8px;background:#14160e;color:#f2dcaa;border:1px solid #aa955d88;border-radius:6px}@media(max-width:600px){.mb-room-create{grid-template-columns:1fr}.mb-room-browser{max-height:35vh}}
 </style>
 <style id="monsterV3Styles">
 /* Caught: show the user's animated GIF above the game, menus, and mobile controls. */
@@ -127,11 +129,20 @@
 
 <div class="screen hidden" id="multiLobby"><div class="screenCard multiplayerCard">
  <div class="eyebrow">친구와 함께하는 협동 탐험 · 최대 4명</div><h2 class="bigTitle" style="font-size:clamp(25px,5vw,38px)">👥 백룸 멀티플레이</h2>
- <div id="multiConnect"><p class="paragraph">같은 맛춘범 사이트에 로그인한 친구끼리 방 코드로 협동 탐험에 입장할 수 있어요.</p>
+ <div id="multiConnect"><p class="paragraph">공개방에서 함께 탐험하거나 친구와 비공개 방 코드를 공유해 보세요.</p>
+  <section id="mbPublicBrowser" class="mb-room-browser" aria-label="백룸 공개방 목록">
+   <div class="mb-room-browser-head"><strong>▣ 공개방 탐색</strong><button type="button" class="miniBtn" id="mbPublicRefresh">↻ 새로고침</button></div>
+   <div id="mbPublicRooms" role="list" class="mb-room-list" aria-live="polite">공개방 목록을 불러오는 중…</div>
+  </section>
+  <div class="mb-room-create">
+   <label>방 이름 <input id="mbRoomTitle" type="text" maxlength="24" value="두 개의 열쇠" autocomplete="off"></label>
+   <label>공개 여부 <select id="mbRoomVisibility"><option value="public">🌐 공개방</option><option value="private">🔒 비공개방</option></select></label>
+   <label>최대 인원 <select id="mbRoomLimit"><option value="2">2명</option><option value="3">3명</option><option value="4" selected>4명</option></select></label>
+  </div>
   <div class="multiField"><label>게임 서버 <input id="multiServer" type="text" readonly value="맛춘범 온라인 서버" aria-label="같은 맛춘범 온라인 서버에 접속"></label><label>맛춘범 닉네임 <input id="multiName" type="text" maxlength="14" value="로그인 확인 중" readonly autocomplete="off"></label></div>
   <div class="multiField"><label>입장할 방 코드 <input id="multiCode" type="text" maxlength="6" placeholder="예: AB2C3D" autocomplete="off"></label><div class="multiButton"><button id="multiJoin" class="bigBtn small">코드로 입장</button><button id="multiCreate" class="bigBtn small">새 방 만들기</button></div></div>
   <p class="multiStatus" id="multiNotice">맛춘범 로그인 정보를 확인해 주세요.</p></div>
- <div id="multiWaiting" class="hidden"><p class="paragraph">초대 코드: <strong class="roomCode" id="multiRoomCode">------</strong> <button class="miniBtn" id="copyRoomCode">코드 복사</button> <button class="miniBtn" id="copyInviteUrl">초대 링크</button><span id="multiConnectionStatus" class="onlineTag">연결 중</span></p>
+ <div id="multiWaiting" class="hidden"><p id="mbRoomLobbyMeta" class="paragraph">협동 탐험 대기실</p><p class="paragraph">초대 코드: <strong class="roomCode" id="multiRoomCode">------</strong> <button class="miniBtn" id="copyRoomCode">코드 복사</button> <button class="miniBtn" id="copyInviteUrl">초대 링크</button><span id="multiConnectionStatus" class="onlineTag">연결 중</span></p>
  <div id="multiMembers" class="memberList"></div><p class="multiStatus" id="multiWaitingNote">참가자가 들어올 때까지 대기 중…</p>
  <div class="btnRow"><button class="bigBtn" id="multiReady">준비 완료</button><button class="bigBtn" id="multiStart">▶ 협동 탐험 시작</button><button class="bigBtn dark" id="multiLeave">방 나가기</button></div></div>
  <div class="btnRow"><button class="bigBtn dark" id="multiBack">← 타이틀로</button></div>
@@ -690,14 +701,33 @@ function onlineServer(){return defaultServerURL()}
 async function netApi(route,body){let ctrl=new AbortController(),timeout=setTimeout(()=>ctrl.abort(),['create','join'].includes(route)?45000:12000);try{let res=await fetch(onlineServer()+'/api/'+route,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});let data=await res.json();if(!res.ok||data.ok===false)throw Error(data.error||'요청을 처리하지 못했어요.');return data}finally{clearTimeout(timeout)}}
 function setMultiNotice(msg){$('multiNotice').textContent=msg}
 function multiLobbyScreen(){game='lobby';unlock();showScreen('multiLobby');inputMode(false);$('multiServer').value=online.url||defaultServerURL()}
-function updateMultiWaiting(){let r=online.room;if(!r)return;$('multiConnect').classList.add('hidden');$('multiWaiting').classList.remove('hidden');$('multiRoomCode').textContent=online.code;$('multiMembers').innerHTML='';for(let p of r.players){let d=document.createElement('div');d.className='member';let nm=document.createElement('b');nm.textContent=(p.id===r.host?'👑 ':'👤 ')+p.name+(p.id===online.me?' (나)':'');let status=document.createElement('span');status.textContent=p.ready?'✓ 준비 완료':'○ 준비 중';d.append(nm,status);$('multiMembers').append(d)}for(let i=r.players.length;i<4;i++){let d=document.createElement('div');d.className='member';d.textContent='＋ 빈 자리';$('multiMembers').append(d)}let me=r.players.find(p=>p.id===online.me);$('multiReady').textContent=me?.ready?'준비 취소':'준비 완료';$('multiReady').classList.toggle('hidden',online.host);$('multiStart').classList.toggle('hidden',!online.host);$('multiStart').disabled=r.players.length<2||r.players.some(p=>!p.ready);$('multiWaitingNote').textContent=r.players.length<2?'친구가 들어올 때까지 기다려 주세요.':r.players.some(p=>!p.ready)?'모든 참가자가 준비를 마치면 방장이 시작할 수 있어요.':'준비 완료! 방장이 탐험을 시작할 수 있어요.'}
+function updateMultiWaiting(){let r=online.room;if(!r)return;$('mbRoomLobbyMeta').textContent=(r.visibility==='public'?'🌐 공개방 · ':'🔒 비공개방 · ')+(r.title||'두 개의 열쇠');$('multiConnect').classList.add('hidden');$('multiWaiting').classList.remove('hidden');$('multiRoomCode').textContent=online.code;$('multiMembers').innerHTML='';for(let p of r.players){let d=document.createElement('div');d.className='member';let nm=document.createElement('b');nm.textContent=(p.id===r.host?'👑 ':'👤 ')+p.name+(p.id===online.me?' (나)':'');let status=document.createElement('span');status.textContent=p.ready?'✓ 준비 완료':'○ 준비 중';d.append(nm,status);$('multiMembers').append(d)}for(let i=r.players.length;i<4;i++){let d=document.createElement('div');d.className='member';d.textContent='＋ 빈 자리';$('multiMembers').append(d)}let me=r.players.find(p=>p.id===online.me);$('multiReady').textContent=me?.ready?'준비 취소':'준비 완료';$('multiReady').classList.toggle('hidden',online.host);$('multiStart').classList.toggle('hidden',!online.host);$('multiStart').disabled=r.players.length<2||r.players.some(p=>!p.ready);$('multiWaitingNote').textContent=r.players.length<2?'친구가 들어올 때까지 기다려 주세요.':r.players.some(p=>!p.ready)?'모든 참가자가 준비를 마치면 방장이 시작할 수 있어요.':'준비 완료! 방장이 탐험을 시작할 수 있어요.'}
 function syncCoopWorld(r){if(!r?.map)return;if(online.version!==r.version){online.version=r.version;map=r.map.map(row=>row.slice());objects=r.objects.map(o=>({...o,cooldownUntil:performance.now()+Math.max(0,o.cooldownRemaining||0)}));quizSolved={...r.quizSolved};owned={...r.owned};if(active)active=objects.find(o=>o.quizId===active.quizId)||active;buildWorldGeometry();updateHUD()}
  else{for(let i=0;i<objects.length;i++){let ref=r.objects[i],o=objects[i];if(ref&&o?.type==='quiz')o.cooldownUntil=performance.now()+Math.max(0,ref.cooldownRemaining||0)}owned={...r.owned};quizSolved={...r.quizSolved}}}
 function gotSnapshot(r){if(!online.active||r.code!==online.code)return;online.room=r;online.players=r.players;online.host=r.host===online.me;$('multiConnectionStatus').textContent='● 실시간 연결';if(r.status==='lobby'){if(game!=='lobby'&&game!=='controls')multiLobbyScreen();updateMultiWaiting();return}
  if(r.status==='playing'){syncCoopWorld(r);enemy.x=r.enemy.x;enemy.z=r.enemy.z;enemy.grace=r.enemy.grace;elapsed=r.elapsed;let me=r.players.find(p=>p.id===online.me);if(!me)return;if(game==='lobby'){player.x=me.x;player.z=me.z;player.yaw=me.yaw;start()}else{if(Math.hypot(player.x-me.x,player.z-me.z)>1.5){player.x=me.x;player.z=me.z}if(!me.alive&&!online.dead){online.dead=true;end(false)}}let names=r.players.filter(p=>p.id!==online.me&&p.alive).map(p=>p.name);$('peerNotice').textContent='👥 함께 탐험 중: '+(names.join(', ')||'다른 플레이어 대기');$('peerNotice').classList.remove('hidden')}
  if(r.status==='ended'&&!online.dead){online.dead=true;end(r.won===true)}}
 function connectRoom(r){online.active=true;online.code=r.code;online.token=r.token;online.me=r.playerId;online.host=r.isHost;online.url=onlineServer();online.version=-1;online.dead=false;online.room=r.room;online.players=r.room.players;online.source?.close();online.source=new EventSource(online.url+'/api/events?code='+encodeURIComponent(online.code),{withCredentials:true});online.source.onmessage=e=>{try{gotSnapshot(JSON.parse(e.data))}catch(err){console.warn('sync',err)}};online.source.onerror=()=>{$('multiConnectionStatus').textContent='○ 재연결 중';if(game!=='lobby')$('peerNotice').textContent='⚠ 서버 재연결 중…';};multiLobbyScreen();gotSnapshot(r.room);setMultiNotice('방에 연결했어요.')}
-async function createMulti(){try{setMultiNotice('방을 만드는 중…');let world={map,enemy:{x:enemy.x,z:enemy.z},objects:objects.map(o=>({...o,cooldownUntil:0}))};let r=await netApi('create',{name:$('multiName').value||'탐험가',world});connectRoom(r)}catch(e){setMultiNotice('❌ '+e.message)}}
+let publicRoomsLoading=false;
+async function loadPublicRooms(){
+ const target=$('mbPublicRooms');if(!target||publicRoomsLoading||online.active)return;
+ publicRoomsLoading=true;
+ try{
+  const res=await fetch(onlineServer()+'/api/rooms',{credentials:'same-origin',cache:'no-store'});
+  const data=await res.json();if(!res.ok||!data.ok)throw Error(data.error||'공개방 정보를 가져올 수 없어.');
+  target.replaceChildren();const rooms=Array.isArray(data.rooms)?data.rooms:[];
+  if(!rooms.length){const empty=document.createElement('div');empty.textContent='모집 중인 공개방이 없어. 새 방을 만들어 봐!';target.append(empty);return;}
+  for(const room of rooms){
+   const card=document.createElement('article');card.className='mb-room-card';card.setAttribute('role','listitem');
+   const title=document.createElement('strong');title.textContent=room.title||'두 개의 열쇠';
+   const meta=document.createElement('div');meta.className='mb-room-meta';meta.textContent='👥 '+room.players+'/'+room.limit+'명 · 방장 '+(room.hostName||'탐험가');
+   const join=document.createElement('button');join.type='button';join.textContent='참가';join.disabled=Number(room.players)>=Number(room.limit)||$('multiJoin').disabled;
+   join.addEventListener('click',()=>{if(join.disabled)return;$('multiCode').value=String(room.code||'').slice(0,6);joinMulti()});card.append(title,meta,join);target.append(card);
+  }
+ }catch(e){target.replaceChildren();const empty=document.createElement('div');empty.textContent='⚠ '+(e.message||'공개방 연결 오류');target.append(empty)}
+ finally{publicRoomsLoading=false}
+}
+async function createMulti(){try{setMultiNotice('방을 만드는 중…');let world={map,enemy:{x:enemy.x,z:enemy.z},objects:objects.map(o=>({...o,cooldownUntil:0}))};let r=await netApi('create',{name:$('multiName').value||'탐험가',world,title:$('mbRoomTitle').value,visibility:$('mbRoomVisibility').value,limit:Number($('mbRoomLimit').value)});connectRoom(r)}catch(e){setMultiNotice('❌ '+e.message)}}
 async function joinMulti(){try{setMultiNotice('방에 입장하는 중…');let r=await netApi('join',{name:$('multiName').value||'탐험가',code:$('multiCode').value.toUpperCase().trim()});connectRoom(r)}catch(e){setMultiNotice('❌ '+e.message)}}
 async function multiAction(type,data={}){if(!online.active)return {ok:false,error:'연결되지 않았어요.'};try{return await netApi('action',{code:online.code,token:online.token,type,...data})}catch(e){return {ok:false,error:e.message}}}
 function handleAction(r){if(!r.ok){toast('⚠️ '+(r.error||'서버 요청 실패'));return}if(r.message)toast(r.message);if(r.won===true)end(true)}
@@ -717,15 +747,16 @@ async function refreshBackroomsIdentity(){
   setMultiNotice(e.message||'맛춘범 로그인을 확인할 수 없어.');return false;
  }
 }
-$('multiplayerBtn').onclick=async()=>{if(!audioMuted)startSound();online.url=defaultServerURL();$('multiConnect').classList.remove('hidden');$('multiWaiting').classList.add('hidden');multiLobbyScreen();await refreshBackroomsIdentity();};
-$('multiCreate').onclick=createMulti;$('multiJoin').onclick=joinMulti;
+$('multiplayerBtn').onclick=async()=>{if(!audioMuted)startSound();online.url=defaultServerURL();$('multiConnect').classList.remove('hidden');$('multiWaiting').classList.add('hidden');multiLobbyScreen();if(await refreshBackroomsIdentity())await loadPublicRooms();};
+$('multiCreate').onclick=createMulti;$('multiJoin').onclick=joinMulti;$('mbPublicRefresh').onclick=loadPublicRooms;
 $('multiReady').onclick=async()=>handleAction(await multiAction('ready'));
 $('multiStart').onclick=async()=>handleAction(await multiAction('start'));
-$('multiLeave').onclick=async()=>{await leaveMulti();multiLobbyScreen();$('multiWaiting').classList.add('hidden');$('multiConnect').classList.remove('hidden')};
+$('multiLeave').onclick=async()=>{await leaveMulti();multiLobbyScreen();$('multiWaiting').classList.add('hidden');$('multiConnect').classList.remove('hidden');loadPublicRooms()};
 $('multiBack').onclick=async()=>{clearChaseState();await leaveMulti();game='menu';showScreen('menu')};
 $('copyInviteUrl').onclick=()=>{let link=location.origin+'/backrooms/?room='+encodeURIComponent(online.code);if(navigator.clipboard?.writeText)navigator.clipboard.writeText(link).then(()=>toast('초대 링크를 복사했어요.')).catch(()=>toast('초대 코드: '+online.code));else toast('초대 코드: '+online.code)};
 $('copyRoomCode').onclick=()=>{if(navigator.clipboard?.writeText)navigator.clipboard.writeText(online.code).then(()=>toast('방 코드를 복사했어요.')).catch(()=>toast('코드: '+online.code));else toast('방 코드: '+online.code)};
 setInterval(()=>{if(online.active)multiAction('ping')},7000);
+setInterval(()=>{if(game==='lobby'&&!online.active&&!$('multiConnect').classList.contains('hidden'))loadPublicRooms()},9000);
 if(new URLSearchParams(location.search).get('room')){let code=new URLSearchParams(location.search).get('room').trim().slice(0,6).toUpperCase();$('multiCode').value=code;online.url=defaultServerURL();multiLobbyScreen();}
 addEventListener('beforeunload',()=>{if(online.active)navigator.sendBeacon?.(online.url+'/api/leave',JSON.stringify({code:online.code,token:online.token}))});
 
