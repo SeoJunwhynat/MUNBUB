@@ -7,6 +7,8 @@ import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { resolve, join, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import backroomsRelay from './backrooms/server.js';
+import { session, sameOrigin } from './lib/mb-server.js';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const routes = new Set([
@@ -121,6 +123,25 @@ export function createAppServer() {
       catch { return json(res, 400, { error: '올바르지 않은 주소야.' }); }
       if (pathname === '/healthz' && req.method === 'GET') {
         return json(res, 200, { status: 'up', service: 'munbub' });
+      }
+      // Backrooms uses the same account cookie but a distinct in-process Node relay.
+      if(pathname==='/backrooms'||pathname==='/backrooms/'){
+        if(!['GET','HEAD'].includes(req.method))return json(res,405,{error:'GET only'});
+        const file=fileURLToPath(new URL('./backrooms/index.html',import.meta.url));
+        const info=await stat(file);
+        res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Content-Length':info.size,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'});
+        if(req.method==='HEAD')return res.end();
+        return createReadStream(file).pipe(res);
+      }
+      if(pathname.startsWith('/backrooms/api/')){
+        if(!['GET','POST'].includes(req.method))return json(res,405,{error:'지원하지 않는 방식이야.'});
+        if(req.method==='POST'&&!sameOrigin(req))return json(res,403,{error:'잘못된 요청 출처야.'});
+        const identity=session(req);
+        if(!identity)return json(res,401,{ok:false,error:'맛춘범에 로그인해야 협동 모드를 사용할 수 있어.'});
+        req._mbBackroomsUser={id:identity.id,name:identity.name};
+        req.url=req.url.replace(/^\/backrooms(?=\/api\/)/,'');
+        backroomsRelay.server.emit('request',req,res);
+        return;
       }
       const match = /^\/api\/([a-z-]+)\/?$/.exec(pathname);
       if (match) {
