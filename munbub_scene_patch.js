@@ -36,6 +36,11 @@
   '#mb-duel-dialog .mb-duel-panel{background:rgba(255,246,230,.94)!important;backdrop-filter:blur(2px)}',
   '@media(max-width:1100px){#homeScreen .mb-dashboard-left>.home-hero{height:clamp(100px,13vw,157px)!important}#homeScreen .home-main{padding-top:10px!important}}',
   '@media(max-width:700px){#homeScreen .home-main{background:rgba(30,18,25,.52)!important;padding-top:8px!important}#homeScreen .mb-dashboard-left>.home-hero{height:clamp(78px,24vw,134px)!important}#homeScreen .home-main>.mb-home-dashboard{row-gap:4px!important}#homeScreen .home-main>.home-card-grid{margin-top:0!important}#homeScreen .home-main>.home-actions{margin-top:3px!important}}',
+  // HOME SPACING v20261106: enlarge the original title proportionally, and lower the two art buttons without increasing the dashboard/card row height.
+  // High-specificity rules beat earlier inline !important styles without adding another event handler, button, or CSS file.
+  '@media(min-width:1101px){#homeScreen#homeScreen .mb-dashboard-left>.home-hero .hero-scroll{transform:translateX(25px) scale(1.25)!important;transform-origin:50% 0!important;pointer-events:none!important}#homeScreen#homeScreen .mb-dashboard-left>.timed-home-wrap,#homeScreen#homeScreen .mb-dashboard-left>.mb-hard-feature{position:relative!important;top:clamp(26px,2.5vw,40px)!important}}',
+  '@media(min-width:701px) and (max-width:1100px){#homeScreen#homeScreen .mb-dashboard-left>.home-hero .hero-scroll{transform:scale(1.14)!important;transform-origin:50% 0!important;pointer-events:none!important}#homeScreen#homeScreen .mb-dashboard-left>.timed-home-wrap,#homeScreen#homeScreen .mb-dashboard-left>.mb-hard-feature{position:relative!important;top:clamp(12px,2vw,25px)!important}}',
+  '@media(max-width:700px){#homeScreen#homeScreen .mb-dashboard-left>.home-hero .hero-scroll{transform:none!important}#homeScreen#homeScreen .mb-dashboard-left>.timed-home-wrap,#homeScreen#homeScreen .mb-dashboard-left>.mb-hard-feature{top:0!important}}',
   '@media(prefers-reduced-motion:reduce){#mb-night-scene{will-change:auto}}'
  ].join('\n');
  document.head.append(style);
