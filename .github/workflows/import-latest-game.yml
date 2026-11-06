@@ -1,0 +1,56 @@
+name: Import latest MUNBUB ZIP to Render safely
+
+on:
+  push:
+    branches:
+      - migration/render-neon
+    paths:
+      - matchunbeom_latest.zip
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: import-latest-munbub
+  cancel-in-progress: false
+
+jobs:
+  import-and-verify:
+    if: github.event_name == 'workflow_dispatch' || github.event.head_commit.message != 'Apply latest game frontend and catalog (Render-Neon protected)'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: migration/render-neon
+          persist-credentials: true
+      - name: Configure Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Refuse to overwrite the running Render-Neon backend
+        run: |
+          test -f matchunbeom_latest.zip
+          python3 scripts/import_latest_release.py
+      - name: Verify complete uploaded release
+        run: |
+          node --check munbub_catalog_ui_20261106.js
+          node --check munbub_idiom_bank_100.js
+          node --check munbub_duel_patch.js
+          node --check munbub_public_patch.js
+          npm install --ignore-scripts --no-audit --no-fund
+          npm run check
+          npm test
+      - name: Commit tested frontend, UI images and idioms
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Stage only the verified latest frontend; never commit npm dependencies,
+          # private credentials, or stale Vercel backend files.
+          git add -A -- index.html idiom_final_100.json tests/idiom-final.test.mjs ui-assets/catalog ':(glob)munbub_*.js' ':(glob)munbub_*.css'
+          if git diff --cached --quiet; then
+            echo "Latest frontend already imported."
+          else
+            git commit -m "Apply latest game frontend and catalog (Render-Neon protected)"
+            git push origin HEAD:migration/render-neon
+          fi
