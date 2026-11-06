@@ -36,7 +36,7 @@ function publicFile(urlPath) {
   // Allow only the game's known client-side roots; never serve .env, JSON
   // databases, answer hashes, test code, ZIPs or server-side JavaScript.
   const safe =
-    urlPath === '/index.html' ||
+    (urlPath === '/index.html' || urlPath === '/moved.html') ||
     /^\/(?:munbub_[\w.-]+\.(?:css|js)|hardcore_image_assets\.js)$/.test(urlPath) ||
     /^\/ui-assets\/(?:[\w.-]+\/)*[\w.-]+\.(?:png|webp|gif|jpe?g|svg|woff2?)$/i.test(urlPath) ||
     /^\/assets\/bgm\/[\w.-]+\.(?:mp3|wav|ogg)$/i.test(urlPath);
@@ -137,7 +137,7 @@ export function createAppServer() {
         return;
       }
       if (pathname.startsWith('/api/')) return json(res, 404, { error: 'API를 찾지 못했어.' });
-      return serveFile(req, res, pathname === '/' ? '/index.html' : pathname);
+      return serveFile(req, res, pathname === '/' ? '/index.html' : pathname === '/moved' ? '/moved.html' : pathname);
     } catch (error) {
       console.error('Web request failure:', error?.name || 'UnknownError');
       return json(res, 500, { error: '서버 내부 오류야.' });
