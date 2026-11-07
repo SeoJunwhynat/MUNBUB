@@ -15,7 +15,7 @@ test('attached GIF is exactly the asset used by the jumpscare',()=>{
 test('retry resets life and monster state before gameplay is re-enabled',()=>{
  assert.match(html,/function start\(\)\{clearTimeout\(jumpscareTimer\);jumpscareTimer=null;hideJumpscare\(\)/);
  assert.match(html,/elapsed=online.active\?Number\(online.room\?\.elapsed\|\|0\):0;/);
- assert.match(html,/stamina=100;player.stamina=100;staminaExhausted=false/);
+ assert.match(html,/stamina=MAX_STAMINA;player.stamina=MAX_STAMINA;staminaExhausted=false/);
  assert.match(html,/enemy.path=\[\];enemy.pathGoal=null;enemy.pathMode=null/);
  assert.match(html,/lastGameFrameAt=last/);
 });
