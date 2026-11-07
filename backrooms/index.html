@@ -1050,7 +1050,7 @@ document.addEventListener('visibilitychange',syncSoundscape);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopChaseVoices();});
 // Browser audio can be suspended on mobile; re-arm only after a real gesture.
 document.addEventListener('pointerdown',()=>{
- if(game==='playing'&&!audioMuted&&audio?.state==='suspended')audio.resume().catch(()=>{});
+ if(['playing','quiz','map'].includes(game)&&!audioMuted&&audio?.state==='suspended')audio.resume().catch(()=>{});
 },{passive:true});
 
 $('playBtn').onclick=start;$('retryBtn').onclick=()=>{if(online.active){leaveMulti().then(()=>{online.url=defaultServerURL();$('multiConnect').classList.remove('hidden');$('multiWaiting').classList.add('hidden');multiLobbyScreen()})}else start()};$('restartPause').onclick=()=>{if(online.active){leaveMulti().then(()=>{game='menu';showScreen('menu');inputMode(false);})}else start()};$('homeBtn').onclick=()=>{clearTimeout(jumpscareTimer);hideJumpscare();clearChaseState();if(online.active)leaveMulti();game='menu';showScreen('menu');inputMode(false);unlock()};$('resumeBtn').onclick=resume;$('pauseBtn').onclick=pause;$('mapBtn').onclick=toggleMap;$('mapClose').onclick=toggleMap;$('touchMap').onclick=toggleMap;$('touchUse').onclick=interact;$('quizClose').onclick=closeQuiz;
