@@ -28,7 +28,7 @@ test('Holding sprint drains stamina all the way to zero and blocks sprint',()=>{
 
 test('Full recovery clears exhaustion, allowing sprint again',()=>{
  const r=rig();
- for(let i=0;i<1300;i++)r.tick(1/60,true);
+ for(let i=0;i<1300&&!r.get().staminaExhausted;i++)r.tick(1/60,true);
  let ticks=0;
  while(r.get().stamina<300 && ticks<900){assert.equal(r.tick(1/60,true),false);ticks++}
  assert.equal(r.get().stamina,300);
