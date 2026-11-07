@@ -228,6 +228,14 @@
 <div id="gameSettingsPanel" class="hidden" role="dialog" aria-modal="true" aria-label="백룸 게임 설정">
  <div class="gameSettingsCard"><h2>⚙ 게임 설정</h2><p class="paragraph">협동 모드는 설정창에서도 괴물이 계속 움직여.</p>
  <label>마우스 시점 감도 <input id="gameMouseSensitivity" type="range" min="50" max="180" step="5" value="100"><span id="gameSensitivityValue">100%</span></label>
+ <fieldset id="gameSoundMixer" style="border:1px solid #877554;border-radius:12px;padding:10px 14px;margin:12px 0;background:rgba(10,13,11,.32)">
+ <legend style="font-weight:900;color:#f8dca5;padding:0 7px">🔊 소리 세부 설정</legend>
+ <p style="font-size:11px;color:#c5bb9f;line-height:1.5;margin:0 0 8px">추격 BGM은 기본보다 3배 크게 설정했어. 각 소리는 따로 조정할 수 있어.</p>
+ <label>전체 소리 <input id="soundVolMaster" type="range" min="0" max="100" step="5" value="100"><output id="soundOutMaster">100%</output></label>
+ <label>추격전 BGM <input id="soundVolBgm" type="range" min="0" max="100" step="5" value="100"><output id="soundOutBgm">100%</output></label>
+ <label>플레이어 발소리 <input id="soundVolSteps" type="range" min="0" max="100" step="5" value="100"><output id="soundOutSteps">100%</output></label>
+ <label>괴물 소리·심장박동 <input id="soundVolThreat" type="range" min="0" max="100" step="5" value="100"><output id="soundOutThreat">100%</output></label>
+ </fieldset>
  <div class="gameSettingsActions">
   <button id="gameSoundToggle" type="button">🔊 사운드 켜짐</button>
   <button id="gameHudEdit" type="button">📱 HUD 배치 조절</button>
@@ -735,7 +743,8 @@ function clearChaseState(stopVoicesNow=true){
  window.__backroomsMonsterVisual?.reset();
 }
 function playSample(key,volume,{lowpass=0,pan=0,roaming=false,limit=false}={}){
- if(!audio||audioMuted||document.hidden||audio.state!=='running'||!audioMaster)return false;
+ if(!audio||audioMuted||document.hidden||audio.state!=='running'||!audioMaster||soundPrefs.threat===0)return false;
+ volume*=soundPrefs.threat/100;
  const buffer=chaseSamples[key];if(!buffer)return false;
  const src=audio.createBufferSource(),g=audio.createGain(),now=audio.currentTime;
  src.buffer=buffer;
@@ -774,10 +783,10 @@ function playChaseCue(kind){
 
 /** Audible first appearance, with no on-screen location reveal. */
 function playDistantMonsterCry(){
- if(!audio||audio.state!=='running'||audioMuted||document.hidden)return;
+ if(!audio||audio.state!=='running'||audioMuted||document.hidden||soundPrefs.threat===0)return;
  playSample('scream2',.14,{lowpass:440,pan:-.45,roaming:true});
  const ctx=audio,n=ctx.currentTime;
- for(const [frequency,level] of [[102,.075],[151,.025]]){
+ for(const [frequency,level] of [[102,.075*soundPrefs.threat/100],[151,.025*soundPrefs.threat/100]]){
   const tone=ctx.createOscillator(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
   tone.type='sawtooth';tone.frequency.setValueAtTime(frequency,n);
   tone.frequency.exponentialRampToValueAtTime(frequency*.48,n+2.1);
@@ -791,8 +800,8 @@ function playDistantMonsterCry(){
 }
 let nextHeartBeatAt=0,nextMonsterStepAt=0,monsterStepTrackX=null,monsterStepTrackZ=null,monsterMovingUntil=0;
 function playHeartbeat(proximity){
- if(!audio||!audioMaster||audioMuted||document.hidden)return;
- const ctx=audio,n=ctx.currentTime,level=.045+.16*Math.pow(proximity,1.5);
+ if(!audio||!audioMaster||audioMuted||document.hidden||soundPrefs.threat===0)return;
+ const ctx=audio,n=ctx.currentTime,level=(.045+.16*Math.pow(proximity,1.5))*soundPrefs.threat/100;
  for(const [offset,weight] of [[0,1],[.17,.72]]){
   const beat=ctx.createOscillator(),gain=ctx.createGain(),begin=n+offset;
   beat.type='sine';beat.frequency.setValueAtTime(91,begin);
@@ -804,8 +813,8 @@ function playHeartbeat(proximity){
  }
 }
 function playMonsterFootstep(distance,chasing){
- if(!audio||!stepNoise||audioMuted||document.hidden||audio.state!=='running')return;
- const loudness=Math.max(0,Math.min(1,(31-distance)/27));
+ if(!audio||!stepNoise||audioMuted||document.hidden||audio.state!=='running'||soundPrefs.threat===0)return;
+ const loudness=Math.max(0,Math.min(1,(31-distance)/27))*soundPrefs.threat/100;
  if(loudness<.025)return;
  const ctx=audio,n=ctx.currentTime;
  const panValue=Math.max(-.86,Math.min(.86,Math.sin(Math.atan2(enemy.x-player.x,-(enemy.z-player.z))-player.yaw)));
@@ -900,6 +909,20 @@ function syncChaseCues(){
 // Soundscape v1: procedural carpet footsteps + Backrooms fluorescent room tone.
 // Procedural ambience plus embedded user-provided chase MP3s; WebAudio begins on user interaction.
 let audio=null,audioMaster=null,ambientBus=null,stepNoise=null,ambientActive=-1,stepSide=0;
+let backroomsBgmGain=null,backroomsBgmRouted=false;
+const soundPrefs={master:100,bgm:100,steps:100,threat:100};
+try{
+ const stored=JSON.parse(localStorage.getItem('backrooms_sound_mixer_v1')||'null');
+ if(stored&&typeof stored==='object')for(const key of Object.keys(soundPrefs)){
+  if(Number.isFinite(stored[key]))soundPrefs[key]=Math.max(0,Math.min(100,Math.round(stored[key]/5)*5));
+ }
+}catch{}
+function updateBackroomsMixer(){
+ if(audio&&audioMaster)audioMaster.gain.setTargetAtTime(audioMuted?0:.78*soundPrefs.master/100,audio.currentTime,.045);
+ if(audio&&backroomsBgmGain)backroomsBgmGain.gain.setTargetAtTime((3/.78)*soundPrefs.bgm/100,audio.currentTime,.045);
+ if(!backroomsBgmRouted)backroomsChaseBgm.volume=Math.min(1,.34*3*soundPrefs.bgm/100*soundPrefs.master/100);
+}
+
 let dreadBus=null,dreadFilter=null,dreadSource=null,lastSoundscapeUpdate=0,nextCreakAt=0;
 let audioMuted=false;
 try{audioMuted=localStorage.getItem('backrooms_audio_muted_v1')==='1'}catch{}
@@ -921,8 +944,19 @@ function startSound(){
   if(!AudioContextImpl)return;
   const ctx=new AudioContextImpl();audio=ctx;preloadChaseSamples();
   try{if(backroomsChaseBgm.readyState===0)backroomsChaseBgm.load()}catch{}
-  audioMaster=ctx.createGain();audioMaster.gain.value=audioMuted?0:.78;
+  audioMaster=ctx.createGain();audioMaster.gain.value=audioMuted?0:.78*soundPrefs.master/100;
   audioMaster.connect(ctx.destination);
+  try{
+   // The original BGM used Audio.volume=.34. Gain 3/.78 through the .78
+   // master makes exactly triple the old output at default settings.
+   const musicSource=ctx.createMediaElementSource(backroomsChaseBgm);
+   backroomsBgmGain=ctx.createGain();backroomsBgmGain.gain.value=(3/.78)*soundPrefs.bgm/100;
+   musicSource.connect(backroomsBgmGain).connect(audioMaster);
+   backroomsBgmRouted=true;
+  }catch(err){
+   console.warn('Music mixer fallback:',err);
+   backroomsBgmRouted=false;updateBackroomsMixer();
+  }
   ambientBus=ctx.createGain();ambientBus.gain.value=0;
   ambientBus.connect(audioMaster);
   // Air pressure / low ventilation hiss. Colored, seamless noise loop.
@@ -997,7 +1031,7 @@ function toggleSound(){
  try{localStorage.setItem('backrooms_audio_muted_v1',audioMuted?'1':'0')}catch{}
  refreshSoundButtons();
  if(!audioMuted)startSound();
- if(audioMaster&&audio){const n=audio.currentTime;audioMaster.gain.cancelScheduledValues(n);audioMaster.gain.setTargetAtTime(audioMuted?0:.78,n,.045)}
+ if(audioMaster&&audio){const n=audio.currentTime;audioMaster.gain.cancelScheduledValues(n);updateBackroomsMixer();}
  syncSoundscape();
 }
 // A short double-textured heel impact and carpet scuff; alternate left/right feet.
@@ -1009,7 +1043,7 @@ function playFootstep(running){
  filter.frequency.setValueAtTime(running?1120:890,n);
  filter.frequency.exponentialRampToValueAtTime(running?380:280,n+.17);
  const gain=ctx.createGain();gain.gain.setValueAtTime(.0001,n);
- gain.gain.linearRampToValueAtTime(running?.43:.33,n+.012);
+ gain.gain.linearRampToValueAtTime(Math.max(.0001,(running?.43:.33)*soundPrefs.steps/100),n+.012);
  gain.gain.exponentialRampToValueAtTime(.0001,n+(running?.19:.17));
  const pan=ctx.createStereoPanner?ctx.createStereoPanner():null;
  if(pan){pan.pan.value=side*.13;noise.connect(filter).connect(gain).connect(pan).connect(audioMaster)}
@@ -1019,7 +1053,7 @@ function playFootstep(running){
  heel.type='sine';heel.frequency.setValueAtTime(running?113:96,n);
  heel.frequency.exponentialRampToValueAtTime(52,n+.10);
  thump.gain.setValueAtTime(.0001,n);
- thump.gain.linearRampToValueAtTime(running?.135:.112,n+.009);
+ thump.gain.linearRampToValueAtTime(Math.max(.0001,(running?.135:.112)*soundPrefs.steps/100),n+.009);
  thump.gain.exponentialRampToValueAtTime(.0001,n+.125);
  heel.connect(thump).connect(audioMaster);heel.start(n);heel.stop(n+.14);
 }
@@ -1046,11 +1080,22 @@ $('audioToggle').addEventListener('click',toggleSound);
 $('menuAudioToggle').addEventListener('click',toggleSound);
 $('pauseAudioToggle').addEventListener('click',toggleSound);
 refreshSoundButtons();
+for(const [key,suffix] of [['master','Master'],['bgm','Bgm'],['steps','Steps'],['threat','Threat']]){
+ const slider=$('soundVol'+suffix),out=$('soundOut'+suffix);
+ if(!slider||!out)continue;
+ slider.value=String(soundPrefs[key]);out.textContent=soundPrefs[key]+'%';
+ slider.addEventListener('input',()=>{
+  soundPrefs[key]=Math.max(0,Math.min(100,Number(slider.value)||0));
+  out.textContent=soundPrefs[key]+'%';
+  updateBackroomsMixer();
+  try{localStorage.setItem('backrooms_sound_mixer_v1',JSON.stringify(soundPrefs))}catch{}
+ });
+}
 document.addEventListener('visibilitychange',syncSoundscape);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stopChaseVoices();});
 // Browser audio can be suspended on mobile; re-arm only after a real gesture.
 document.addEventListener('pointerdown',()=>{
- if(['playing','quiz','map'].includes(game)&&!audioMuted&&audio?.state==='suspended')audio.resume().catch(()=>{});
+ if(['playing','quiz','map'].includes(game)&&!audioMuted){if(audio?.state==='suspended')audio.resume().catch(()=>{});if(chaseActive)startBackroomsChaseBgm();}
 },{passive:true});
 
 $('playBtn').onclick=start;$('retryBtn').onclick=()=>{if(online.active){leaveMulti().then(()=>{online.url=defaultServerURL();$('multiConnect').classList.remove('hidden');$('multiWaiting').classList.add('hidden');multiLobbyScreen()})}else start()};$('restartPause').onclick=()=>{if(online.active){leaveMulti().then(()=>{game='menu';showScreen('menu');inputMode(false);})}else start()};$('homeBtn').onclick=()=>{clearTimeout(jumpscareTimer);hideJumpscare();clearChaseState();if(online.active)leaveMulti();game='menu';showScreen('menu');inputMode(false);unlock()};$('resumeBtn').onclick=resume;$('pauseBtn').onclick=pause;$('mapBtn').onclick=toggleMap;$('mapClose').onclick=toggleMap;$('touchMap').onclick=toggleMap;$('touchUse').onclick=interact;$('quizClose').onclick=closeQuiz;
