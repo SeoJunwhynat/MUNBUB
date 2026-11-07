@@ -31,6 +31,7 @@ test('server holds position and delays capture through the initial Notice, then 
     room.status = 'playing';
     room.enemy.grace = 0;
     room.enemy.active = true;
+    room.enemy.yaw = Math.PI/2; // The target stands due east, directly ahead in the 140-degree cone.
     p.x = 12.6;
     p.z = 10;
     p.lastSeen = Date.now();
