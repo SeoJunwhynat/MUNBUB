@@ -1,7 +1,7 @@
 /**
  * Render adapter for the existing Vercel-style /api modules.
  * Node >=22, no Express dependency. Keeps the exact routes and request formats.
- * Login, rankings, duels and public rooms still require a configured Vercel Blob token.
+ * Login, rankings, duels and public rooms use the Render-linked Neon store.
  */
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
@@ -32,7 +32,7 @@ function adapt(res){
   return res;
 }
 async function parseBody(req){
-  if(req.method!=='POST' && req.method!=='PUT' && req.method!=='PATCH')return undefined;
+  if(!['POST','PUT','PATCH','DELETE'].includes(req.method))return undefined;
   let chunks=[],total=0;
   for await(const chunk of req){total+=chunk.length;if(total>1024*1024){const error=new Error('Request too large');error.status=413;throw error;}chunks.push(chunk);}
   if(!chunks.length)return {};

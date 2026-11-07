@@ -28,68 +28,102 @@
  }
  function route(map,from,to,{blocked=null}={}){
    if(!from||!to||!map?.length)return [];
-   const h=map.length,w=map[0]?.length||0;
-   const sx=Math.floor(from.x/CELL),sz=Math.floor(from.z/CELL);
-   const tx=Math.floor(to.x/CELL),tz=Math.floor(to.z/CELL);
-   if([sx,sz,tx,tz].some(Number.isNaN)||map[sz]?.[sx]!==0||map[tz]?.[tx]!==0)return [];
+   if(![from.x,from.z,to.x,to.z].every(Number.isFinite))return [];
    if(clearLine(map,from,to,{blocked}))return [{x:to.x,z:to.z}];
-   const start=sz*w+sx,goal=tz*w+tx;
-   const open=[start],opened=new Set([start]),seen=new Set(),came=new Map();
-   const score=new Map([[start,0]]),estimate=new Map([[start,Math.hypot(tx-sx,tz-sz)]]);
-   let found=start===goal;
-   while(open.length&&seen.size<h*w){
-     let best=0;
-     for(let i=1;i<open.length;i++)if((estimate.get(open[i])??Infinity)<(estimate.get(open[best])??Infinity))best=i;
-     const current=open.splice(best,1)[0];opened.delete(current);
-     if(current===goal){found=true;break}
-     if(seen.has(current))continue;
-     seen.add(current);const x=current%w,z=Math.floor(current/w);
+   // An ordinary tile-level A* treats an entire 4m tile as one waypoint.
+   // Terminals and shelves sit at tile centres, so their collider could make
+   // that waypoint unreachable even when there is plenty of floor on both sides.
+   // Navigate on a 1m clearance grid, then simplify the safe route.
+   const width=(map[0]?.length||0)*CELL,height=map.length*CELL;
+   if(!width||!height)return [];
+   const total=width*height,pass=new Int8Array(total),closed=new Uint8Array(total);
+   const cost=new Float64Array(total).fill(Infinity),previous=new Int32Array(total).fill(-1);
+   const xy=(id)=>({x:id%width+.5,z:Math.floor(id/width)+.5});
+   function clearNode(x,z){
+     if(x<0||z<0||x>=width||z>=height)return false;
+     const id=z*width+x;
+     if(!pass[id]){const px=x+.5,pz=z+.5;
+       pass[id]=(walkable(map,px,pz,.36)&&!blocked?.(px,pz))?1:-1;}
+     return pass[id]===1;
+   }
+   function anchor(point){
+     const px=Math.floor(point.x),pz=Math.floor(point.z);
+     for(let radius=0;radius<=7;radius++){
+       let best=-1,bestDistance=Infinity;
+       for(let dz=-radius;dz<=radius;dz++)for(let dx=-radius;dx<=radius;dx++){
+         if(Math.max(Math.abs(dx),Math.abs(dz))!==radius)continue;
+         const x=px+dx,z=pz+dz;
+         if(!clearNode(x,z))continue;
+         const p={x:x+.5,z:z+.5};
+         if(!clearLine(map,point,p,{blocked}))continue;
+         const d=Math.hypot(point.x-p.x,point.z-p.z);
+         if(d<bestDistance){best=z*width+x;bestDistance=d;}
+       }
+       if(best>=0)return best;
+     }
+     return -1;
+   }
+   const start=anchor(from),goal=anchor(to);
+   if(start<0||goal<0)return [];
+   const heap=[];
+   function push(id,priority){
+     let i=heap.length;heap.push({id,priority});
+     while(i>0){const p=(i-1)>>1;
+       if(heap[p].priority<=priority)break;
+       heap[i]=heap[p];i=p;
+     }
+     heap[i]={id,priority};
+   }
+   function pop(){
+     const first=heap[0],tail=heap.pop();
+     if(heap.length){let i=0;
+       while(true){let child=i*2+1;if(child>=heap.length)break;
+         if(child+1<heap.length&&heap[child+1].priority<heap[child].priority)child++;
+         if(heap[child].priority>=tail.priority)break;
+         heap[i]=heap[child];i=child;
+       }
+       heap[i]=tail;
+     }
+     return first.id;
+   }
+   const target=xy(goal);
+   const heuristic=id=>{const p=xy(id);return Math.hypot(p.x-target.x,p.z-target.z);};
+   cost[start]=0;push(start,heuristic(start));
+   let found=false;
+   while(heap.length){
+     const id=pop();if(closed[id])continue;
+     if(id===goal){found=true;break;}
+     closed[id]=1;
+     const x=id%width,z=Math.floor(id/width),here=xy(id);
      for(const [dx,dz] of DIRS){
-       const nx=x+dx,nz=z+dz;if(map[nz]?.[nx]!==0)continue;
-       if(dx&&dz&&(map[z]?.[nx]!==0||map[nz]?.[x]!==0))continue; // no diagonal corner cuts
-       const next=nz*w+nx;
-       const cost=(score.get(current)??Infinity)+Math.hypot(dx,dz);
-       if(cost>=(score.get(next)??Infinity))continue;
-       came.set(next,current);score.set(next,cost);
-       estimate.set(next,cost+Math.hypot(tx-nx,tz-nz));
-       if(!opened.has(next)){open.push(next);opened.add(next)}
+       const nx=x+dx,nz=z+dz;if(!clearNode(nx,nz))continue;
+       if(dx&&dz&&(!clearNode(x+dx,z)||!clearNode(x,z+dz)))continue;
+       const there={x:nx+.5,z:nz+.5};
+       if(!clearLine(map,here,there,{blocked}))continue;
+       const neighbor=nz*width+nx,weight=Math.hypot(dx,dz);
+       const tentative=cost[id]+weight;
+       if(tentative>=cost[neighbor]||closed[neighbor])continue;
+       previous[neighbor]=id;cost[neighbor]=tentative;
+       push(neighbor,tentative+heuristic(neighbor));
      }
    }
    if(!found)return [];
    const raw=[];let cursor=goal;
-   while(cursor!==start&&raw.length<h*w){
-     const x=cursor%w,z=Math.floor(cursor/w);
-     raw.unshift({x:(x+0.5)*CELL,z:(z+0.5)*CELL});
-     cursor=came.get(cursor);if(cursor===undefined)return [];
+   while(cursor!==start&&raw.length<total){
+     raw.unshift(xy(cursor));
+     cursor=previous[cursor];if(cursor<0)return [];
    }
-   raw.push({x:to.x,z:to.z});
-   // A terminal can occupy a tile centre. Pick a walkable side waypoint so
-   // the monster routes AROUND the prop instead of stalling at its centre.
-   if(blocked){
-     const offsets=[[1.35,0],[-1.35,0],[0,1.35],[0,-1.35],
-                    [1.35,1.35],[-1.35,1.35],[1.35,-1.35],[-1.35,-1.35]];
-     for(let i=0;i<raw.length-1;i++){
-       const point=raw[i];
-       if(!blocked(point.x,point.z))continue;
-       const previous=i?raw[i-1]:from,next=raw[i+1];
-       const candidates=offsets.map(([dx,dz])=>({x:point.x+dx,z:point.z+dz}))
-         .filter(p=>walkable(map,p.x,p.z,.36)&&!blocked(p.x,p.z)
-            &&clearLine(map,previous,p,{blocked}));
-       if(candidates.length)raw[i]=candidates.sort((a,b)=>
-           Math.hypot(a.x-next.x,a.z-next.z)-Math.hypot(b.x-next.x,b.z-next.z))[0];
-     }
-   }
-   // Greedy line-of-sight simplification; do not cut through colliders or wall corners.
-   const refined=[],points=[{x:from.x,z:from.z},...raw];
-   let i=0;
+   // Ensure the first/last sub-tile connections are also obstacle-free.
+   const points=[{x:from.x,z:from.z},xy(start),...raw,{x:to.x,z:to.z}];
+   const simplified=[];let i=0;
    while(i<points.length-1){
      let far=i+1;
-     for(let j=points.length-1;j>i+1;j--){
-       if(clearLine(map,points[i],points[j],{blocked})){far=j;break}
-     }
-     refined.push(points[far]);i=far;
+     for(let j=i+2;j<points.length;j++)
+       if(clearLine(map,points[i],points[j],{blocked}))far=j;
+     if(!clearLine(map,points[i],points[far],{blocked}))return [];
+     simplified.push(points[far]);i=far;
    }
-   return refined;
+   return simplified;
  }
  function advance(map,from,to,length,{blocked=null}={}){
    if(!to||!from||!(length>0))return {x:from.x,z:from.z,moved:false};

@@ -24,8 +24,9 @@ test('model and maze share ONE WebGL canvas and a single depth buffer',()=>{
 });
 
 test('game owns AI and collision, model is visual only with original fallback',()=>{
- assert.match(html,/function enemyPath\(\)/);
+ assert.match(html,/function enemyPath\(goal\)/);
  assert.match(html,/function collides\(x,z\)/);
+ assert.match(html,/nav\.route\(map,enemy,dest/);
  assert.match(html,/!window\.__backroomsMonsterVisual\?\.ready/);
  assert.match(bridge,/this\.bridge\.update\(enemy/);
  assert.match(html,/game==='jumpscare'/);
