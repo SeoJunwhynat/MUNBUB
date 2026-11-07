@@ -7,6 +7,7 @@
  'use strict';
  const CELL=4;
  const MONSTER_CHASE_SPEED=(5.75*1.05)*0.93;
+ const MONSTER_NOTICE_DURATION_MS=1200;
  const MONSTER_PATROL_SPEED=2.65;
  const MONSTER_SEARCH_SPEED=3.2;
  const DIRS=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
@@ -211,5 +212,5 @@
    }
    return {x,z,moved:Math.hypot(x-from.x,z-from.z)>.002};
  }
- return Object.freeze({CELL,MONSTER_CHASE_SPEED,MONSTER_PATROL_SPEED,MONSTER_SEARCH_SPEED,wall,walkable,clearLine,visible,predict,route,nextWaypoint,advance});
+ return Object.freeze({CELL,MONSTER_CHASE_SPEED,MONSTER_NOTICE_DURATION_MS,MONSTER_PATROL_SPEED,MONSTER_SEARCH_SPEED,wall,walkable,clearLine,visible,predict,route,nextWaypoint,advance});
 });

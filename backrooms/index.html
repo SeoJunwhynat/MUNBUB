@@ -106,15 +106,15 @@
 #hud #hudStamina,#hud.hudLayoutEnabled #hudStamina{
  position:fixed!important;left:50%!important;top:auto!important;
  bottom:calc(55px + env(safe-area-inset-bottom,0px))!important;
- transform:translateX(-50%)!important;width:clamp(160px,28vw,300px)!important;
- height:9px!important;min-width:0!important;max-height:none!important;
+ transform:translateX(-50%)!important;width:clamp(320px,56vw,600px)!important;
+ height:18px!important;min-width:0!important;max-height:none!important;
  padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
  background:transparent!important;box-shadow:none!important;outline:0!important;
  backdrop-filter:none!important;pointer-events:none!important;z-index:6!important;
 }
 #hudStamina .statHeader{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
-#hudStamina .track{position:absolute!important;left:0!important;top:3px!important;display:block!important;width:100%!important;height:3px!important;border:0!important;border-radius:99px!important;overflow:visible!important;background:rgba(235,230,216,.25)!important;box-shadow:0 0 7px rgba(0,0,0,.8)!important}
-#hud #hudStamina #staminaFill{position:absolute!important;left:50%!important;top:0!important;height:3px!important;max-width:100%!important;transform:translateX(-50%)!important;border-radius:99px!important;background:#f7f7f7!important;box-shadow:0 0 7px rgba(255,255,255,.65)!important;transition:width .09s linear,background-color .15s linear!important}
+#hudStamina .track{position:absolute!important;left:0!important;top:6px!important;display:block!important;width:100%!important;height:6px!important;border:0!important;border-radius:99px!important;overflow:visible!important;background:rgba(235,230,216,.25)!important;box-shadow:0 0 7px rgba(0,0,0,.8)!important}
+#hud #hudStamina #staminaFill{position:absolute!important;left:50%!important;top:0!important;height:6px!important;max-width:100%!important;transform:translateX(-50%)!important;border-radius:99px!important;background:#f7f7f7!important;box-shadow:0 0 7px rgba(255,255,255,.65)!important;transition:width .09s linear,background-color .15s linear!important}
 #hud #hudStamina.recovering #staminaFill,#hud #hudStamina.staminaExhausted.recovering #staminaFill{background:#f34a4a!important;box-shadow:0 0 8px rgba(244,70,70,.75)!important}
 #hud.hudLayoutEnabled.editingHud #hudStamina{outline:none!important;box-shadow:none!important}
 #controlPicker [data-target="stamina"]{display:none!important}
@@ -125,12 +125,12 @@
 .screenCard{max-width:min(95vw,800px);max-height:calc(100dvh - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
 #hudTools .iconBtn{min-height:39px}
 @media(pointer:coarse){
- #hud #hudStamina,#hud.hudLayoutEnabled #hudStamina{bottom:calc(26dvh + env(safe-area-inset-bottom,0px))!important;width:min(210px,42vw)!important}
+ #hud #hudStamina,#hud.hudLayoutEnabled #hudStamina{bottom:calc(26dvh + env(safe-area-inset-bottom,0px))!important;width:min(420px,84vw)!important}
  #hud .mission{max-height:min(33dvh,225px);overflow-y:auto;overscroll-behavior:contain}
  #mobile #touchMap,#mobile #touchRun,#mobile #touchUse{font-size:clamp(11px,2.6vw,15px)}
 }
 @media(pointer:coarse) and (orientation:landscape){
- #hud #hudStamina,#hud.hudLayoutEnabled #hudStamina{bottom:calc(9px + env(safe-area-inset-bottom,0px))!important;width:min(230px,34vw)!important}
+ #hud #hudStamina,#hud.hudLayoutEnabled #hudStamina{bottom:calc(9px + env(safe-area-inset-bottom,0px))!important;width:min(460px,68vw)!important}
  #hud.hudLayoutEnabled #hudMission{max-height:34dvh!important}
  #controlPanel .configCard{max-height:55dvh}
 }
@@ -275,10 +275,10 @@ function box(arr,x0,y0,z0,x1,y1,z1,s=0,top=s,btm=s,g=0){quad(arr,[x0,y1,z1],[x1,
 function planeY(a,x0,z0,x1,z1,y,tile,n=1,g=0){let normal=[0,n,0];if(n>0)quad(a,[x0,y,z1],[x1,y,z1],[x1,y,z0],[x0,y,z0],tile,normal,g);else quad(a,[x0,y,z0],[x1,y,z0],[x1,y,z1],[x0,y,z1],tile,normal,g)}
 function buffer(data){let b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);return {b,count:data.length/9}}
 function draw(buf){if(!buf||!buf.count)return;gl.bindBuffer(gl.ARRAY_BUFFER,buf.b);gl.enableVertexAttribArray(loc.p);gl.enableVertexAttribArray(loc.uv);gl.enableVertexAttribArray(loc.n);gl.enableVertexAttribArray(loc.g);gl.vertexAttribPointer(loc.p,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(loc.uv,2,gl.FLOAT,false,36,12);gl.vertexAttribPointer(loc.n,3,gl.FLOAT,false,36,20);gl.vertexAttribPointer(loc.g,1,gl.FLOAT,false,36,32);gl.drawArrays(gl.TRIANGLES,0,buf.count)}
-const MAX_STAMINA=300,STAMINA_REGEN_PER_SECOND=18*2;
+const MAX_STAMINA=300,STAMINA_REGEN_PER_SECOND=18*4;
 let staminaRecovering=false;
-const PLAYER_WALK_SPEED=3.30*1.05,PLAYER_SPRINT_SPEED=5.75*1.05;
-let map=[],objects=[],staticBuf=null;const player={x:6,z:6,yaw:0,pitch:0,stamina:MAX_STAMINA,flash:true};let enemy={x:0,z:0,path:[],pathTime:0,grace:0,phase:0,aiMode:'patrol',lastSeen:null,lastSeenAt:-1000,patrolGoal:null,pathGoal:null,stuckTicks:0},game='menu',active=null,quizSolved={},owned={spell:false,idiom:false},elapsed=0,toastClock=0,stamina=MAX_STAMINA,staminaExhausted=false,seconds=0,locked=false,runHold=false,joy={x:0,y:0};const keys={};
+const PLAYER_WALK_SPEED=3.30*1.05,PLAYER_SPRINT_SPEED=(5.75*1.05*.93)*1.08;
+let map=[],objects=[],staticBuf=null;const player={x:6,z:6,yaw:0,pitch:0,stamina:MAX_STAMINA,flash:true};let enemy={x:0,z:0,path:[],pathTime:0,grace:0,phase:0,aiMode:'patrol',lastSeen:null,lastSeenAt:-1000,patrolGoal:null,pathGoal:null,stuckTicks:0,noticeUntil:0},game='menu',active=null,quizSolved={},owned={spell:false,idiom:false},elapsed=0,toastClock=0,stamina=MAX_STAMINA,staminaExhausted=false,seconds=0,locked=false,runHold=false,joy={x:0,y:0};const keys={};
 let editingControls=false,controlReturnState="menu",controlSelected="joystick",touchLayouts={};
 let onlineQuizPending=null;let online={active:false,code:"",token:"",me:"",url:"",room:null,host:false,source:null,version:-1,players:[],lastSend:0,dead:false};
 let coopTeamUpdateAt=0,gameSettingsOpen=false,gameSettingsReturn="playing",mouseGain=1;
@@ -313,7 +313,7 @@ if(staticBuf&&staticBuf.b)gl.deleteBuffer(staticBuf.b);staticBuf=buffer(m)}funct
 let openDirs=[[0,1,PI],[1,0,PI/2],[0,-1,0],[-1,0,-PI/2]];
 openDirs=openDirs.filter(([dx,dz])=>map[1+dz]?.[1+dx]===0);
 openDirs.sort((a,b)=>{let count=d=>{let v=0;for(let k=1;k<=6;k++){if(map[1+d[1]*k]?.[1+d[0]*k]!==0)break;v++}return v};return count(b)-count(a)});
-player.yaw=openDirs.length?openDirs[0][2]:PI;player.pitch=0;enemy.x=(spawn.x+.5)*CELL;enemy.z=(spawn.z+.5)*CELL;enemy.grace=28;enemy.pathTime=0;enemy.phase=0;enemy.path=[];enemy.lastSeen=null;enemy.lastSeenAt=-1000;enemy.patrolGoal=null;enemy.pathGoal=null;enemy.pathMode=null;enemy.stuckTicks=0;enemy.chasing=false;enemy.aiMode='patrol';return objects.length}
+player.yaw=openDirs.length?openDirs[0][2]:PI;player.pitch=0;enemy.x=(spawn.x+.5)*CELL;enemy.z=(spawn.z+.5)*CELL;enemy.grace=28;enemy.pathTime=0;enemy.phase=0;enemy.path=[];enemy.lastSeen=null;enemy.lastSeenAt=-1000;enemy.patrolGoal=null;enemy.pathGoal=null;enemy.pathMode=null;enemy.stuckTicks=0;enemy.noticeUntil=0;enemy.chasing=false;enemy.aiMode='patrol';return objects.length}
 function isWall(x,z){let gx=Math.floor(x/CELL),gz=Math.floor(z/CELL);return !map[gz]||map[gz][gx]!==0}function collides(x,z){let r=.33,ix0=Math.floor((x-r)/CELL),ix1=Math.floor((x+r)/CELL),iz0=Math.floor((z-r)/CELL),iz1=Math.floor((z+r)/CELL);for(let gz=iz0;gz<=iz1;gz++)for(let gx=ix0;gx<=ix1;gx++){if(map[gz]?.[gx]===0)continue;let a=gx*CELL,b=gz*CELL,xx=Math.max(a,Math.min(x,a+CELL)),zz=Math.max(b,Math.min(z,b+CELL));if((x-xx)**2+(z-zz)**2<r*r)return true}for(let o of objects){if(o.type==='exit')continue;let cx=(o.x+.5)*CELL,cz=(o.z+.5)*CELL,half=o.type==='quiz'?.72:.88,xx=Math.max(cx-half,Math.min(x,cx+half)),zz=Math.max(cz-half,Math.min(z,cz+half));if((x-xx)**2+(z-zz)**2<r*r)return true}return false}function safeMove(dx,dz){let steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.115));for(let i=0;i<steps;i++){let sx=dx/steps,sz=dz/steps;if(!collides(player.x+sx,player.z))player.x+=sx;if(!collides(player.x,player.z+sz))player.z+=sz}}
 function enemyPath(goal){
   const nav=window.MonsterNav;
@@ -335,7 +335,7 @@ function updateSprint(dt,wantsToSprint){
  const sprint=wantsToSprint&&!staminaExhausted&&stamina>0;
  staminaRecovering=false;
  if(sprint){
-  stamina=Math.max(0,stamina-24*dt);
+  stamina=Math.max(0,stamina-48*dt);
   if(stamina<=0){
    stamina=0;
    staminaExhausted=true;
@@ -367,20 +367,25 @@ if(online.active){enemy.phase+=dt*7*1.3}else if(enemy.grace>0)enemy.grace-=dt;el
  let goal=null;
  if(spotted){
   enemy.lastSeen={x:player.x,z:player.z};enemy.lastSeenAt=elapsed;
-  enemy.aiMode='chase';enemy.patrolGoal=null;
+  if(enemy.aiMode!=='chase'&&enemy.aiMode!=='notice'){
+   enemy.noticeUntil=elapsed+(nav?.MONSTER_NOTICE_DURATION_MS||1200)/1000;
+   enemy.path=[];enemy.pathTime=0;enemy.pathMode=null;
+  }
+  enemy.aiMode=elapsed<enemy.noticeUntil?'notice':'chase';enemy.patrolGoal=null;
   goal=nav?.predict(map,player,{
    x:(player.x-oldPX)/Math.max(.01,dt),z:(player.z-oldPZ)/Math.max(.01,dt)
   },{blocked:(x,z)=>collides(x,z)})||{x:player.x,z:player.z};
  }else if(enemy.lastSeen&&elapsed-enemy.lastSeenAt<3){
-  enemy.aiMode='chase';goal=enemy.lastSeen;
+  enemy.aiMode=elapsed<enemy.noticeUntil?'notice':'chase';goal=enemy.lastSeen;
  }else if(enemy.lastSeen&&elapsed-enemy.lastSeenAt<7.2){
-  enemy.aiMode='search';goal=enemy.lastSeen;
+  enemy.aiMode='search';enemy.noticeUntil=0;goal=enemy.lastSeen;
  }else{
-  enemy.aiMode='patrol';enemy.lastSeen=null;enemy.lastSeenAt=-1000;
+  enemy.aiMode='patrol';enemy.noticeUntil=0;enemy.lastSeen=null;enemy.lastSeenAt=-1000;
   if(!enemy.patrolGoal||Math.hypot(enemy.x-enemy.patrolGoal.x,enemy.z-enemy.patrolGoal.z)<.85)
    enemy.patrolGoal=chooseSoloPatrolGoal();
   goal=enemy.patrolGoal;
  }
+ if(enemy.aiMode!=='notice'){
  enemy.pathTime-=dt;
  const goalChanged=goal&&(!enemy.pathGoal||Math.hypot(goal.x-enemy.pathGoal.x,goal.z-enemy.pathGoal.z)>1.15);
  // 60/120/144Hz frame rates should not cause extra A* work.
@@ -401,8 +406,9 @@ if(online.active){enemy.phase+=dt*7*1.3}else if(enemy.grace>0)enemy.grace-=dt;el
   enemy.stuckTicks=progress>.016?0:enemy.stuckTicks+1;
   if(enemy.stuckTicks>=2)enemy.pathTime=Math.min(enemy.pathTime,.16);
  }else if(enemy.aiMode==='patrol')enemy.patrolGoal=null;
- enemy.phase+=dt*(enemy.aiMode==='chase'?12:7)*1.3;
- if(Math.hypot(enemy.x-player.x,enemy.z-player.z)<1.12&&nav?.clearLine(map,enemy,player,{radius:.15})){end(false);return}
+ }
+ if(enemy.aiMode!=='notice')enemy.phase+=dt*(enemy.aiMode==='chase'?12:7)*1.3;
+ if(enemy.aiMode!=='notice'&&Math.hypot(enemy.x-player.x,enemy.z-player.z)<1.12&&nav?.clearLine(map,enemy,player,{radius:.15})){end(false);return}
 }
 let teammate=closestDownedTeammate(),near=nearest();$('interact').classList.toggle('hidden',!near&&!teammate);if(teammate){$('interact').textContent='✚ '+teammate.name+' 부활시키기 · '+(coarse?'조사':'E');}else if(near){$('interact').innerHTML=`<span class="key">${coarse?'◎':'E'}</span>${nearText(near)}`};let distance=Math.hypot(enemy.x-player.x,enemy.z-player.z);$('danger').style.opacity=enemy.grace>0?'0':String(Math.max(0,Math.min(.88,(13-distance)/13*.94)));if(elapsed-lastHud>.11){lastHud=elapsed;updateHUD(distance)}if(online.active&&performance.now()-online.lastSend>130){online.lastSend=performance.now();sendMultiPosition()}}
 function nearText(o){if(o.type==='quiz'){let st=screenState(o);return st==='done'?'🟢 3/3 해결한 문제 단말기':st==='lock'?`🔴 잠금 해제까지 ${Math.max(1,Math.ceil((o.cooldownUntil-performance.now())/1000))}초`:`⚪ ${o.kind==='spell'?'맞춤법':'사자성어'} 단말기 (${progressOf(o)}/3)`}if(o.type==='key')return owned[o.kind]?'이미 획득한 열쇠':`${o.kind==='spell'?'맞춤법':'사자성어'}의 방 · 열쇠 확인`;return owned.spell&&owned.idiom?'문이 열렸습니다 · 탈출하기':'출구가 잠겨 있습니다 · 열쇠 2개 필요'}
@@ -655,7 +661,7 @@ function render(ts,frameDt){
  gl.useProgram(prog);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);
  let view=matLook(eye,[eye[0]+forward[0],eye[1]+forward[1],eye[2]+forward[2]]);let proj=matPerspective(game==='jumpscare'?1.06:1.29,canvas.width/Math.max(1,canvas.height),.065,96);gl.uniformMatrix4fv(loc.vp,false,mulMat(proj,view));gl.uniform3fv(loc.eye,eye);gl.uniform3fv(loc.fwd,forward);gl.uniform1f(loc.time,t);gl.uniform1f(loc.flash,player.flash?1:0);gl.uniform1f(loc.fog,30);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);draw(staticBuf);if(online.active){let b=makePeerModels();draw(b);gl.deleteBuffer(b.b)}if((enemy.grace<=0||game==='ended'||game==='jumpscare')&&!window.__backroomsMonsterVisual?.ready){let d=makeEnemy();draw(d);gl.deleteBuffer(d.b)}
  const monsterVisual=window.__backroomsMonsterVisual;
- if(monsterVisual?.ready){try{monsterVisual.renderAfterWorld({enemy,player,eye,forward,dt,width:canvas.width,height:canvas.height,phase:enemy.phase,game,chasing:online.active?!!enemy.chasing:enemy.aiMode==='chase',mode:enemy.aiMode})}catch(err){console.warn('GLB renderer reset to fallback',err);monsterVisual.ready=false;}}
+ if(monsterVisual?.ready){try{monsterVisual.renderAfterWorld({enemy,player,eye,forward,dt,width:canvas.width,height:canvas.height,phase:enemy.phase,game,chasing:online.active?!!enemy.chasing:(enemy.aiMode==='chase'||enemy.aiMode==='notice'),mode:enemy.aiMode})}catch(err){console.warn('GLB renderer reset to fallback',err);monsterVisual.ready=false;}}
 
  }
 // Backrooms chase SFX: user-supplied MP3s embedded for standalone and hosted HTML parity.

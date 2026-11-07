@@ -54,7 +54,7 @@ export class BackroomsMonsterVisual {
   }
   notice() {
     // Event-only; the bridge is the ONE owner of animation actions.
-    if(!this.attacking)this.noticeUntil=Math.max(this.noticeUntil,performance.now()+980);
+    if(!this.attacking)this.noticeUntil=Math.max(this.noticeUntil,performance.now()+1200);
   }
   attack(){
     // Death/capture only. Do not latch this into the next gameplay state.
@@ -91,7 +91,7 @@ export class BackroomsMonsterVisual {
     if(!showing){this.noticeUntil=0;this.searchUntil=0;}
     const aiState=chooseMonsterAIState({
       game,visible:showing,chasing:pursuing,
-      noticed:pursuing&&now<this.noticeUntil,
+      noticed:pursuing&&(mode==='notice'||(!mode&&now<this.noticeUntil)),
       searching:mode==='search'||(!mode&&now<this.searchUntil),
       moving:mode==='patrol'&&now<this.movingUntil
     });

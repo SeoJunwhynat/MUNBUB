@@ -8,7 +8,7 @@ const match=html.match(/function updateSprint\(dt,wantsToSprint\)\{[\s\S]*?\n\}/
 assert.ok(match,'Stamina movement controller is present');
 function rig(){
  const scope=vm.createContext({});
- vm.runInContext(`const MAX_STAMINA=300,STAMINA_REGEN_PER_SECOND=36;let stamina=MAX_STAMINA,staminaExhausted=false,notices=[];function toast(s){notices.push(s)};function updateStaminaHUD(){};function sound(){}\n${match[0]}\nglobalThis.rig={tick:updateSprint,get:()=>({stamina,staminaExhausted,notices})};`,scope);
+ vm.runInContext(`const MAX_STAMINA=300,STAMINA_REGEN_PER_SECOND=72;let stamina=MAX_STAMINA,staminaExhausted=false,notices=[];function toast(s){notices.push(s)};function updateStaminaHUD(){};function sound(){}\n${match[0]}\nglobalThis.rig={tick:updateSprint,get:()=>({stamina,staminaExhausted,notices})};`,scope);
  return scope.rig;
 }
 

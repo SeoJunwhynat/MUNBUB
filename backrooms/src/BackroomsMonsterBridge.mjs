@@ -10,7 +10,7 @@ export const MONSTER_STATE_CLIPS=Object.freeze({
  chase:'Chase',attack:'Attack',stun:'Stun',pivot:'Pivot',transition:'Transition'
 });
 const ONCE=new Set(['Notice','Attack','Stun','Pivot','Transition']);
-const NEXT_AFTER=Object.freeze({Notice:'Chase',Attack:'Idle',Stun:'Idle',Pivot:'Patrol',Transition:'Idle'});
+const NEXT_AFTER=Object.freeze({Notice:'Idle',Attack:'Idle',Stun:'Idle',Pivot:'Patrol',Transition:'Idle'});
 
 /** Pure resolver; an attack may ONLY be selected on the actual catch scene. */
 export function chooseMonsterAIState({game='playing',visible=true,chasing=false,noticed=false,

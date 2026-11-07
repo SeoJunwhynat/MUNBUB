@@ -14,8 +14,8 @@ test('HUD is a fixed central symmetric filament, white full and red recharging',
  assert.match(html,/background:#f34a4a!important/);
  assert.match(html,/staminaRecovering&&stamina<MAX_STAMINA/);
 });
-test('co-op and solo stamina capacity is 300 without changing recovery speed',()=>{
- assert.match(html,/MAX_STAMINA=300,STAMINA_REGEN_PER_SECOND=18\*2/);
+test('co-op and solo stamina capacity is 300 with doubled recovery speed',()=>{
+ assert.match(html,/MAX_STAMINA=300,STAMINA_REGEN_PER_SECOND=18\*4/);
  assert.match(server,/const MAX_STAMINA = 300/);
  assert.match(server,/Math\.min\(MAX_STAMINA,Number\(b\.stamina\)\)/);
 });

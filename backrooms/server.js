@@ -75,7 +75,7 @@ function snapshot(room) {
 }
 function dispatch(room,only=null){const payload=JSON.stringify(snapshot(room));const message='data: '+payload+'\n\n';for(const [token,client] of room.listeners){if(only&&token!==only)continue;try{client.write(message);}catch{room.listeners.delete(token);}}}
 function resultEvent(room,p,body){for(const [token,res] of room.listeners){if(token===p.token){try{res.write('event: notice\ndata: '+JSON.stringify(body)+'\n\n')}catch{};break}}}
-function createRoom(name,world,accountId,options={}){if(rooms.size>=MAX_ROOMS)throw badRequest('서버 방 개수가 가득 찼습니다.');let id=code();while(rooms.has(id))id=code();let token=rand(),pid=rand(6);let p={token,id:pid,accountId,name:safeName(name),x:6,z:6,yaw:0,pitch:0,stamina:MAX_STAMINA,ready:true,alive:true,vx:0,vz:0,lastMove:stamp(),respawnAt:0,reviveProtectedUntil:0,revives:0};let room={code:id,host:pid,title:options.title||'두 개의 열쇠',visibility:options.visibility||'private',limit:options.limit||4,status:'lobby',players:new Map([[token,p]]),listeners:new Map(),createdAt:stamp(),lastActivity:stamp(),version:0,elapsed:0,enemy:{x:world.enemy.x,z:world.enemy.z,grace:START_GRACE,path:[],pathAt:0,chasing:false,sightedUntil:0,targetId:null,lastSeen:null,lastSeenAt:0,mode:'patrol',stuckTicks:0,patrolGoal:null},map:world.map,objects:world.objects,quizSolved:{},owned:{spell:false,idiom:false},won:false};rooms.set(id,room);return {room,p};}
+function createRoom(name,world,accountId,options={}){if(rooms.size>=MAX_ROOMS)throw badRequest('서버 방 개수가 가득 찼습니다.');let id=code();while(rooms.has(id))id=code();let token=rand(),pid=rand(6);let p={token,id:pid,accountId,name:safeName(name),x:6,z:6,yaw:0,pitch:0,stamina:MAX_STAMINA,ready:true,alive:true,vx:0,vz:0,lastMove:stamp(),respawnAt:0,reviveProtectedUntil:0,revives:0};let room={code:id,host:pid,title:options.title||'두 개의 열쇠',visibility:options.visibility||'private',limit:options.limit||4,status:'lobby',players:new Map([[token,p]]),listeners:new Map(),createdAt:stamp(),lastActivity:stamp(),version:0,elapsed:0,enemy:{x:world.enemy.x,z:world.enemy.z,grace:START_GRACE,path:[],pathAt:0,chasing:false,sightedUntil:0,targetId:null,lastSeen:null,lastSeenAt:0,mode:'patrol',noticeUntil:0,stuckTicks:0,patrolGoal:null},map:world.map,objects:world.objects,quizSolved:{},owned:{spell:false,idiom:false},won:false};rooms.set(id,room);return {room,p};}
 function auth(b,account){
  const room=rooms.get(String(b.code||'').toUpperCase());
  const player=room&&[...room.players.values()].find(p=>p.accountId===account?.id);
@@ -168,15 +168,16 @@ let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTi
    let goal=null;
    if(target){
     e.targetId=target.id;e.lastSeen={x:target.x,z:target.z};e.lastSeenAt=now;
-    e.sightedUntil=now+3000;e.mode='chase';e.chasing=true;e.patrolGoal=null;
+    if(!e.chasing){e.noticeUntil=now+Nav.MONSTER_NOTICE_DURATION_MS;e.path=[];e.pathAt=0;e.pathMode=null;}
+    e.sightedUntil=now+3000;e.mode=now<e.noticeUntil?'notice':'chase';e.chasing=true;e.patrolGoal=null;
     // Short prediction remains inside walkable space.
     goal=Nav.predict(room.map,target,{x:target.vx,z:target.vz},{blocked:obstacle});
    }else if(e.lastSeen&&now-e.lastSeenAt<3000){
-    e.mode='chase';e.chasing=true;goal=e.lastSeen;
+    e.mode=now<e.noticeUntil?'notice':'chase';e.chasing=true;goal=e.lastSeen;
    }else if(e.lastSeen&&now-e.lastSeenAt<7200){
-    e.mode='search';e.chasing=false;goal=e.lastSeen;
+    e.mode='search';e.noticeUntil=0;e.chasing=false;goal=e.lastSeen;
    }else{
-    e.mode='patrol';e.chasing=false;e.targetId=null;e.lastSeen=null;e.lastSeenAt=0;
+    e.mode='patrol';e.noticeUntil=0;e.chasing=false;e.targetId=null;e.lastSeen=null;e.lastSeenAt=0;
     if(!e.patrolGoal||distance(e,e.patrolGoal)<.85){
      const gx=Math.floor(e.x/CELL),gz=Math.floor(e.z/CELL);
      const candidates=[];
@@ -187,6 +188,7 @@ let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTi
     }
     goal=e.patrolGoal;
    }
+   if(e.mode!=='notice'){
    const targetMoved=goal&&(!e.pathGoal||distance(goal,e.pathGoal)>1.15);
    const sincePlan=now-(e.pathAt||0);
    // Bound expensive A* in multiplayer, but respond immediately to a mode change.
@@ -209,11 +211,12 @@ let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTi
     e.stuckTicks=progress>.016?0:e.stuckTicks+1;
     if(e.stuckTicks>=2)e.pathAt=0;
    }else if(e.mode==='patrol')e.patrolGoal=null;
-   for(const p of active)if(distance(p,e)<1.05&&now>=(p.reviveProtectedUntil||0)&&Nav.clearLine(room.map,p,e,{radius:.15})){
+   }
+   for(const p of active)if(e.mode!=='notice'&&distance(p,e)<1.05&&now>=(p.reviveProtectedUntil||0)&&Nav.clearLine(room.map,p,e,{radius:.15})){
     p.alive=false;p.respawnAt=now+SELF_RESPAWN_MS;p.lastMove=now;room.version++;
    }
   }else{
-    e.mode='idle';e.chasing=false;e.path=[];e.targetId=null;
+    e.mode='idle';e.noticeUntil=0;e.chasing=false;e.path=[];e.targetId=null;
     e.patrolGoal=null;e.lastSeen=null;e.lastSeenAt=0;e.sightedUntil=0;
   }
   // Keep the room running when everybody is downed. Teammates can revive one another,
@@ -255,4 +258,4 @@ const server=http.createServer(async(req,res)=>{
  }
 });
 if(require.main===module)server.listen(PORT,HOST,()=>console.log(`BACKROOMS CO-OP running at http://localhost:${PORT}`));
-module.exports={server,rooms,createRoom,validateWorld,handleAction,snapshot,publicQuestion,listPublicRooms};
+module.exports={server,rooms,createRoom,validateWorld,handleAction,snapshot,publicQuestion,listPublicRooms,tick};

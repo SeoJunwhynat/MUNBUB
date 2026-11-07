@@ -5,9 +5,9 @@ import {Script} from 'node:vm';
 import Nav from '../backrooms/src/monster-nav.js';
 import server from '../backrooms/server.js';
 const html=readFileSync(new URL('../backrooms/index.html',import.meta.url),'utf8');
-test('stamina 300, 2x regen and movement 1.05x',()=>{
- assert.match(html,/MAX_STAMINA=300,STAMINA_REGEN_PER_SECOND=18\*2/);
- assert.match(html,/PLAYER_WALK_SPEED=3\.30\*1\.05,PLAYER_SPRINT_SPEED=5\.75\*1\.05/);
+test('stamina 300, drain and regen doubled and sprint 1.08x chase',()=>{
+ assert.match(html,/MAX_STAMINA=300,STAMINA_REGEN_PER_SECOND=18\*4/);
+ assert.match(html,/PLAYER_WALK_SPEED=3\.30\*1\.05,PLAYER_SPRINT_SPEED=\(5\.75\*1\.05\*\.93\)\*1\.08/);
  assert.match(html,/let speed=sprint\?PLAYER_SPRINT_SPEED:PLAYER_WALK_SPEED/);
  assert.match(html,/stamina=Math\.min\(MAX_STAMINA,stamina\+STAMINA_REGEN_PER_SECOND\*dt\)/);
  assert.match(html,/stamina\/MAX_STAMINA\*100/);

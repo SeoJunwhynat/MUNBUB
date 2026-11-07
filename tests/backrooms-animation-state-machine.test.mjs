@@ -61,8 +61,8 @@ test('bridge plays Chase continuously during pursuit, never Attack until actual 
 test('Notice single-shot completion does not restart every frame',()=>{
  const {bridge,model,calls}=rig();
  bridge.update(enemy,.016,{aiState:'notice'});
- assert.equal(calls.at(-1).options.after,'Chase');
- model.currentName='Chase'; // Mixer finished Notice and selected fallback Chase.
+ assert.equal(calls.at(-1).options.after,'Idle');
+ model.currentName='Idle'; // Notice finishes while the monster holds position.
  for(let i=0;i<20;i++)bridge.update(enemy,.016,{aiState:'notice'});
  assert.equal(calls.filter(x=>x.name==='Notice').length,1);
  bridge.update(enemy,.016,{aiState:'chase'});
