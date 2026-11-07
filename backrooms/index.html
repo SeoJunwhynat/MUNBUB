@@ -461,7 +461,7 @@ async function oneShotJumpscareGif(blob){
  }
  return blob;
 }
-const jumpscareGifReady=fetch(jumpscareGifPath).then(response=>{
+const jumpscareGifReady=fetch(jumpscareGifPath,{cache:'no-store'}).then(response=>{
  if(!response.ok)throw new Error('Jumpscare GIF unavailable');
  return response.blob();
 }).then(oneShotJumpscareGif).then(blob=>{jumpscareGifBlob=blob;return blob}).catch(error=>{console.warn('점프스케어 GIF 로딩 실패',error);return null});
@@ -617,15 +617,16 @@ function playSample(key,volume,{lowpass=0,pan=0,roaming=false,limit=false}={}){
  if(lowpass){const filter=audio.createBiquadFilter();filter.type='lowpass';filter.frequency.value=lowpass;tail=tail.connect(filter);}
  if(audio.createStereoPanner){const p=audio.createStereoPanner();p.pan.value=Math.max(-1,Math.min(1,pan));tail=tail.connect(p);}
  tail.connect(g);
-  if(limit&&audio.createDynamicsCompressor){
-   // Preserve the 3x input boost without uncontrolled digital clipping.
-   const compressor=audio.createDynamicsCompressor();
-   compressor.threshold.value=-12;compressor.knee.value=12;
-   compressor.ratio.value=8;compressor.attack.value=.002;
-   compressor.release.value=.2;g.connect(compressor).connect(audioMaster);
-  }else{g.connect(audioMaster)}
+ let compressor=null;
+ if(limit&&audio.createDynamicsCompressor){
+  // 3x scream input; limiter prevents harsh peak clipping.
+  compressor=audio.createDynamicsCompressor();
+  compressor.threshold.value=-12;compressor.knee.value=12;
+  compressor.ratio.value=8;compressor.attack.value=.002;
+  compressor.release.value=.2;g.connect(compressor).connect(audioMaster);
+ }else{g.connect(audioMaster)}
  const set=roaming?roamVoiceSources:chaseVoiceSources;
- src.onended=()=>{set.delete(src);try{src.disconnect();g.disconnect()}catch{}};
+ src.onended=()=>{set.delete(src);try{src.disconnect();g.disconnect();compressor?.disconnect()}catch{}};
  set.add(src);src.start(now);return true;
 }
 function playChaseCue(kind){
