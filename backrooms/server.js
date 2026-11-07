@@ -144,16 +144,11 @@ function bfsPath(room,sx,sz,tx,tz){const [a,b,c,d]=[Math.floor(sx/CELL),Math.flo
  const prev=Array.from({length:WORLD},()=>Array(WORLD).fill(null)),queue=[[a,b]];prev[b][a]=[-1,-1];for(let i=0;i<queue.length;i++){let [x,z]=queue[i];if(x===c&&z===d)break;for(let [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){let nx=x+dx,nz=z+dz;if(room.map[nz]?.[nx]!==0||prev[nz][nx])continue;prev[nz][nx]=[x,z];queue.push([nx,nz]);}}
  let path=[],x=c,z=d;while(prev[z]?.[x]&&!(x===a&&z===b)&&path.length<500){path.unshift([(x+.5)*CELL,(z+.5)*CELL]);[x,z]=prev[z][x];}return path;
 }
-// Monster accelerates by 30% only when it can SEE a living player within detection range.
+// Occlude monster sight with walls and solid objects, including terminals.
 function seesPlayer(room,player){
- const from=room.enemy,dist=distance(from,player);
- if(dist>CHASE_SIGHT_DISTANCE)return false;
- const steps=Math.max(1,Math.ceil(dist/.55));
- for(let i=1;i<steps;i++){
-  const x=from.x+(player.x-from.x)*i/steps,z=from.z+(player.z-from.z)*i/steps;
-  if(wall(room.map,x,z))return false;
- }
- return true;
+ return Nav.visible(room.map,room.enemy,player,{
+  maxDistance:CHASE_SIGHT_DISTANCE,blocked:(x,z)=>blocks(room,x,z)
+ });
 }
 let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTick)/1000);lastTick=now;for(const room of rooms.values()){
  for(const [token,pl] of room.players){if(now-(pl.lastSeen||room.createdAt)>30000&&!room.listeners.has(token)){room.players.delete(token);if(room.host===pl.id)room.host=[...room.players.values()][0]?.id;}}if(!room.players.size){rooms.delete(room.code);continue}
@@ -168,13 +163,13 @@ let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTi
    const current=visible.find(p=>p.id===e.targetId);
    const nearest=visible[0];
    const target=current&&(!nearest||distance(current,e)<distance(nearest,e)*1.55)?current:nearest;
+   const obstacle=(x,z)=>blocks(room,x,z);
    let goal=null;
    if(target){
     e.targetId=target.id;e.lastSeen={x:target.x,z:target.z};e.lastSeenAt=now;
     e.sightedUntil=now+3000;e.mode='chase';e.chasing=true;e.patrolGoal=null;
-    // Anticipate player direction for a short time, but never predict into walls.
-    const lead={x:target.x+(target.vx||0)*.27,z:target.z+(target.vz||0)*.27};
-    goal=Nav.walkable(room.map,lead.x,lead.z,.38)?lead:{x:target.x,z:target.z};
+    // Short prediction remains inside walkable space.
+    goal=Nav.predict(room.map,target,{x:target.vx,z:target.vz},{blocked:obstacle});
    }else if(e.lastSeen&&now-e.lastSeenAt<3000){
     e.mode='chase';e.chasing=true;goal=e.lastSeen;
    }else if(e.lastSeen&&now-e.lastSeenAt<7200){
@@ -192,17 +187,24 @@ let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTi
     goal=e.patrolGoal;
    }
    const targetMoved=goal&&(!e.pathGoal||distance(goal,e.pathGoal)>1.15);
-   if(goal&&(now-e.pathAt>320||!e.path?.length||targetMoved||e.stuckTicks>=2)){
-    e.path=Nav.route(room.map,e,goal,{blocked:(x,z)=>blocks(room,x,z)});
-    e.pathGoal={x:goal.x,z:goal.z};e.pathAt=now;e.stuckTicks=0;
+   const sincePlan=now-(e.pathAt||0);
+   // Bound expensive A* in multiplayer, but respond immediately to a mode change.
+   if(goal&&(e.pathMode!==e.mode||sincePlan>850||
+       (targetMoved&&sincePlan>420)||(!e.path?.length&&sincePlan>480)||
+       (e.stuckTicks>=2&&sincePlan>200))){
+    e.path=Nav.route(room.map,e,goal,{blocked:obstacle});
+    e.pathGoal={x:goal.x,z:goal.z};e.pathMode=e.mode;
+    e.pathAt=now;e.stuckTicks=0;
    }
    while(e.path?.length&&distance(e,e.path[0])<.43)e.path.shift();
    const waypoint=e.path?.[0];
    if(waypoint){
     const speed=e.mode==='chase'?Nav.MONSTER_CHASE_SPEED:e.mode==='search'?Nav.MONSTER_SEARCH_SPEED:Nav.MONSTER_PATROL_SPEED;
-    const next=Nav.advance(room.map,e,waypoint,speed*dt,{blocked:(x,z)=>blocks(room,x,z)});
-    if(next.moved){e.x=next.x;e.z=next.z;e.stuckTicks=0;}
-    else{e.stuckTicks++;e.pathAt=0;}
+    const next=Nav.advance(room.map,e,waypoint,speed*dt,{blocked:obstacle});
+    const progress=distance(e,waypoint)-distance(next,waypoint);
+    if(next.moved){e.x=next.x;e.z=next.z;}
+    e.stuckTicks=progress>.016?0:e.stuckTicks+1;
+    if(e.stuckTicks>=2)e.pathAt=0;
    }else if(e.mode==='patrol')e.patrolGoal=null;
    for(const p of active)if(distance(p,e)<1.05&&now>=(p.reviveProtectedUntil||0)&&Nav.clearLine(room.map,p,e,{radius:.15})){
     p.alive=false;p.respawnAt=now+SELF_RESPAWN_MS;p.lastMove=now;room.version++;

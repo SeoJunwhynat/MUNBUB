@@ -311,13 +311,10 @@ function updateSprint(dt,wantsToSprint){
  return false;
 }
 let last=0,t=0,lastHud=0,walkPhase=0,lastSound=0,lastFallbackFrame=0;function soloMonsterSeesPlayer(){
- const dist=Math.hypot(enemy.x-player.x,enemy.z-player.z);
- if(enemy.grace>0||dist>17)return false;
- for(let d=.65;d<dist;d+=.65){
-  const x=enemy.x+(player.x-enemy.x)*d/dist,z=enemy.z+(player.z-enemy.z)*d/dist;
-  if(isWall(x,z))return false;
- }
- return true;
+ const nav=window.MonsterNav;
+ return enemy.grace<=0&&!!nav?.visible(map,enemy,player,{
+  maxDistance:17,blocked:(x,z)=>collides(x,z)
+ });
 }
 function update(dt){elapsed+=dt;let forward=(keys['KeyW']?1:0)-(keys['KeyS']?1:0)-joy.y,strafe=(keys['KeyD']?1:0)-(keys['KeyA']?1:0)+joy.x;let len=Math.hypot(forward,strafe);if(len>0){forward/=Math.max(1,len);strafe/=Math.max(1,len)}let sprint=updateSprint(dt,(keys.ShiftLeft||keys.ShiftRight||runHold)&&len>.1);let speed=sprint?5.75:3.30;let dx=(Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)*speed*dt,dz=(-Math.cos(player.yaw)*forward+Math.sin(player.yaw)*strafe)*speed*dt;const oldPX=player.x,oldPZ=player.z;safeMove(dx,dz);const moving=len>.1&&Math.hypot(player.x-oldPX,player.z-oldPZ)>Math.max(.001,dt*.12);if(moving){walkPhase+=dt*(sprint?14:9);if(elapsed-lastSound>(sprint?.29:.46)){lastSound=elapsed;sound('step',sprint)}}else walkPhase=0;for(let o of objects){if(o.type==='quiz'&&o.cooldownUntil&&performance.now()>=o.cooldownUntil){o.cooldownUntil=0;buildWorldGeometry();}}
 if(online.active){enemy.phase+=dt*7*1.3}else if(enemy.grace>0)enemy.grace-=dt;else{
@@ -326,8 +323,9 @@ if(online.active){enemy.phase+=dt*7*1.3}else if(enemy.grace>0)enemy.grace-=dt;el
  if(spotted){
   enemy.lastSeen={x:player.x,z:player.z};enemy.lastSeenAt=elapsed;
   enemy.aiMode='chase';enemy.patrolGoal=null;
-  const lead={x:player.x+(player.x-oldPX)/Math.max(.01,dt)*.27,z:player.z+(player.z-oldPZ)/Math.max(.01,dt)*.27};
-  goal=nav?.walkable(map,lead.x,lead.z,.38)&&!collides(lead.x,lead.z)?lead:{x:player.x,z:player.z};
+  goal=nav?.predict(map,player,{
+   x:(player.x-oldPX)/Math.max(.01,dt),z:(player.z-oldPZ)/Math.max(.01,dt)
+  },{blocked:(x,z)=>collides(x,z)})||{x:player.x,z:player.z};
  }else if(enemy.lastSeen&&elapsed-enemy.lastSeenAt<3){
   enemy.aiMode='chase';goal=enemy.lastSeen;
  }else if(enemy.lastSeen&&elapsed-enemy.lastSeenAt<7.2){
@@ -339,17 +337,23 @@ if(online.active){enemy.phase+=dt*7*1.3}else if(enemy.grace>0)enemy.grace-=dt;el
   goal=enemy.patrolGoal;
  }
  enemy.pathTime-=dt;
- if(goal&&(enemy.pathTime<=0||!enemy.path.length||!enemy.pathGoal||
-    Math.hypot(goal.x-enemy.pathGoal.x,goal.z-enemy.pathGoal.z)>1.15||enemy.stuckTicks>=2)){
-  enemyPath(goal);enemy.pathTime=.32;enemy.stuckTicks=0;
+ const goalChanged=goal&&(!enemy.pathGoal||Math.hypot(goal.x-enemy.pathGoal.x,goal.z-enemy.pathGoal.z)>1.15);
+ // 60/120/144Hz frame rates should not cause extra A* work.
+ if(goal&&(enemy.pathMode!==enemy.aiMode||enemy.pathTime<=0||
+    (goalChanged&&enemy.pathTime<.16)||(enemy.stuckTicks>=2&&enemy.pathTime<.17))){
+  enemyPath(goal);enemy.pathMode=enemy.aiMode;
+  enemy.pathTime=enemy.path.length?.55:.8;enemy.stuckTicks=0;
  }
  while(enemy.path.length&&Math.hypot(enemy.x-enemy.path[0][0],enemy.z-enemy.path[0][1])<.43)enemy.path.shift();
  const waypoint=enemy.path[0];
  if(waypoint&&nav){
   const spd=enemy.aiMode==='chase'?nav.MONSTER_CHASE_SPEED:enemy.aiMode==='search'?nav.MONSTER_SEARCH_SPEED:nav.MONSTER_PATROL_SPEED;
   const moved=nav.advance(map,enemy,{x:waypoint[0],z:waypoint[1]},spd*dt,{blocked:(x,z)=>collides(x,z)});
-  if(moved.moved){enemy.x=moved.x;enemy.z=moved.z;enemy.stuckTicks=0;}
-  else{enemy.stuckTicks++;enemy.pathTime=0;}
+  const progress=Math.hypot(enemy.x-waypoint[0],enemy.z-waypoint[1])-
+   Math.hypot(moved.x-waypoint[0],moved.z-waypoint[1]);
+  if(moved.moved){enemy.x=moved.x;enemy.z=moved.z;}
+  enemy.stuckTicks=progress>.016?0:enemy.stuckTicks+1;
+  if(enemy.stuckTicks>=2)enemy.pathTime=Math.min(enemy.pathTime,.16);
  }else if(enemy.aiMode==='patrol')enemy.patrolGoal=null;
  enemy.phase+=dt*(enemy.aiMode==='chase'?12:7)*1.3;
  if(Math.hypot(enemy.x-player.x,enemy.z-player.z)<1.12&&nav?.clearLine(map,enemy,player,{radius:.15})){end(false);return}
@@ -526,7 +530,7 @@ function render(ts){syncSoundscape();syncChaseCues();if(fallback&&ts-lastFallbac
  gl.useProgram(prog);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);
  let view=matLook(eye,[eye[0]+forward[0],eye[1]+forward[1],eye[2]+forward[2]]);let proj=matPerspective(game==='jumpscare'?1.06:1.29,canvas.width/Math.max(1,canvas.height),.065,96);gl.uniformMatrix4fv(loc.vp,false,mulMat(proj,view));gl.uniform3fv(loc.eye,eye);gl.uniform3fv(loc.fwd,forward);gl.uniform1f(loc.time,t);gl.uniform1f(loc.flash,player.flash?1:0);gl.uniform1f(loc.fog,30);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);draw(staticBuf);if(online.active){let b=makePeerModels();draw(b);gl.deleteBuffer(b.b)}if((enemy.grace<=0||game==='ended'||game==='jumpscare')&&!window.__backroomsMonsterVisual?.ready){let d=makeEnemy();draw(d);gl.deleteBuffer(d.b)}
  const monsterVisual=window.__backroomsMonsterVisual;
- if(monsterVisual?.ready){try{monsterVisual.renderAfterWorld({enemy,player,eye,forward,dt,width:canvas.width,height:canvas.height,phase:enemy.phase,game,chasing:online.active?!!enemy.chasing:enemy.aiMode==='chase'})}catch(err){console.warn('GLB renderer reset to fallback',err);monsterVisual.ready=false;}}
+ if(monsterVisual?.ready){try{monsterVisual.renderAfterWorld({enemy,player,eye,forward,dt,width:canvas.width,height:canvas.height,phase:enemy.phase,game,chasing:online.active?!!enemy.chasing:enemy.aiMode==='chase',mode:enemy.aiMode})}catch(err){console.warn('GLB renderer reset to fallback',err);monsterVisual.ready=false;}}
 
  requestAnimationFrame(render)}
 // Backrooms chase SFX: user-supplied MP3s embedded for standalone and hosted HTML parity.
@@ -949,7 +953,7 @@ function gotSnapshot(r){if(!online.active||r.code!==online.code)return;
  if(r.status==='lobby'){if(game!=='lobby'&&game!=='controls')multiLobbyScreen();updateMultiWaiting();updateCoopPanel();return}
  if(r.status==='playing'){
   syncCoopWorld(r);enemy.x=r.enemy.x;enemy.z=r.enemy.z;enemy.grace=r.enemy.grace;
-  enemy.chasing=!!r.enemy.chasing;elapsed=r.elapsed;
+  enemy.chasing=!!r.enemy.chasing;enemy.aiMode=r.enemy.mode||(enemy.chasing?'chase':'patrol');elapsed=r.elapsed;
   const me=r.players.find(p=>p.id===online.me);if(!me)return;
   if(game==='lobby'){player.x=me.x;player.z=me.z;player.yaw=me.yaw;start()}
   if(!me.alive){if(!online.dead)showCoopDowned();else updateDownedUI();}

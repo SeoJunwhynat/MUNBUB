@@ -72,7 +72,7 @@ export class BackroomsMonsterVisual {
     this.lastX=null;this.lastZ=null;
     if(this.ready){this.bridge.reset();this.state='Idle';}
   }
-  renderAfterWorld({enemy,player,eye,forward,dt,width,height,phase,game,chasing}) {
+  renderAfterWorld({enemy,player,eye,forward,dt,width,height,phase,game,chasing,mode=null}) {
     if(!this.ready||!enemy||!player)return;
     const now=performance.now();
     const showing=enemy.grace<=0||game==='jumpscare'||game==='ended';
@@ -92,8 +92,8 @@ export class BackroomsMonsterVisual {
     const aiState=chooseMonsterAIState({
       game,visible:showing,chasing:pursuing,
       noticed:pursuing&&now<this.noticeUntil,
-      searching:now<this.searchUntil,
-      moving:now<this.movingUntil
+      searching:mode==='search'||(!mode&&now<this.searchUntil),
+      moving:mode==='patrol'&&now<this.movingUntil
     });
     if(aiState==='attack'&&!this.attacking)this.attack();
     this.wasChasing=pursuing;

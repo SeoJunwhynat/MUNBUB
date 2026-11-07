@@ -26,6 +26,25 @@
    }
    return true;
  }
+
+ // Shared perception: scenery and walls block sight, independently of walk radius.
+ function visible(map,from,to,{blocked=null,maxDistance=Infinity}={}){
+  if(!map?.length||!from||!to||![from.x,from.z,to.x,to.z].every(Number.isFinite))return false;
+  if(Math.hypot(to.x-from.x,to.z-from.z)>maxDistance)return false;
+  return clearLine(map,from,to,{radius:.08,blocked});
+ }
+ // Predict cautiously; never aim across a wall/prop or overreact to network jitter.
+ function predict(map,target,velocity,{blocked=null,leadSeconds=.27,maxLead=1.6}={}){
+  if(!target||![target.x,target.z].every(Number.isFinite))return null;
+  const base={x:target.x,z:target.z};
+  const vx=Number.isFinite(velocity?.x)?Math.max(-7.4,Math.min(7.4,velocity.x)):0;
+  const vz=Number.isFinite(velocity?.z)?Math.max(-7.4,Math.min(7.4,velocity.z)):0;
+  const length=Math.hypot(vx,vz)*leadSeconds;
+  if(length<.01)return base;
+  const scale=Math.min(leadSeconds,maxLead/Math.hypot(vx,vz));
+  const next={x:base.x+vx*scale,z:base.z+vz*scale};
+  return clearLine(map,base,next,{blocked,radius:.35})?next:base;
+ }
  function route(map,from,to,{blocked=null}={}){
    if(!from||!to||!map?.length)return [];
    if(![from.x,from.z,to.x,to.z].every(Number.isFinite))return [];
@@ -141,5 +160,5 @@
    }
    return {x,z,moved:Math.hypot(x-from.x,z-from.z)>.002};
  }
- return Object.freeze({CELL,MONSTER_CHASE_SPEED,MONSTER_PATROL_SPEED,MONSTER_SEARCH_SPEED,wall,walkable,clearLine,route,advance});
+ return Object.freeze({CELL,MONSTER_CHASE_SPEED,MONSTER_PATROL_SPEED,MONSTER_SEARCH_SPEED,wall,walkable,clearLine,visible,predict,route,advance});
 });
