@@ -23,6 +23,6 @@ test('catch GIF decodes one-shot by dropping infinite loop extension and ignores
 });
 test('solo and co-op movement and GLB animation all use 1.3x multiplier',()=>{
  assert.match(html,/let spd=2\.08\*1\.3/);
- assert.match(server,/Math\.min\(d,2\.05\*1\.3\*dt\)/);
+ assert.match(server,/Math\.min\(d,2\.05\*1\.3\*\(room\.enemy\.chasing\?1\.3:1\)\*dt\)/);
  assert.match(visual,/this\.controller\.setAnimationSpeed\(1\.3\)/);
 });
