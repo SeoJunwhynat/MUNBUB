@@ -181,7 +181,7 @@ document.head.append(style);
  };
  function timeLeft(){return deadline?Math.max(0,Math.ceil((deadline-now())/1000)):null}
  function stats(){
-  return '<div class="mb-ranked-stat"><span>⚔ '+esc(MODES[mode]?.title||'랭킹전')+'</span>'+
+  return '<div class="mb-ranked-stat quiz-meta"><span>⚔ '+esc(MODES[mode]?.title||'랭킹전')+'</span>'+
    '<span>정답 '+correct+' / '+answered+'</span>'+
    (mode==='hardcore'?'<span>점수 '+score+'점</span>':'')+
    (deadline?'<span id="mb-ranked-time">⏱ '+timeLeft()+'초</span>':'')+'</div>';
@@ -196,9 +196,9 @@ document.head.append(style);
   const written=q.format==='text'||(!options.length&&q.type!=='idiom');
   frame(MODES[mode].title,stats()+
    '<p class="mb-ranked-help">문제 '+(answered+1)+' · '+esc(label)+' · '+(written?'서술형':'객관식')+'</p>'+
-   '<div class="mb-ranked-question">'+esc(problem)+'</div>'+
+   '<div class="mb-ranked-question prompt" role="heading" aria-level="3">'+esc(problem)+'</div>'+
    (written?'<form id="mb-ranked-write"><input id="mb-ranked-typed" class="mb-ranked-input" maxlength="120" required autocomplete="off" spellcheck="false" placeholder="정답을 직접 입력해 줘"><button class="mb-ranked-primary" type="submit">제출</button></form>':
-    '<div class="mb-ranked-choices">'+options.map(x=>'<button type="button" data-ranked-answer="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div>')+
+    '<div class="mb-ranked-choices option-list">'+options.map(x=>'<button class="option" type="button" data-ranked-answer="'+esc(x)+'">'+esc(x)+'</button>').join('')+'</div>')+
    '<p class="mb-ranked-help" id="mb-ranked-message">서버에서 정답을 확인해. 랭킹전 점수는 계정별 최고 기록만 반영돼.</p>'+
    '<button id="mb-ranked-stop" type="button">도전 종료하고 기록 저장</button>');
   dialog.querySelectorAll('[data-ranked-answer]').forEach(btn=>btn.addEventListener('click',()=>submit(btn.dataset.rankedAnswer)));
