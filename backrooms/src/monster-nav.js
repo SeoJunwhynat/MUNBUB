@@ -15,7 +15,7 @@
    return !wall(map,x-radius,z-radius)&&!wall(map,x-radius,z+radius)
     &&!wall(map,x+radius,z-radius)&&!wall(map,x+radius,z+radius);
  }
- function clearLine(map,a,b,{radius=0.36,blocked=null}={}){
+ function clearLine(map,a,b,{radius=0.35,blocked=null}={}){
    if(!a||!b||![a.x,a.z,b.x,b.z].every(Number.isFinite))return false;
    const distance=Math.hypot(b.x-a.x,b.z-a.z);
    const steps=Math.max(1,Math.ceil(distance/.20));
@@ -45,9 +45,34 @@
   const next={x:base.x+vx*scale,z:base.z+vz*scale};
   return clearLine(map,base,next,{blocked,radius:.35})?next:base;
  }
- function route(map,from,to,{blocked=null}={}){
+ // A player can stand within .35m of a wall (player radius .33m).
+ // Rather than fail pathfinding at that unreachable exact point, find a legal
+ // approach on the player's side within monster capture distance.
+ function approachRoute(map,from,to,blocked){
+   const candidates=[];
+   for(const radius of [.40,.60,.78,.90]){
+     for(let i=0;i<16;i++){
+       const angle=Math.PI*2*i/16;
+       const p={x:to.x+Math.cos(angle)*radius,z:to.z+Math.sin(angle)*radius};
+       if(!walkable(map,p.x,p.z,.35)||blocked?.(p.x,p.z))continue;
+       if(!clearLine(map,p,to,{radius:.08,blocked}))continue;
+       candidates.push({p,score:Math.hypot(p.x-from.x,p.z-from.z)+radius*.12});
+     }
+   }
+   candidates.sort((a,b)=>a.score-b.score);
+   // Bound computation for a crowded multiplayer maze.
+   for(const candidate of candidates.slice(0,24)){
+     const path=route(map,from,candidate.p,{blocked,allowApproach:false});
+     if(path.length)return path;
+   }
+   return [];
+ }
+ function route(map,from,to,{blocked=null,allowApproach=true}={}){
    if(!from||!to||!map?.length)return [];
    if(![from.x,from.z,to.x,to.z].every(Number.isFinite))return [];
+   // Path planning and actual movement must use exactly the same clearance.
+   if(!walkable(map,to.x,to.z,.35)||blocked?.(to.x,to.z))
+     return allowApproach?approachRoute(map,from,to,blocked):[];
    if(clearLine(map,from,to,{blocked}))return [{x:to.x,z:to.z}];
    // An ordinary tile-level A* treats an entire 4m tile as one waypoint.
    // Terminals and shelves sit at tile centres, so their collider could make
@@ -62,7 +87,7 @@
      if(x<0||z<0||x>=width||z>=height)return false;
      const id=z*width+x;
      if(!pass[id]){const px=x+.5,pz=z+.5;
-       pass[id]=(walkable(map,px,pz,.36)&&!blocked?.(px,pz))?1:-1;}
+       pass[id]=(walkable(map,px,pz,.35)&&!blocked?.(px,pz))?1:-1;}
      return pass[id]===1;
    }
    function anchor(point){
@@ -179,9 +204,10 @@
    const allowed=(nx,nz)=>walkable(map,nx,nz,.35)&&!blocked?.(nx,nz);
    for(let i=0;i<steps;i++){
      if(allowed(x+dx,z+dz)){x+=dx;z+=dz;continue}
-     // Slide along an obstacle without walking through it.
-     if(allowed(x+dx,z))x+=dx;
-     if(allowed(x,z+dz))z+=dz;
+     // Slide only while making progress; otherwise request a fresh route.
+     const oldDistance=Math.hypot(to.x-x,to.z-z);
+     if(allowed(x+dx,z)&&Math.hypot(to.x-x-dx,to.z-z)<oldDistance-1e-6)x+=dx;
+     if(allowed(x,z+dz)&&Math.hypot(to.x-x,to.z-z-dz)<Math.hypot(to.x-x,to.z-z)-1e-6)z+=dz;
    }
    return {x,z,moved:Math.hypot(x-from.x,z-from.z)>.002};
  }

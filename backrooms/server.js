@@ -198,7 +198,10 @@ let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTi
     e.pathAt=now;e.stuckTicks=0;
    }
    const waypoint=Nav.nextWaypoint(room.map,e,e.path,{blocked:obstacle});
-   if(waypoint){
+   if(waypoint&&!Nav.clearLine(room.map,e,waypoint,{blocked:obstacle})){
+    // A moving target invalidated this turn: replan from the actual position.
+    e.path=[];e.pathAt=0;e.stuckTicks=2;
+   }else if(waypoint){
     const speed=e.mode==='chase'?Nav.MONSTER_CHASE_SPEED:e.mode==='search'?Nav.MONSTER_SEARCH_SPEED:Nav.MONSTER_PATROL_SPEED;
     const next=Nav.advance(room.map,e,waypoint,speed*dt,{blocked:obstacle});
     const progress=distance(e,waypoint)-distance(next,waypoint);

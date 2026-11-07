@@ -347,7 +347,9 @@ if(online.active){enemy.phase+=dt*7*1.3}else if(enemy.grace>0)enemy.grace-=dt;el
   enemy.pathTime=enemy.path.length?.55:.8;enemy.stuckTicks=0;
  }
  const waypoint=nav?.nextWaypoint(map,enemy,enemy.path,{blocked:(x,z)=>collides(x,z)});
- if(waypoint&&nav){
+ if(waypoint&&nav&&!nav.clearLine(map,enemy,waypoint,{blocked:(x,z)=>collides(x,z)})){
+  enemy.path=[];enemy.pathTime=0;enemy.stuckTicks=2;
+ }else if(waypoint&&nav){
   const spd=enemy.aiMode==='chase'?nav.MONSTER_CHASE_SPEED:enemy.aiMode==='search'?nav.MONSTER_SEARCH_SPEED:nav.MONSTER_PATROL_SPEED;
   const moved=nav.advance(map,enemy,waypoint,spd*dt,{blocked:(x,z)=>collides(x,z)});
   const progress=Math.hypot(enemy.x-waypoint.x,enemy.z-waypoint.z)-
