@@ -8,6 +8,7 @@
  const CELL=4;
  const MONSTER_CHASE_SPEED=((5.75*1.05*.93)*1.08)*0.8;
  const MONSTER_NOTICE_DURATION_MS=1200;
+ const MONSTER_FIELD_OF_VIEW_DEGREES=140;
  const MONSTER_PATROL_SPEED=2.65;
  const MONSTER_SEARCH_SPEED=3.2;
  const DIRS=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
@@ -28,10 +29,21 @@
    return true;
  }
 
- // Shared perception: scenery and walls block sight, independently of walk radius.
- function visible(map,from,to,{blocked=null,maxDistance=Infinity}={}){
+ // Facing is a yaw angle measured from +Z towards +X. The sight cone
+ // extends 70° to either side (total FOV 140°), not behind the monster.
+ function withinFieldOfView(from,to,facing,angle=MONSTER_FIELD_OF_VIEW_DEGREES){
+  if(!from||!to||![from.x,from.z,to.x,to.z,facing].every(Number.isFinite))return false;
+  const dx=to.x-from.x,dz=to.z-from.z;
+  const distance=Math.hypot(dx,dz);
+  if(distance<.0001)return true;
+  const field=Math.max(0,Math.min(360,Number(angle)||0))*Math.PI/360;
+  return (dx*Math.sin(facing)+dz*Math.cos(facing))/distance>=Math.cos(field)-1e-8;
+ }
+ // Shared perception: require both an unobstructed line and the front arc.
+ function visible(map,from,to,{blocked=null,maxDistance=Infinity,facing=null,fovDegrees=MONSTER_FIELD_OF_VIEW_DEGREES}={}){
   if(!map?.length||!from||!to||![from.x,from.z,to.x,to.z].every(Number.isFinite))return false;
   if(Math.hypot(to.x-from.x,to.z-from.z)>maxDistance)return false;
+  if(facing!==null&&!withinFieldOfView(from,to,facing,fovDegrees))return false;
   return clearLine(map,from,to,{radius:.08,blocked});
  }
  // Predict cautiously; never aim across a wall/prop or overreact to network jitter.
@@ -212,5 +224,5 @@
    }
    return {x,z,moved:Math.hypot(x-from.x,z-from.z)>.002};
  }
- return Object.freeze({CELL,MONSTER_CHASE_SPEED,MONSTER_NOTICE_DURATION_MS,MONSTER_PATROL_SPEED,MONSTER_SEARCH_SPEED,wall,walkable,clearLine,visible,predict,route,nextWaypoint,advance});
+ return Object.freeze({CELL,MONSTER_CHASE_SPEED,MONSTER_NOTICE_DURATION_MS,MONSTER_FIELD_OF_VIEW_DEGREES,MONSTER_PATROL_SPEED,MONSTER_SEARCH_SPEED,wall,walkable,clearLine,withinFieldOfView,visible,predict,route,nextWaypoint,advance});
 });

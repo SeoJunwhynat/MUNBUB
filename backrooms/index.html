@@ -279,7 +279,7 @@ function draw(buf){if(!buf||!buf.count)return;gl.bindBuffer(gl.ARRAY_BUFFER,buf.
 const MAX_STAMINA=300,STAMINA_REGEN_PER_SECOND=18*4;
 let staminaRecovering=false;
 const PLAYER_WALK_SPEED=3.30*1.05,PLAYER_SPRINT_SPEED=(5.75*1.05*.93)*1.08;
-let map=[],objects=[],staticBuf=null;const player={x:6,z:6,yaw:0,pitch:0,stamina:MAX_STAMINA,flash:true};let enemy={x:0,z:0,path:[],pathTime:0,grace:0,phase:0,aiMode:'patrol',lastSeen:null,lastSeenAt:-1000,patrolGoal:null,pathGoal:null,stuckTicks:0,noticeUntil:0,active:false},game='menu',active=null,quizSolved={},owned={spell:false,idiom:false},elapsed=0,toastClock=0,stamina=MAX_STAMINA,staminaExhausted=false,seconds=0,locked=false,runHold=false,joy={x:0,y:0};const keys={};
+let map=[],objects=[],staticBuf=null;const player={x:6,z:6,yaw:0,pitch:0,stamina:MAX_STAMINA,flash:true};let enemy={x:0,z:0,path:[],pathTime:0,grace:0,phase:0,aiMode:'patrol',lastSeen:null,lastSeenAt:-1000,patrolGoal:null,pathGoal:null,stuckTicks:0,noticeUntil:0,active:false,yaw:0},game='menu',active=null,quizSolved={},owned={spell:false,idiom:false},elapsed=0,toastClock=0,stamina=MAX_STAMINA,staminaExhausted=false,seconds=0,locked=false,runHold=false,joy={x:0,y:0};const keys={};
 let editingControls=false,controlReturnState="menu",controlSelected="joystick",touchLayouts={};
 let onlineQuizPending=null;let online={active:false,code:"",token:"",me:"",url:"",room:null,host:false,source:null,version:-1,players:[],lastSend:0,dead:false};
 let coopTeamUpdateAt=0,gameSettingsOpen=false,gameSettingsReturn="playing",mouseGain=1;
@@ -314,7 +314,7 @@ if(staticBuf&&staticBuf.b)gl.deleteBuffer(staticBuf.b);staticBuf=buffer(m)}funct
 let openDirs=[[0,1,PI],[1,0,PI/2],[0,-1,0],[-1,0,-PI/2]];
 openDirs=openDirs.filter(([dx,dz])=>map[1+dz]?.[1+dx]===0);
 openDirs.sort((a,b)=>{let count=d=>{let v=0;for(let k=1;k<=6;k++){if(map[1+d[1]*k]?.[1+d[0]*k]!==0)break;v++}return v};return count(b)-count(a)});
-player.yaw=openDirs.length?openDirs[0][2]:PI;player.pitch=0;enemy.x=(spawn.x+.5)*CELL;enemy.z=(spawn.z+.5)*CELL;enemy.grace=0;enemy.active=false;enemy.pathTime=0;enemy.phase=0;enemy.path=[];enemy.lastSeen=null;enemy.lastSeenAt=-1000;enemy.patrolGoal=null;enemy.pathGoal=null;enemy.pathMode=null;enemy.stuckTicks=0;enemy.noticeUntil=0;enemy.chasing=false;enemy.aiMode='patrol';return objects.length}
+player.yaw=openDirs.length?openDirs[0][2]:PI;player.pitch=0;enemy.x=(spawn.x+.5)*CELL;enemy.z=(spawn.z+.5)*CELL;enemy.grace=0;enemy.active=false;enemy.yaw=0;enemy.pathTime=0;enemy.phase=0;enemy.path=[];enemy.lastSeen=null;enemy.lastSeenAt=-1000;enemy.patrolGoal=null;enemy.pathGoal=null;enemy.pathMode=null;enemy.stuckTicks=0;enemy.noticeUntil=0;enemy.chasing=false;enemy.aiMode='patrol';return objects.length}
 function isWall(x,z){let gx=Math.floor(x/CELL),gz=Math.floor(z/CELL);return !map[gz]||map[gz][gx]!==0}function collides(x,z){let r=.33,ix0=Math.floor((x-r)/CELL),ix1=Math.floor((x+r)/CELL),iz0=Math.floor((z-r)/CELL),iz1=Math.floor((z+r)/CELL);for(let gz=iz0;gz<=iz1;gz++)for(let gx=ix0;gx<=ix1;gx++){if(map[gz]?.[gx]===0)continue;let a=gx*CELL,b=gz*CELL,xx=Math.max(a,Math.min(x,a+CELL)),zz=Math.max(b,Math.min(z,b+CELL));if((x-xx)**2+(z-zz)**2<r*r)return true}for(let o of objects){if(o.type==='exit')continue;let cx=(o.x+.5)*CELL,cz=(o.z+.5)*CELL,half=o.type==='quiz'?.72:.88,xx=Math.max(cx-half,Math.min(x,cx+half)),zz=Math.max(cz-half,Math.min(z,cz+half));if((x-xx)**2+(z-zz)**2<r*r)return true}return false}function safeMove(dx,dz){let steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.115));for(let i=0;i<steps;i++){let sx=dx/steps,sz=dz/steps;if(!collides(player.x+sx,player.z))player.x+=sx;if(!collides(player.x,player.z+sz))player.z+=sz}}
 function enemyPath(goal){
   const nav=window.MonsterNav;
@@ -359,7 +359,7 @@ function updateSprint(dt,wantsToSprint){
 let last=0,t=0,lastHud=0,walkPhase=0,lastSound=0,lastFallbackFrame=0;function soloMonsterSeesPlayer(){
  const nav=window.MonsterNav;
  return enemy.active&&enemy.grace<=0&&!!nav?.visible(map,enemy,player,{
-  maxDistance:17,blocked:(x,z)=>collides(x,z)
+  maxDistance:17,facing:enemy.yaw,fovDegrees:140,blocked:(x,z)=>collides(x,z)
  });
 }
 function update(dt){elapsed+=dt;let forward=(keys['KeyW']?1:0)-(keys['KeyS']?1:0)-joy.y,strafe=(keys['KeyD']?1:0)-(keys['KeyA']?1:0)+joy.x;let len=Math.hypot(forward,strafe);if(len>0){forward/=Math.max(1,len);strafe/=Math.max(1,len)}let sprint=updateSprint(dt,(keys.ShiftLeft||keys.ShiftRight||runHold)&&len>.1);let speed=sprint?PLAYER_SPRINT_SPEED:PLAYER_WALK_SPEED;let dx=(Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)*speed*dt,dz=(-Math.cos(player.yaw)*forward+Math.sin(player.yaw)*strafe)*speed*dt;const oldPX=player.x,oldPZ=player.z;safeMove(dx,dz);const moving=len>.1&&Math.hypot(player.x-oldPX,player.z-oldPZ)>Math.max(.001,dt*.12);if(moving){walkPhase+=dt*(sprint?14:9);if(elapsed-lastSound>(sprint?.29:.46)){lastSound=elapsed;sound('step',sprint)}}else walkPhase=0;for(let o of objects){if(o.type==='quiz'&&o.cooldownUntil&&performance.now()>=o.cooldownUntil){o.cooldownUntil=0;buildWorldGeometry();}}
@@ -405,7 +405,7 @@ if(online.active){if(enemy.active)enemy.phase+=dt*7*1.3}else if(!enemy.active){e
   const moved=nav.advance(map,enemy,waypoint,spd*dt,{blocked:(x,z)=>collides(x,z)});
   const progress=Math.hypot(enemy.x-waypoint.x,enemy.z-waypoint.z)-
    Math.hypot(moved.x-waypoint.x,moved.z-waypoint.z);
-  if(moved.moved){enemy.x=moved.x;enemy.z=moved.z;}
+  if(moved.moved){const dx=moved.x-enemy.x,dz=moved.z-enemy.z;if(Math.hypot(dx,dz)>.004)enemy.yaw=Math.atan2(dx,dz);enemy.x=moved.x;enemy.z=moved.z;}
   enemy.stuckTicks=progress>.016?0:enemy.stuckTicks+1;
   if(enemy.stuckTicks>=2)enemy.pathTime=Math.min(enemy.pathTime,.16);
  }else if(enemy.aiMode==='patrol')enemy.patrolGoal=null;
@@ -1214,7 +1214,7 @@ function gotSnapshot(r){if(!online.active||r.code!==online.code)return;
  if(r.status==='lobby'){if(game!=='lobby'&&game!=='controls')multiLobbyScreen();updateMultiWaiting();updateCoopPanel();return}
  if(r.status==='playing'){
   syncCoopWorld(r);const enemyAwakenedNow=!enemy.active&&!!r.enemy.active;
-   enemy.x=r.enemy.x;enemy.z=r.enemy.z;enemy.grace=r.enemy.grace;enemy.active=!!r.enemy.active;
+   enemy.x=r.enemy.x;enemy.z=r.enemy.z;enemy.yaw=Number.isFinite(r.enemy.yaw)?r.enemy.yaw:enemy.yaw;enemy.grace=r.enemy.grace;enemy.active=!!r.enemy.active;
    if(enemyAwakenedNow)playDistantMonsterCry();
   enemy.chasing=!!r.enemy.chasing;enemy.aiMode=r.enemy.mode||(enemy.chasing?'chase':'patrol');elapsed=r.elapsed;
    if(!chaseActive&&enemy.active&&(enemy.aiMode==='notice'||enemy.aiMode==='chase'))beginChaseAudio();

@@ -71,11 +71,11 @@ function listPublicRooms(){
 }
 function snapshot(room) {
  return {code:room.code,title:room.title,visibility:room.visibility,limit:room.limit,status:room.status,host:room.host,won:room.won||false,version:room.version,players:[...room.players.values()].map(playerInfo),
- map:room.map,objects:room.objects.map(o=>({type:o.type,kind:o.kind,quizId:o.quizId,x:o.x,z:o.z,question:o.question?publicQuestion(o.question):undefined,cooldownRemaining:Math.max(0,o.cooldownUntil-stamp())})),quizSolved:room.quizSolved,owned:room.owned,enemy:{x:room.enemy.x,z:room.enemy.z,grace:Math.max(0,room.enemy.grace),active:!!room.enemy.active,chasing:!!room.enemy.chasing,mode:room.enemy.mode||'patrol'},elapsed:room.elapsed};
+ map:room.map,objects:room.objects.map(o=>({type:o.type,kind:o.kind,quizId:o.quizId,x:o.x,z:o.z,question:o.question?publicQuestion(o.question):undefined,cooldownRemaining:Math.max(0,o.cooldownUntil-stamp())})),quizSolved:room.quizSolved,owned:room.owned,enemy:{x:room.enemy.x,z:room.enemy.z,grace:Math.max(0,room.enemy.grace),active:!!room.enemy.active,yaw:room.enemy.yaw,chasing:!!room.enemy.chasing,mode:room.enemy.mode||'patrol'},elapsed:room.elapsed};
 }
 function dispatch(room,only=null){const payload=JSON.stringify(snapshot(room));const message='data: '+payload+'\n\n';for(const [token,client] of room.listeners){if(only&&token!==only)continue;try{client.write(message);}catch{room.listeners.delete(token);}}}
 function resultEvent(room,p,body){for(const [token,res] of room.listeners){if(token===p.token){try{res.write('event: notice\ndata: '+JSON.stringify(body)+'\n\n')}catch{};break}}}
-function createRoom(name,world,accountId,options={}){if(rooms.size>=MAX_ROOMS)throw badRequest('서버 방 개수가 가득 찼습니다.');let id=code();while(rooms.has(id))id=code();let token=rand(),pid=rand(6);let p={token,id:pid,accountId,name:safeName(name),x:6,z:6,yaw:0,pitch:0,stamina:MAX_STAMINA,ready:true,alive:true,vx:0,vz:0,lastMove:stamp(),respawnAt:0,reviveProtectedUntil:0,revives:0};let room={code:id,host:pid,title:options.title||'두 개의 열쇠',visibility:options.visibility||'private',limit:options.limit||4,status:'lobby',players:new Map([[token,p]]),listeners:new Map(),createdAt:stamp(),lastActivity:stamp(),version:0,elapsed:0,enemy:{x:world.enemy.x,z:world.enemy.z,grace:START_GRACE,path:[],pathAt:0,chasing:false,sightedUntil:0,targetId:null,lastSeen:null,lastSeenAt:0,mode:'idle',active:false,noticeUntil:0,stuckTicks:0,patrolGoal:null},map:world.map,objects:world.objects,quizSolved:{},owned:{spell:false,idiom:false},won:false};rooms.set(id,room);return {room,p};}
+function createRoom(name,world,accountId,options={}){if(rooms.size>=MAX_ROOMS)throw badRequest('서버 방 개수가 가득 찼습니다.');let id=code();while(rooms.has(id))id=code();let token=rand(),pid=rand(6);let p={token,id:pid,accountId,name:safeName(name),x:6,z:6,yaw:0,pitch:0,stamina:MAX_STAMINA,ready:true,alive:true,vx:0,vz:0,lastMove:stamp(),respawnAt:0,reviveProtectedUntil:0,revives:0};let room={code:id,host:pid,title:options.title||'두 개의 열쇠',visibility:options.visibility||'private',limit:options.limit||4,status:'lobby',players:new Map([[token,p]]),listeners:new Map(),createdAt:stamp(),lastActivity:stamp(),version:0,elapsed:0,enemy:{x:world.enemy.x,z:world.enemy.z,grace:START_GRACE,path:[],pathAt:0,chasing:false,sightedUntil:0,targetId:null,lastSeen:null,lastSeenAt:0,mode:'idle',active:false,yaw:0,noticeUntil:0,stuckTicks:0,patrolGoal:null},map:world.map,objects:world.objects,quizSolved:{},owned:{spell:false,idiom:false},won:false};rooms.set(id,room);return {room,p};}
 function auth(b,account){
  const room=rooms.get(String(b.code||'').toUpperCase());
  const player=room&&[...room.players.values()].find(p=>p.accountId===account?.id);
@@ -87,7 +87,7 @@ function solvedCount(room,kind){return room.objects.filter(o=>o.type==='quiz'&&o
 function handleAction(room,p,b){let type=b.type;
  if(type==='leave'){room.players.delete(p.token);room.listeners.get(p.token)?.end();room.listeners.delete(p.token);if(room.host===p.id)room.host=[...room.players.values()][0]?.id;if(!room.players.size)rooms.delete(room.code);return {ok:true,message:'방에서 나왔어요.'};}
  if(type==='ready'){if(room.status!=='lobby')throw badRequest('준비 상태를 변경할 수 없습니다.');p.ready=!p.ready;dispatch(room);return {ok:true};}
- if(type==='start'){if(room.status!=='lobby')throw badRequest('이미 시작한 방입니다.');if(room.host!==p.id)throw badRequest('방장만 시작할 수 있어요.');if(room.players.size<2)throw badRequest('최소 2명이 필요해요.');if([...room.players.values()].some(x=>!x.ready))throw badRequest('모든 참가자가 준비해야 해요.');room.status='playing';room.elapsed=0;room.enemy.grace=START_GRACE;room.enemy.active=false;room.enemy.mode='idle';const candidates=[];for(let dx of [-.52,.0,.52])for(let dz of [-.52,0,.52])candidates.push({x:6+dx,z:6+dz});let ix=0;for(const pp of room.players.values()){let pos=candidates[ix++];pp.x=pos.x;pp.z=pos.z;pp.alive=true;pp.ready=true;pp.stamina=MAX_STAMINA;pp.vx=0;pp.vz=0;pp.lastMove=stamp();pp.respawnAt=0;pp.reviveProtectedUntil=0;pp.revives=0;}room.version++;dispatch(room);return {ok:true,message:'협동 탐험을 시작합니다!'};}
+ if(type==='start'){if(room.status!=='lobby')throw badRequest('이미 시작한 방입니다.');if(room.host!==p.id)throw badRequest('방장만 시작할 수 있어요.');if(room.players.size<2)throw badRequest('최소 2명이 필요해요.');if([...room.players.values()].some(x=>!x.ready))throw badRequest('모든 참가자가 준비해야 해요.');room.status='playing';room.elapsed=0;room.enemy.grace=START_GRACE;room.enemy.active=false;room.enemy.yaw=0;room.enemy.mode='idle';const candidates=[];for(let dx of [-.52,.0,.52])for(let dz of [-.52,0,.52])candidates.push({x:6+dx,z:6+dz});let ix=0;for(const pp of room.players.values()){let pos=candidates[ix++];pp.x=pos.x;pp.z=pos.z;pp.alive=true;pp.ready=true;pp.stamina=MAX_STAMINA;pp.vx=0;pp.vz=0;pp.lastMove=stamp();pp.respawnAt=0;pp.reviveProtectedUntil=0;pp.revives=0;}room.version++;dispatch(room);return {ok:true,message:'협동 탐험을 시작합니다!'};}
  if(type==='ping')return {ok:true};if(room.status!=='playing')throw badRequest('현재 플레이 중인 방이 아닙니다.');
  if(type==='revive'){
    if(!p.alive)throw badRequest('쓰러진 상태에서는 다른 팀원을 부활시킬 수 없어요.');
@@ -148,7 +148,7 @@ function bfsPath(room,sx,sz,tx,tz){const [a,b,c,d]=[Math.floor(sx/CELL),Math.flo
 // Occlude monster sight with walls and solid objects, including terminals.
 function seesPlayer(room,player){
  return Nav.visible(room.map,room.enemy,player,{
-  maxDistance:CHASE_SIGHT_DISTANCE,blocked:(x,z)=>blocks(room,x,z)
+  maxDistance:CHASE_SIGHT_DISTANCE,facing:room.enemy.yaw,fovDegrees:140,blocked:(x,z)=>blocks(room,x,z)
  });
 }
 let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTick)/1000);lastTick=now;for(const room of rooms.values()){
@@ -207,7 +207,7 @@ let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTi
     const speed=e.mode==='chase'?Nav.MONSTER_CHASE_SPEED:e.mode==='search'?Nav.MONSTER_SEARCH_SPEED:Nav.MONSTER_PATROL_SPEED;
     const next=Nav.advance(room.map,e,waypoint,speed*dt,{blocked:obstacle});
     const progress=distance(e,waypoint)-distance(next,waypoint);
-    if(next.moved){e.x=next.x;e.z=next.z;}
+    if(next.moved){const dx=next.x-e.x,dz=next.z-e.z;if(Math.hypot(dx,dz)>.004)e.yaw=Math.atan2(dx,dz);e.x=next.x;e.z=next.z;}
     e.stuckTicks=progress>.016?0:e.stuckTicks+1;
     if(e.stuckTicks>=2)e.pathAt=0;
    }else if(e.mode==='patrol')e.patrolGoal=null;
