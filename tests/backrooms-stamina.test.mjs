@@ -50,7 +50,7 @@ test('Resting before exhaustion recharges normally without lockout',()=>{
 
 test('Keyboard/mobile input shares sprint lockout and HUD displays it',()=>{
  assert.match(html,/updateSprint\(dt,\(keys\.ShiftLeft\|\|keys\.ShiftRight\|\|runHold\)\&\&len>\.1\)/);
- assert.match(html,/staminaExhausted=false;runHold=false;.*quizSolved=\{\}/);
+ assert.match(html,/staminaExhausted=false;runHold=false;[\s\S]*?quizSolved=\{\}/);
  assert.match(html,/staminaExhausted\?' · 회복 중':'/);
  assert.match(html,/#touchRun\.staminaExhausted\{/);
  assert.doesNotMatch(html,/stamina>2&&len>\.1/);
