@@ -16,14 +16,19 @@ test('retry resets elapsed, stamina and input before graphics or audio startup',
 });
 test('game simulation advances before visuals and cannot be stopped by audio',()=>{
  const loop=html.match(/function ensureGameLoop\(\)\{[\s\S]*?\n\}/)?.[0];
- assert.ok(loop);
- assert.ok(loop.indexOf('update(dt)')<loop.indexOf('render(ts,dt)'));
+ const simulation=html.match(/function stepGameSimulation\(ts\)\{[\s\S]*?\n\}/)?.[0];
+ assert.ok(loop);assert.ok(simulation);
+ assert.match(simulation,/update\(dt\)/);
+ assert.ok(loop.indexOf('stepGameSimulation(ts)')<loop.indexOf('render(ts,dt)'));
  assert.match(loop,/finally\{ensureGameLoop\(\)\}/);
+ assert.match(html,/stepGameSimulation\(now\)/);
  assert.match(html,/function render\(ts,frameDt\)\{/);
  assert.match(html,/try\{syncSoundscape\(\);syncChaseCues\(\)\}/);
 });
 test('catch sound input becomes 3x the preceding boost and retains limiter',()=>{
- assert.match(html,/kind==='caught'\?\(0\.69\*9\):\.53/);
+ assert.match(html,/const previousCaughtGain=\.69\*9/);
+ assert.match(html,/const jumpscareBoost=3/);
+ assert.match(html,/kind==='caught'\?previousCaughtGain\*jumpscareBoost:\.53/);
  assert.match(html,/limit:kind==='caught'/);
  assert.match(html,/compressor=audio\.createDynamicsCompressor\(\)/);
 });

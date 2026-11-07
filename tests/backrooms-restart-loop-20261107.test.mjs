@@ -8,7 +8,7 @@ test('single RAF owner always re-arms after a render error or jumpscare retry',(
  assert.match(html,/gameFrameQueued=true/);
  assert.match(html,/try\{render\(ts,dt\)\}/);
  assert.match(html,/finally\{ensureGameLoop\(\)\}/);
- assert.match(html,/function start\(\)\{clearTimeout\(jumpscareTimer\);hideJumpscare\(\)/);
+ assert.match(html,/function start\(\)\{clearTimeout\(jumpscareTimer\);jumpscareTimer=null;hideJumpscare\(\)/);
  assert.match(html,/try\{clearChaseState\(\)\}catch/);
  assert.match(html,/resetRunControls\(\)/);
  assert.match(html,/function start\([\s\S]*?ensureGameLoop\(\);lock\(\)/);
@@ -23,7 +23,9 @@ test('reset state covers keys, virtual joystick, time, stamina and navigation',(
  assert.match(html,/enemy\.pathMode=null;enemy\.stuckTicks=0/);
 });
 test('death scream gain triples the previous level without changing pursuit',()=>{
- assert.match(html,/kind==='caught'\?\(0\.69\*9\):\.53/);
+ assert.match(html,/const previousCaughtGain=\.69\*9/);
+ assert.match(html,/const jumpscareBoost=3/);
+ assert.match(html,/kind==='caught'\?previousCaughtGain\*jumpscareBoost:\.53/);
  assert.match(html,/limit:kind==='caught'/);
  assert.match(html,/audio\.createDynamicsCompressor/);
  assert.match(html,/const jumpscareGifPath='assets\/jumpscare\/monster_rush\.gif'/);

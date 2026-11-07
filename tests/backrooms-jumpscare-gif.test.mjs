@@ -22,5 +22,5 @@ test('retries reset GIF frames and clean up object URL',()=>{
  assert.match(html,/URL\.createObjectURL\(jumpscareGifBlob\)/);
  assert.match(html,/URL\.revokeObjectURL\(jumpscareGifObjectURL\)/);
  assert.match(html,/function hideJumpscare\(/);
- assert.match(html,/function start\(\)\{clearTimeout\(jumpscareTimer\);hideJumpscare\(\)/);
+ assert.match(html,/function start\(\)\{clearTimeout\(jumpscareTimer\);jumpscareTimer=null;hideJumpscare\(\)/);
 });
