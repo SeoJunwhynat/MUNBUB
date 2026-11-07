@@ -52,7 +52,7 @@ test('no tracking bar, monster map marker or countdown; monster footfalls and he
  assert.match(html,/function playMonsterFootstep\(distance,chasing\)/);
  assert.match(html,/function playHeartbeat\(proximity\)/);
  assert.match(html,/syncMonsterPresenceAudio\(n,distance\)/);
- assert.match(html,/gain\.gain\.linearRampToValueAtTime\(running\?\.43:\.33/);
+ assert.match(html,/gain\.gain\.linearRampToValueAtTime\(Math\.max\(\.0001,\(running\?\.43:\.33\)\*soundPrefs\.steps\/100\)/);
 });
 test('BGM preloads and starts on notice/chase, in real user gesture context',()=>{
  const music=new URL('../backrooms/assets/sfx/The_Weight_Behind_You.mp3',import.meta.url);
@@ -61,7 +61,7 @@ test('BGM preloads and starts on notice/chase, in real user gesture context',()=
  assert.match(html,/function beginChaseAudio\(\)/);
  assert.match(html,/if\(!chaseActive\)beginChaseAudio\(\)/);
  assert.match(html,/const detected=enemy\.active&&enemy\.grace<=0/);
- assert.match(html,/\['playing','quiz','map'\]\.includes\(game\)&&!audioMuted&&audio\?\.state==='suspended'/);
+ assert.match(html,/\['playing','quiz','map'\]\.includes\(game\)&&!audioMuted\)/);\n assert.match(html,/if\(chaseActive\)startBackroomsChaseBgm\(\)/);
  const rawScripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
  const main=rawScripts.find(([all])=>!all.includes('type='));
  assert.ok(main);assert.doesNotThrow(()=>new Script(main[1]));
