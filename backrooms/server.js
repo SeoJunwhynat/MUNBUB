@@ -196,8 +196,7 @@ let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTi
     e.pathGoal={x:goal.x,z:goal.z};e.pathMode=e.mode;
     e.pathAt=now;e.stuckTicks=0;
    }
-   while(e.path?.length&&distance(e,e.path[0])<.43)e.path.shift();
-   const waypoint=e.path?.[0];
+   const waypoint=Nav.nextWaypoint(room.map,e,e.path,{blocked:obstacle});
    if(waypoint){
     const speed=e.mode==='chase'?Nav.MONSTER_CHASE_SPEED:e.mode==='search'?Nav.MONSTER_SEARCH_SPEED:Nav.MONSTER_PATROL_SPEED;
     const next=Nav.advance(room.map,e,waypoint,speed*dt,{blocked:obstacle});

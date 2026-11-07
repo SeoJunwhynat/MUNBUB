@@ -144,6 +144,31 @@
    }
    return simplified;
  }
+
+ // Do not leave a bend based on distance alone; that cuts through corners.
+ // Both [x,z] client paths and {x,z} authoritative paths use this function.
+ function nextWaypoint(map,from,path,{blocked=null}={}){
+   if(!map?.length||!from||!Array.isArray(path))return null;
+   const point=p=>Array.isArray(p)?{x:p[0],z:p[1]}:p;
+   let scanned=0;
+   while(path.length&&scanned++<1024){
+     const now=point(path[0]);
+     if(!now||![now.x,now.z].every(Number.isFinite)){path.shift();continue;}
+     const distance=Math.hypot(now.x-from.x,now.z-from.z);
+     if(path.length===1){
+       if(distance<=.12){path.shift();continue;}
+       return now;
+     }
+     const following=point(path[1]);
+     // Only skip a nearby waypoint when the actual CURRENT position has
+     // an obstacle-free segment to the next waypoint. Otherwise finish turn.
+     if(distance<.70&&following&&clearLine(map,from,following,{blocked})){
+       path.shift();continue;
+     }
+     return now;
+   }
+   return null;
+ }
  function advance(map,from,to,length,{blocked=null}={}){
    if(!to||!from||!(length>0))return {x:from.x,z:from.z,moved:false};
    const vx=to.x-from.x,vz=to.z-from.z,dist=Math.hypot(vx,vz);
@@ -160,5 +185,5 @@
    }
    return {x,z,moved:Math.hypot(x-from.x,z-from.z)>.002};
  }
- return Object.freeze({CELL,MONSTER_CHASE_SPEED,MONSTER_PATROL_SPEED,MONSTER_SEARCH_SPEED,wall,walkable,clearLine,visible,predict,route,advance});
+ return Object.freeze({CELL,MONSTER_CHASE_SPEED,MONSTER_PATROL_SPEED,MONSTER_SEARCH_SPEED,wall,walkable,clearLine,visible,predict,route,nextWaypoint,advance});
 });
