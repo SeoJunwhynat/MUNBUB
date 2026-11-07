@@ -314,6 +314,31 @@ document.head.append(style);
   if(!dialog.querySelector('#mb-ranked-next'))return;
   e.preventDefault();e.stopPropagation();next();
  });
+ // Keyboard focus should not move the essay box behind the mobile soft keyboard.
+ function syncRankedMobileKeyboard(){
+  const vv=window.visualViewport;
+  if(!vv||!dialog.open||!dialog.classList.contains('mb-ranked-playing')||window.innerWidth>700){
+   for(const name of ['height','max-height','top','bottom','margin'])dialog.style.removeProperty(name);
+   return;
+  }
+  const editing=!!dialog.querySelector('#mb-ranked-typed')&&
+   (document.activeElement?.id==='mb-ranked-typed');
+  const covered=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+  if(editing&&covered>90){
+   const usable=Math.max(180,Math.floor(vv.height-8));
+   dialog.style.setProperty('height',usable+'px','important');
+   dialog.style.setProperty('max-height',usable+'px','important');
+   dialog.style.setProperty('top',Math.max(0,Math.floor(vv.offsetTop))+'px','important');
+   dialog.style.setProperty('bottom','auto','important');
+   dialog.style.setProperty('margin','0 auto','important');
+  }else{
+   for(const name of ['height','max-height','top','bottom','margin'])dialog.style.removeProperty(name);
+  }
+ }
+ window.visualViewport?.addEventListener('resize',syncRankedMobileKeyboard);
+ window.visualViewport?.addEventListener('scroll',syncRankedMobileKeyboard);
+ dialog.addEventListener('focusin',()=>requestAnimationFrame(syncRankedMobileKeyboard));
+ dialog.addEventListener('focusout',()=>requestAnimationFrame(syncRankedMobileKeyboard));
  dialog.addEventListener('cancel',()=>stopWithoutPause());
  window.addEventListener('pagehide',stopWithoutPause,{capture:true});
  tickId=window.setInterval(()=>{
