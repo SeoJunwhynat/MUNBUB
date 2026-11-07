@@ -79,7 +79,7 @@ async function handle(req,res){
     const id=body&&typeof body==='object'&&body.id;
     if(typeof id!=='string'||!/^[A-Za-z0-9_-]{20,100}$/.test(id))return json(res,400,{error:'Invalid anonymous session'});
     if(req.method==='DELETE')return json(res,200,{online:forgetPresence(id)});
-    const online=pingPresence(id);
+    const online=pingPresence(id,Date.now(),session(req)?.id||null);
     if(online===null)return json(res,429,{error:'Too many active sessions'});
     return json(res,200,{online});
   }

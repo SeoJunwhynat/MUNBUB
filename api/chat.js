@@ -4,6 +4,7 @@
  */
 import {configured,session,sameOrigin,noCache} from '../lib/mb-server.js';
 import {chatQuery} from '../lib/mb-storage.js';
+import handleChatModes from './chat-modes.js';
 
 const MAX_CHARS=180;
 const lastPost=new Map();
@@ -15,8 +16,10 @@ const publicMessage=row=>({
 export default async function handler(req,res){
  noCache(res);
  const user=session(req);
+ if(req.method==='GET'&&req.query?.mode==='broadcast')return handleChatModes(req,res,user);
  if(!user)return respond(res,401,{error:'전체 채팅은 맛춘범 로그인이 필요해.'});
  if(!configured())return respond(res,503,{error:'채팅 저장소에 연결하지 못했어.'});
+ if((req.method==='GET'&&['users','dm','inbox'].includes(req.query?.mode))||(req.method==='POST'&&['send_dm','send_broadcast','block','unblock','report_dm'].includes(req.body?.action)))return handleChatModes(req,res,user);
  if(req.method==='GET'){
   try{
    const rows=await chatQuery([
