@@ -149,7 +149,12 @@
    try{
     const path=which==='dm'?(who?'mode=dm&peer='+encodeURIComponent(who):null):
       which==='all'?'mode=broadcast':'';
-    if(path===null){authorize(true);return}
+    if(path===null){
+     await fetchChat(null,'mode=inbox');
+     authorize(true);
+     if(!users.length)loadUsers();
+     return;
+    }
     const payload=await fetchChat(null,path);
     if(req!==requestVersion||mode!==which||peer?.id!==who)return;
     authorize(true);
@@ -183,6 +188,22 @@
   setInterval(()=>{if(visible&&!document.hidden)refresh()},3200);
   document.addEventListener('visibilitychange',()=>{if(visible&&!document.hidden)refresh()});
   window.addEventListener('pageshow',()=>{if(visible)refresh()});
+  // Avoid the virtual keyboard covering the compose row on Android/iOS.
+  const vv=window.visualViewport;
+  if(vv){
+   const reposition=()=>{
+    const keyboard=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
+    if(visible&&window.innerWidth<701&&keyboard>95){
+     panel.style.setProperty('bottom',Math.round(keyboard+8)+'px','important');
+     panel.style.setProperty('height',Math.max(180,Math.min(500,vv.height-24))+'px','important');
+    }else{
+     panel.style.removeProperty('bottom');panel.style.removeProperty('height');
+    }
+   };
+   vv.addEventListener('resize',reposition);vv.addEventListener('scroll',reposition);
+   input.addEventListener('focus',()=>requestAnimationFrame(reposition));
+   input.addEventListener('blur',()=>requestAnimationFrame(reposition));
+  }
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});
  else mount();
