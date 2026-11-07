@@ -1,5 +1,5 @@
 /* Tastefully minimal nickname+password accounts with unique server-side names. */
-import { list } from '@vercel/blob';
+import { list } from '../lib/mb-storage.js';
 import {
  configured,noCache,sameOrigin,session,setSession,clearSession,
  nickname,canonicalName,newId,hash,readPrivate,writePrivate,
@@ -39,7 +39,7 @@ const validateName=res=>err(res,400,'닉네임은 한글·영문·숫자·공백
 const validatePass=res=>err(res,400,'비밀번호는 8~72자로 설정해 줘. 공백만으로 만들 수는 없어.');
 export default async function handler(req,res){
  noCache(res);
- if(!configured())return err(res,503,'온라인 저장소가 연결되지 않았어. Vercel 프로젝트에 Blob 스토어를 연결하고 재배포해 줘.');
+ if(!configured())return err(res,503,'온라인 저장소가 연결되지 않았어. Render 서버의 Neon 데이터베이스 연결을 확인해 줘.');
  const me=session(req);
  if(req.method==='GET'){
   if(!me)return res.status(200).json({loggedIn:false});
@@ -104,6 +104,6 @@ export default async function handler(req,res){
  }catch(e){
   console.error('Account operation:',e?.name||'UnknownFailure');
   if(duplicate(e))return err(res,409,'이미 사용 중인 닉네임이야.');
-  return err(res,503,'계정 저장소 오류야. 배포 로그와 Blob 연결 상태를 확인해 줘.');
+  return err(res,503,'계정 저장소 오류야. Render 서버의 데이터베이스 연결 상태를 확인해 줘.');
  }
 }

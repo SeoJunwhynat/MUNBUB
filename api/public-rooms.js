@@ -1,12 +1,12 @@
 /* Live, opt-in public duel listing. Private invite rooms never appear here. */
-import { list } from '@vercel/blob';
+import { list } from '../lib/mb-storage.js';
 import { configured, noCache, readPrivate } from '../lib/mb-server.js';
 const ID=/^[A-HJ-NP-Z2-9]{8}$/;
 const PREFIX='public-rooms/';
 export default async function handler(req,res){
  noCache(res);
  if(req.method!=='GET')return res.status(405).json({error:'GET 전용 요청이야.'});
- if(!configured())return res.status(503).json({error:'공개방 저장소가 연결되지 않았어. Vercel Blob 연결을 확인해 줘.'});
+ if(!configured())return res.status(503).json({error:'공개방 저장소가 연결되지 않았어. Render 데이터베이스 연결을 확인해 줘.'});
  try{
   const blobList=await list({prefix:PREFIX,limit:1000});
   // Avoid 3-4 private Blob reads for hundreds of expired rooms. Metadata from
