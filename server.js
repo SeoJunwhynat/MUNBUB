@@ -13,7 +13,7 @@ import { session, sameOrigin } from './lib/mb-server.js';
 import {activeCount,pingPresence,forgetPresence} from './lib/mb-presence.js';
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const handlers = new Map();
-const apiRoutes = new Set(['account','duel','health','leaderboard','public-arena','public-rooms','ranked','score']);
+const apiRoutes = new Set(['account','duel','health','leaderboard','public-arena','public-rooms','ranked','score','chat']);
 const mime = {
   '.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
   '.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8',
