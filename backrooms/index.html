@@ -236,7 +236,9 @@ function box(arr,x0,y0,z0,x1,y1,z1,s=0,top=s,btm=s,g=0){quad(arr,[x0,y1,z1],[x1,
 function planeY(a,x0,z0,x1,z1,y,tile,n=1,g=0){let normal=[0,n,0];if(n>0)quad(a,[x0,y,z1],[x1,y,z1],[x1,y,z0],[x0,y,z0],tile,normal,g);else quad(a,[x0,y,z0],[x1,y,z0],[x1,y,z1],[x0,y,z1],tile,normal,g)}
 function buffer(data){let b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);return {b,count:data.length/9}}
 function draw(buf){if(!buf||!buf.count)return;gl.bindBuffer(gl.ARRAY_BUFFER,buf.b);gl.enableVertexAttribArray(loc.p);gl.enableVertexAttribArray(loc.uv);gl.enableVertexAttribArray(loc.n);gl.enableVertexAttribArray(loc.g);gl.vertexAttribPointer(loc.p,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(loc.uv,2,gl.FLOAT,false,36,12);gl.vertexAttribPointer(loc.n,3,gl.FLOAT,false,36,20);gl.vertexAttribPointer(loc.g,1,gl.FLOAT,false,36,32);gl.drawArrays(gl.TRIANGLES,0,buf.count)}
-let map=[],objects=[],staticBuf=null;const player={x:6,z:6,yaw:0,pitch:0,stamina:100,flash:true};let enemy={x:0,z:0,path:[],pathTime:0,grace:0,phase:0,aiMode:'patrol',lastSeen:null,lastSeenAt:-1000,patrolGoal:null,pathGoal:null,stuckTicks:0},game='menu',active=null,quizSolved={},owned={spell:false,idiom:false},elapsed=0,toastClock=0,stamina=100,staminaExhausted=false,seconds=0,locked=false,runHold=false,joy={x:0,y:0};const keys={};
+const MAX_STAMINA=150,STAMINA_REGEN_PER_SECOND=18*2;
+const PLAYER_WALK_SPEED=3.30*1.05,PLAYER_SPRINT_SPEED=5.75*1.05;
+let map=[],objects=[],staticBuf=null;const player={x:6,z:6,yaw:0,pitch:0,stamina:MAX_STAMINA,flash:true};let enemy={x:0,z:0,path:[],pathTime:0,grace:0,phase:0,aiMode:'patrol',lastSeen:null,lastSeenAt:-1000,patrolGoal:null,pathGoal:null,stuckTicks:0},game='menu',active=null,quizSolved={},owned={spell:false,idiom:false},elapsed=0,toastClock=0,stamina=MAX_STAMINA,staminaExhausted=false,seconds=0,locked=false,runHold=false,joy={x:0,y:0};const keys={};
 let editingControls=false,controlReturnState="menu",controlSelected="joystick",touchLayouts={};
 let onlineQuizPending=null;let online={active:false,code:"",token:"",me:"",url:"",room:null,host:false,source:null,version:-1,players:[],lastSend:0,dead:false};
 let coopTeamUpdateAt=0,gameSettingsOpen=false,gameSettingsReturn="playing",mouseGain=1;
@@ -302,9 +304,9 @@ function updateSprint(dt,wantsToSprint){
   }
   return true;
  }
- stamina=Math.min(100,stamina+18*dt);
- if(staminaExhausted&&stamina>=100){
-  stamina=100;
+ stamina=Math.min(MAX_STAMINA,stamina+STAMINA_REGEN_PER_SECOND*dt);
+ if(staminaExhausted&&stamina>=MAX_STAMINA){
+  stamina=MAX_STAMINA;
   staminaExhausted=false;
   toast('⚡ 스태미나 회복 완료! 다시 달릴 수 있어요.');sound('recover');
  }
@@ -316,7 +318,7 @@ let last=0,t=0,lastHud=0,walkPhase=0,lastSound=0,lastFallbackFrame=0;function so
   maxDistance:17,blocked:(x,z)=>collides(x,z)
  });
 }
-function update(dt){elapsed+=dt;let forward=(keys['KeyW']?1:0)-(keys['KeyS']?1:0)-joy.y,strafe=(keys['KeyD']?1:0)-(keys['KeyA']?1:0)+joy.x;let len=Math.hypot(forward,strafe);if(len>0){forward/=Math.max(1,len);strafe/=Math.max(1,len)}let sprint=updateSprint(dt,(keys.ShiftLeft||keys.ShiftRight||runHold)&&len>.1);let speed=sprint?5.75:3.30;let dx=(Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)*speed*dt,dz=(-Math.cos(player.yaw)*forward+Math.sin(player.yaw)*strafe)*speed*dt;const oldPX=player.x,oldPZ=player.z;safeMove(dx,dz);const moving=len>.1&&Math.hypot(player.x-oldPX,player.z-oldPZ)>Math.max(.001,dt*.12);if(moving){walkPhase+=dt*(sprint?14:9);if(elapsed-lastSound>(sprint?.29:.46)){lastSound=elapsed;sound('step',sprint)}}else walkPhase=0;for(let o of objects){if(o.type==='quiz'&&o.cooldownUntil&&performance.now()>=o.cooldownUntil){o.cooldownUntil=0;buildWorldGeometry();}}
+function update(dt){elapsed+=dt;let forward=(keys['KeyW']?1:0)-(keys['KeyS']?1:0)-joy.y,strafe=(keys['KeyD']?1:0)-(keys['KeyA']?1:0)+joy.x;let len=Math.hypot(forward,strafe);if(len>0){forward/=Math.max(1,len);strafe/=Math.max(1,len)}let sprint=updateSprint(dt,(keys.ShiftLeft||keys.ShiftRight||runHold)&&len>.1);let speed=sprint?PLAYER_SPRINT_SPEED:PLAYER_WALK_SPEED;let dx=(Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)*speed*dt,dz=(-Math.cos(player.yaw)*forward+Math.sin(player.yaw)*strafe)*speed*dt;const oldPX=player.x,oldPZ=player.z;safeMove(dx,dz);const moving=len>.1&&Math.hypot(player.x-oldPX,player.z-oldPZ)>Math.max(.001,dt*.12);if(moving){walkPhase+=dt*(sprint?14:9);if(elapsed-lastSound>(sprint?.29:.46)){lastSound=elapsed;sound('step',sprint)}}else walkPhase=0;for(let o of objects){if(o.type==='quiz'&&o.cooldownUntil&&performance.now()>=o.cooldownUntil){o.cooldownUntil=0;buildWorldGeometry();}}
 if(online.active){enemy.phase+=dt*7*1.3}else if(enemy.grace>0)enemy.grace-=dt;else{
  const nav=window.MonsterNav,spotted=soloMonsterSeesPlayer();
  let goal=null;
@@ -364,7 +366,7 @@ function interact(){if(game!=='playing')return;
  const teammate=closestDownedTeammate();
  if(teammate){multiAction('revive',{targetId:teammate.id}).then(handleAction);return}
  let o=nearest();if(!o)return;if(o.type==='quiz'){if(progressOf(o)>=QUESTIONS_PER_TERMINAL){toast('이 단말기의 3문제를 모두 해결했어요.');return}if(screenState(o)==='lock'){toast(`🔴 ${Math.max(1,Math.ceil((o.cooldownUntil-performance.now())/1000))}초 후 새 문제를 풀 수 있어요.`);return}openQuiz(o)}else if(o.type==='key'){if(online.active){multiAction('collect',{kind:o.kind}).then(handleAction);return}if(owned[o.kind]){toast('이미 열쇠를 획득했어요.');return}if(solved(o.kind)!==4){toast(`🔒 ${o.kind==='spell'?'맞춤법':'사자성어'} 단말기 4개를 모두 해결해야 해요. (${solved(o.kind)}/4)`);sound('wrong');return}owned[o.kind]=true;buildWorldGeometry();toast(`🗝️ ${o.kind==='spell'?'맞춤법':'사자성어'}의 열쇠를 획득했어요!`);sound('success');updateHUD()}else if(o.type==='exit'){if(online.active){multiAction('escape',{}).then(handleAction);return}if(owned.spell&&owned.idiom){end(true)}else{toast(`🔒 출구를 열려면 열쇠 2개가 필요해요. (${Number(owned.spell)+Number(owned.idiom)}/2)`);sound('wrong')}}}
-function updateStaminaHUD(){$('staminaFill').style.width=stamina+'%';$('staminaText').textContent=Math.round(stamina)+'%'+(staminaExhausted?' · 회복 중':'');$('hudStamina').classList.toggle('staminaExhausted',staminaExhausted);$('touchRun').classList.toggle('staminaExhausted',staminaExhausted);$('touchRun').setAttribute('aria-disabled',String(staminaExhausted));$('touchRun').title=staminaExhausted?'스태미나가 100% 회복되면 다시 달릴 수 있어요.':'누르고 있으면 달리기';}
+function updateStaminaHUD(){$('staminaFill').style.width=(Math.max(0,Math.min(100,stamina/MAX_STAMINA*100)))+'%';$('staminaText').textContent=Math.round(stamina)+' / '+MAX_STAMINA+(staminaExhausted?' · 회복 중':'');$('hudStamina').classList.toggle('staminaExhausted',staminaExhausted);$('touchRun').classList.toggle('staminaExhausted',staminaExhausted);$('touchRun').setAttribute('aria-disabled',String(staminaExhausted));$('touchRun').title=staminaExhausted?'스태미나가 완전히 회복되면 다시 달릴 수 있어요.':'누르고 있으면 달리기';}
 function updateHUD(distance=99){let s=solved('spell'),i=solved('idiom'),k=Number(owned.spell)+Number(owned.idiom);$('obSpell').innerHTML=`📝 맞춤법 <strong>${answeredOf('spell')} / 12문제 · ${s}/4기</strong>`;$('obSpell').classList.toggle('done',s===4);$('obIdiom').innerHTML=`📜 사자성어 <strong>${answeredOf('idiom')} / 12문제 · ${i}/4기</strong>`;$('obIdiom').classList.toggle('done',i===4);$('obKeys').innerHTML=`🗝️ 모은 열쇠 <strong>${k} / 2</strong>`;$('obKeys').classList.toggle('done',k===2);$('obExit').innerHTML=`🚪 탈출문 <strong>${k===2?'열림':'잠김'}</strong>`;$('spellKey').classList.toggle('owned',owned.spell);$('idiomKey').classList.toggle('owned',owned.idiom);updateStaminaHUD();let text=enemy.grace>0?'추격 시작까지 '+Math.ceil(enemy.grace)+'초':distance<5?'위험! 바로 근처예요':distance<12?'가까운 곳에서 움직임 감지':distance<23?'멀리서 발소리가 들려요':'주변은 아직 조용합니다';$('entityText').textContent=text;$('entityBar').style.width=(enemy.grace>0?0:Math.max(8,100-distance*2.6))+'%';}
 function showScreen(id){for(let p of ['menu','multiLobby','quiz','mapScreen','pauseScreen','downedScreen','endScreen'])$(p).classList.toggle('hidden',p!==id)}function inputMode(on){$('hud').classList.toggle('hidden',!on);$('crosshair').classList.toggle('hidden',!on);$('mobile').classList.toggle('hidden',!on||(!coarse&&!editingControls));$('interact').classList.add('hidden')}function lock(){if(!coarse&&game==='playing'&&document.pointerLockElement!==canvas&&canvas.requestPointerLock)canvas.requestPointerLock().catch(()=>{})}function unlock(){if(document.pointerLockElement===canvas)document.exitPointerLock()}function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(toastClock);toastClock=setTimeout(()=>$('toast').classList.remove('show'),2600)}
 function resetRunControls(){
@@ -382,7 +384,7 @@ function start(){clearTimeout(jumpscareTimer);jumpscareTimer=null;hideJumpscare(
  resetRunControls();$('gameSettingsPanel').classList.add('hidden');gameSettingsOpen=false;
  // Always reset gameplay BEFORE optional graphics/sound work.
  elapsed=online.active?Number(online.room?.elapsed||0):0;
- stamina=100;player.stamina=100;staminaExhausted=false;runHold=false;player.flash=true;
+ stamina=MAX_STAMINA;player.stamina=MAX_STAMINA;staminaExhausted=false;runHold=false;player.flash=true;
  enemy.path=[];enemy.pathGoal=null;enemy.pathMode=null;enemy.stuckTicks=0;enemy.pathTime=0;
  if(!online.active){quizSolved={};owned={spell:false,idiom:false}}
  nextCreakAt=audio?audio.currentTime+12:0;
@@ -982,7 +984,7 @@ function showCoopDowned(){
 function resumeCoopFromDowned(me){
  clearTimeout(jumpscareTimer);hideJumpscare();online.dead=false;runHold=false;
  player.x=me.x;player.z=me.z;player.yaw=me.yaw||player.yaw;player.pitch=me.pitch||0;
- stamina=Math.max(0,Math.min(100,me.stamina||80));staminaExhausted=false;
+ stamina=Math.max(0,Math.min(MAX_STAMINA,me.stamina??(MAX_STAMINA*.8)));staminaExhausted=false;
  game='playing';showScreen('none');inputMode(true);last=performance.now();
  lastHud=-Infinity;ensureGameLoop();lock();
  toast('🟢 부활 완료! 잠시 동안 괴물에게서 보호돼.');updateHUD();

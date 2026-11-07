@@ -9,7 +9,7 @@ test('retry resets elapsed, stamina and input before graphics or audio startup',
  assert.ok(m);
  const start=m[0];
  assert.ok(start.indexOf('elapsed=')<start.indexOf('rebuildWorld()'));
- assert.ok(start.indexOf('stamina=100')<start.indexOf('rebuildWorld()'));
+ assert.ok(start.indexOf('stamina=MAX_STAMINA')<start.indexOf('rebuildWorld()'));
  assert.ok(start.includes("game='playing'"));
  assert.match(start,/ensureGameLoop\(\)/);
  assert.match(start,/try\{startSound\(\)\}catch/);

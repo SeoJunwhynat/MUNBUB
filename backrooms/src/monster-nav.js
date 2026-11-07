@@ -6,7 +6,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
  const CELL=4;
- const MONSTER_CHASE_SPEED=5.75*0.93;
+ const MONSTER_CHASE_SPEED=(5.75*1.05)*0.93;
  const MONSTER_PATROL_SPEED=2.65;
  const MONSTER_SEARCH_SPEED=3.2;
  const DIRS=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];

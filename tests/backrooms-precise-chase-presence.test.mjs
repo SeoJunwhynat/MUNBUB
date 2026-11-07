@@ -10,9 +10,9 @@ function mapOf(size=13){
   x===0||z===0||x===size-1||z===size-1?1:0));
 }
 const point=(x,z)=>({x:x*4+2,z:z*4+2});
-test('chase is exactly 93 percent of the existing 5.75 player sprint speed in BOTH modes',()=>{
- assert.equal(Nav.MONSTER_CHASE_SPEED,5.75*.93);
- assert.equal(Number(Nav.MONSTER_CHASE_SPEED.toFixed(4)),5.3475);
+test('chase is exactly 93 percent of the buffed 6.0375 player sprint speed in BOTH modes',()=>{
+ assert.equal(Nav.MONSTER_CHASE_SPEED,(5.75*1.05)*.93);
+ assert.equal(Number(Nav.MONSTER_CHASE_SPEED.toFixed(4)),5.6149);
  const html=readFileSync(new URL('../backrooms/index.html',import.meta.url),'utf8');
  const server=readFileSync(new URL('../backrooms/server.js',import.meta.url),'utf8');
  assert.match(html,/nav\.MONSTER_CHASE_SPEED/);

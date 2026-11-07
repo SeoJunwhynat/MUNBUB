@@ -19,7 +19,7 @@ test('reset state covers keys, virtual joystick, time, stamina and navigation',(
  assert.match(html,/Object\.keys\(keys\)\.forEach/);
  assert.match(html,/joy\.x=0;joy\.y=0/);
  assert.match(html,/elapsed=online\.active\?Number\(online\.room\?\.elapsed\|\|0\):0/);
- assert.match(html,/stamina=100;player\.stamina=100;staminaExhausted=false/);
+ assert.match(html,/stamina=MAX_STAMINA;player\.stamina=MAX_STAMINA;staminaExhausted=false/);
  assert.match(html,/enemy\.pathMode=null;enemy\.stuckTicks=0/);
 });
 test('death scream gain triples the previous level without changing pursuit',()=>{

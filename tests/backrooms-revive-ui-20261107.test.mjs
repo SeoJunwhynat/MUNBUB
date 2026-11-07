@@ -23,7 +23,7 @@ test('a teammate can revive a nearby downed player without resetting shared obje
   const output=backrooms.handleAction(room,host,{type:'revive',targetId:guest.id});
   assert.equal(output.ok,true);assert.equal(guest.alive,true);
   assert.equal(guest.respawnAt,0);assert.ok(guest.reviveProtectedUntil>Date.now());
-  assert.equal(guest.stamina,80);assert.equal(room.quizSolved.sp1,2);
+  assert.equal(guest.stamina,120);assert.equal(room.quizSolved.sp1,2);
   assert.equal(room.owned.spell,true);
   assert.equal(backrooms.snapshot(room).players.find(p=>p.id==='guest').alive,true);
  }finally{cleanup(room);}
@@ -48,7 +48,7 @@ test('downed player stays in room and cannot self-respawn until server cooldown 
   guest.respawnAt=Date.now()-10;
   const restored=backrooms.handleAction(room,guest,{type:'respawn'});
   assert.equal(restored.ok,true);assert.equal(guest.alive,true);
-  assert.equal(guest.x,6);assert.equal(guest.z,6);assert.equal(guest.stamina,100);
+  assert.equal(guest.x,6);assert.equal(guest.z,6);assert.equal(guest.stamina,150);
   assert.ok(guest.reviveProtectedUntil>Date.now());
   assert.equal(room.status,'playing');
   assert.equal(room.quizSolved.sp1,undefined);

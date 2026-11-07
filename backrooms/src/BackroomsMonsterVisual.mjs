@@ -99,7 +99,7 @@ export class BackroomsMonsterVisual {
     this.wasChasing=pursuing;
     // Existing global animation multiplier is 1.3x; the sight-based 30%
     // pursuit acceleration is mirrored by Chase playback to avoid foot sliding.
-    this.controller.setAnimationSpeed(aiState==='chase'?1.3*(5.75*.93)/(2.05*1.3):1.3);
+    this.controller.setAnimationSpeed(aiState==='chase'?1.3*((5.75*1.05)*.93)/(2.05*1.3):1.3);
     this.bridge.update(enemy,Math.min(dt,.09),{aiState,visible:showing});
     this.state=this.bridge.state;
     this.controller.object.visible=showing;

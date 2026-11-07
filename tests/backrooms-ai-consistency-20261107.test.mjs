@@ -29,5 +29,5 @@ test('client and authoritative server share sight, chase and search',()=>{
  assert.match(html,/nav\?\.visible\(/);assert.match(html,/nav\?\.predict\(/);
  assert.match(html,/enemy\.aiMode=r\.enemy\.mode/);
  assert.match(visual,/searching:mode==='search'/);
- assert.equal(Nav.MONSTER_CHASE_SPEED,5.75*.93);
+ assert.equal(Nav.MONSTER_CHASE_SPEED,(5.75*1.05)*.93);
 });
