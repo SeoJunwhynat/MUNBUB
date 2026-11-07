@@ -36,5 +36,5 @@ test('solo and authoritative co-op invalidate obstructed waypoints',()=>{
  assert.match(coop,/waypoint&&!Nav\.clearLine\(room\.map,e,waypoint/);
  assert.match(solo,/enemy\.path=\[\];enemy\.pathTime=0;enemy\.stuckTicks=2/);
  assert.match(coop,/e\.path=\[\];e\.pathAt=0;e\.stuckTicks=2/);
- assert.equal(Nav.MONSTER_CHASE_SPEED,(5.75*1.05)*.93);
+ assert.equal(Nav.MONSTER_CHASE_SPEED,((5.75*1.05*.93)*1.08)*0.8);
 });
