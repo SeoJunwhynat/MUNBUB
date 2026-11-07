@@ -204,6 +204,10 @@ document.head.append(style);
   dialog.querySelectorAll('[data-ranked-answer]').forEach(btn=>btn.addEventListener('click',()=>submit(btn.dataset.rankedAnswer)));
   $('mb-ranked-write')?.addEventListener('submit',e=>{e.preventDefault();submit($('mb-ranked-typed')?.value||'')});
   $('mb-ranked-stop')?.addEventListener('click',finish);
+  // After every new written question, type immediately without another click.
+  // preventScroll keeps portrait/mobile positioning stable as the keyboard opens.
+  const typed=$('mb-ranked-typed');
+  if(typed)requestAnimationFrame(()=>{if(active&&dialog.open&&typed.isConnected)typed.focus({preventScroll:true})});
  }
  async function start(){
   if(busy)return;
@@ -237,6 +241,7 @@ document.head.append(style);
    run=out.run;correct=out.correct;answered=out.answered;score=out.score||0;
    const q=findQ();
    lastResult={good:out.verifiedCorrect,answer:q?.answers?.join(' / ')||q?.answer||'',note:q?.note||'',points:out.points||0};
+   dialog.querySelector('#mb-ranked-typed')?.blur();
    showFeedback();
   }catch(e){const p=$('mb-ranked-message');if(p)p.textContent='⚠ '+e.message;
    dialog.querySelectorAll('[data-ranked-answer],#mb-ranked-write button').forEach(b=>b.disabled=false);
@@ -248,7 +253,7 @@ document.head.append(style);
    '<h3>'+(f.good?'✅ 정답!':'❌ 오답!')+(mode==='hardcore'&&f.good?' +'+f.points+'점':'')+'</h3>'+
    '<p>정답: <strong>'+esc(f.answer)+'</strong></p>'+
    (f.note?'<p>'+esc(f.note)+'</p>':'')+
-   '</section><button id="mb-ranked-next" class="mb-ranked-primary" type="button">다음 혼합문제 ▶</button>'+
+   '</section><button id="mb-ranked-next" class="mb-ranked-primary" type="button">다음 혼합문제 ▶ <small>(스페이스바)</small></button>'+ 
    '<button id="mb-ranked-stop" type="button">도전 종료하고 기록 저장</button>');
   $('mb-ranked-next')?.addEventListener('click',next);
   $('mb-ranked-stop')?.addEventListener('click',finish);
@@ -298,6 +303,16 @@ document.head.append(style);
   if(e.target.closest?.('#mb-ranked-close')){
    stopWithoutPause();dialog.close();
   }
+ });
+ // Keyboard shortcut works only on the result screen, never while composing
+ // an essay or using IME. The user can still type spaces into answers normally.
+ dialog.addEventListener('keydown',e=>{
+  if(!dialog.open||!active||busy||e.repeat||e.isComposing||e.keyCode===229)return;
+  if(e.code!=='Space'&&e.key!==' '&&e.key!=='Spacebar')return;
+  const target=e.target;
+  if(target?.closest?.('input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
+  if(!dialog.querySelector('#mb-ranked-next'))return;
+  e.preventDefault();e.stopPropagation();next();
  });
  dialog.addEventListener('cancel',()=>stopWithoutPause());
  window.addEventListener('pagehide',stopWithoutPause,{capture:true});
