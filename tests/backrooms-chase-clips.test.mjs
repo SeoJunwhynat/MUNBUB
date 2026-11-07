@@ -42,7 +42,7 @@ test('screams 2 and 3 alternate during chase and old sounds only play when roami
 });
 
 test('mute, blur and chase end stop one-shot effects',()=>{
- assert.match(html,/if\(audioMuted\)stopChaseVoices\(\)/);
+ assert.match(html,/if\(audioMuted\)\{stopChaseVoices\(\);stopBackroomsChaseBgm\(\);\}/);
  assert.match(html,/function stopChaseVoices\(\)\{stopVoices\(chaseVoiceSources\);stopVoices\(roamVoiceSources\);\}/);
  assert.match(html,/document\.addEventListener\('visibilitychange',\(\)=>\{if\(document\.hidden\)stopChaseVoices\(\);\}\)/);
 });
