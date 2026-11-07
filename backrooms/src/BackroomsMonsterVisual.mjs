@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {loadSpellingMonster} from './SpellingMonster.mjs';
-import {BackroomsMonsterBridge} from './BackroomsMonsterBridge.mjs';
+import {BackroomsMonsterBridge,chooseMonsterAIState} from './BackroomsMonsterBridge.mjs';
 
 /**
  * Reuses the existing WebGL context/canvas and its depth buffer.
@@ -29,6 +29,10 @@ export class BackroomsMonsterVisual {
     this.state='Idle';
     this.noticeUntil=0;
     this.attacking=false;
+    this.wasChasing=false;
+    this.searchUntil=0;
+    this.movingUntil=0;
+    this.lastX=null;this.lastZ=null;
     this.lastFrames=0;
     this.loading=this.load();
   }
@@ -49,33 +53,55 @@ export class BackroomsMonsterVisual {
     }
   }
   notice() {
-    this.noticeUntil=performance.now()+980;
-    if(this.ready){this.controller.setAnimation('Notice',{fade:.08,after:'Chase'});this.state='Notice';}
+    // Event-only; the bridge is the ONE owner of animation actions.
+    if(!this.attacking)this.noticeUntil=Math.max(this.noticeUntil,performance.now()+980);
   }
   attack(){
+    // Death/capture only. Do not latch this into the next gameplay state.
+    if(this.attacking)return;
     this.attacking=true;
-    if(this.ready){this.controller.setAnimation('Attack',{fade:.05,force:true,after:'Idle'});this.state='Attack';}
+    this.noticeUntil=0;
+    this.searchUntil=0;
   }
   reset(){
-    this.attacking=false;this.noticeUntil=0;
-    if(this.ready){this.controller.setAnimation('Idle',{fade:.12});this.state='Idle';}
+    this.attacking=false;
+    this.noticeUntil=0;
+    this.searchUntil=0;
+    this.movingUntil=0;
+    this.wasChasing=false;
+    this.lastX=null;this.lastZ=null;
+    if(this.ready){this.bridge.reset();this.state='Idle';}
   }
   renderAfterWorld({enemy,player,eye,forward,dt,width,height,phase,game,chasing}) {
-    if(!this.ready||!enemy||!player) return;
+    if(!this.ready||!enemy||!player)return;
+    const now=performance.now();
     const showing=enemy.grace<=0||game==='jumpscare'||game==='ended';
-    let aiState='patrol';
-    const dist=Math.hypot(enemy.x-player.x,enemy.z-player.z);
-    if(!showing)aiState='idle';
-    else if(game==='jumpscare'||this.attacking)aiState='attack';
-    else if(performance.now()<this.noticeUntil)aiState='notice';
-    else if(chasing)aiState='chase';
-    else if(dist<28)aiState='search';
-    // The single-shot animations must not be interrupted before finishing.
-    if(aiState==='notice' && this.state!=='Notice') this.notice();
-    if(aiState==='attack' && this.state!=='Attack') this.attack();
-    if(aiState==='chase' && this.state==='Notice' && performance.now()<this.noticeUntil) aiState='notice';
+    const pursuing=!!chasing && enemy.grace<=0 && game!=='jumpscare' && game!=='ended';
+    if(game!=='jumpscare'&&this.attacking){
+      this.attacking=false;
+      this.bridge.reset();
+    }
+    // Track network movement with a short hold to avoid flickering Patrol/Idle
+    // between the multiplayer server's position broadcasts.
+    if(this.lastX!==null&&Math.hypot(enemy.x-this.lastX,enemy.z-this.lastZ)>.008)
+      this.movingUntil=now+480;
+    this.lastX=enemy.x;this.lastZ=enemy.z;
+    if(this.wasChasing&&!pursuing)this.searchUntil=now+2400;
+    if(pursuing&&!this.wasChasing&&now>=this.noticeUntil)this.notice();
+    if(!showing){this.noticeUntil=0;this.searchUntil=0;}
+    const aiState=chooseMonsterAIState({
+      game,visible:showing,chasing:pursuing,
+      noticed:pursuing&&now<this.noticeUntil,
+      searching:now<this.searchUntil,
+      moving:now<this.movingUntil
+    });
+    if(aiState==='attack'&&!this.attacking)this.attack();
+    this.wasChasing=pursuing;
+    // Existing global animation multiplier is 1.3x; the sight-based 30%
+    // pursuit acceleration is mirrored by Chase playback to avoid foot sliding.
+    this.controller.setAnimationSpeed(aiState==='chase'?1.3*1.3:1.3);
     this.bridge.update(enemy,Math.min(dt,.09),{aiState,visible:showing});
-    this.state=this.controller.currentName||this.state;
+    this.state=this.bridge.state;
     this.controller.object.visible=showing;
     if(!showing)return;
     // Rendering is on the SAME canvas and context, so the maze's depth buffer masks the rig.

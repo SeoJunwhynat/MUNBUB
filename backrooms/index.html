@@ -478,7 +478,7 @@ function render(ts){syncSoundscape();syncChaseCues();if(fallback&&ts-lastFallbac
  gl.useProgram(prog);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);
  let view=matLook(eye,[eye[0]+forward[0],eye[1]+forward[1],eye[2]+forward[2]]);let proj=matPerspective(game==='jumpscare'?1.06:1.29,canvas.width/Math.max(1,canvas.height),.065,96);gl.uniformMatrix4fv(loc.vp,false,mulMat(proj,view));gl.uniform3fv(loc.eye,eye);gl.uniform3fv(loc.fwd,forward);gl.uniform1f(loc.time,t);gl.uniform1f(loc.flash,player.flash?1:0);gl.uniform1f(loc.fog,30);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);draw(staticBuf);if(online.active){let b=makePeerModels();draw(b);gl.deleteBuffer(b.b)}if((enemy.grace<=0||game==='ended'||game==='jumpscare')&&!window.__backroomsMonsterVisual?.ready){let d=makeEnemy();draw(d);gl.deleteBuffer(d.b)}
  const monsterVisual=window.__backroomsMonsterVisual;
- if(monsterVisual?.ready){try{monsterVisual.renderAfterWorld({enemy,player,eye,forward,dt,width:canvas.width,height:canvas.height,phase:enemy.phase,game,chasing:chaseActive})}catch(err){console.warn('GLB renderer reset to fallback',err);monsterVisual.ready=false;}}
+ if(monsterVisual?.ready){try{monsterVisual.renderAfterWorld({enemy,player,eye,forward,dt,width:canvas.width,height:canvas.height,phase:enemy.phase,game,chasing:online.active?!!enemy.chasing:!!(chaseActive||(game==='playing'&&soloMonsterSeesPlayer()))})}catch(err){console.warn('GLB renderer reset to fallback',err);monsterVisual.ready=false;}}
 
  requestAnimationFrame(render)}
 // Backrooms chase SFX: user-supplied MP3s embedded for standalone and hosted HTML parity.
