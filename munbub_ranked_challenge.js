@@ -71,7 +71,8 @@ style.textContent += '\n'+[
 document.head.append(style);
  const visualCss=document.createElement('link');visualCss.rel='stylesheet';visualCss.href='./munbub_ranked_visual_20261106.css';document.head.append(visualCss);
  let selected='infinite',run=null,active=false,busy=false,mode=null,qid=null,
-     correct=0,answered=0,score=0,deadline=null,lastResult=null,tickId=null,generation=0;
+     correct=0,answered=0,score=0,deadline=null,lastResult=null,tickId=null,generation=0,
+     answerChecking=false,advanceQueued=false;
  const now=()=>Date.now();
  const safeMode=x=>MODES[x]?x:'infinite';
  function frame(title,content){
@@ -112,7 +113,7 @@ document.head.append(style);
    .catch(e=>{if(serial===rankFetchSerial&&dialog.querySelector('#mb-ranked-stage-rows'))target.textContent=e.message});
  }
  function showLobby(message=''){
-  active=false;run=null;mode=null;deadline=null;lastResult=null;
+  active=false;run=null;mode=null;deadline=null;lastResult=null;answerChecking=false;advanceQueued=false;
   dialog.classList.remove('mb-ranked-playing');
   dialog.classList.add('mb-ranked-visual-open');
   delete dialog.dataset.mbRankedMode;
@@ -188,6 +189,7 @@ document.head.append(style);
  }
  function showQuestion(){
   if(!active||!run)return;
+  answerChecking=false;advanceQueued=false;
   const q=findQ();
   if(!q){showLobby('문제를 불러오지 못했어. 다시 시도해 줘.');return}
   const label=q.type==='idiom'?'사자성어 뜻':q.type==='application'?'응용문제':'프린트 맞춤법';
@@ -222,13 +224,13 @@ document.head.append(style);
    mode=selection;run=out.run;qid=out.qid;correct=0;answered=0;score=0;deadline=out.deadline||null;
    dialog.dataset.mbRankedMode=mode;
    if(!findQ())throw Error('랭킹 문제 데이터가 준비되지 않았어. 화면을 새로고침한 뒤 다시 도전해 줘.');
-   generation++;active=true;showQuestion();
+   generation++;answerChecking=false;advanceQueued=false;active=true;showQuestion();
   }catch(e){showLobby(e.message)}finally{busy=false}
  }
  async function submit(answer){
   if(!active||busy||!run)return;
   if(deadline&&timeLeft()===0){finish();return}
-  busy=true;
+  busy=true;answerChecking=true;advanceQueued=false;
   const id=qid;
   dialog.querySelectorAll('[data-ranked-answer],#mb-ranked-write button').forEach(b=>b.disabled=true);
   const msg=$('mb-ranked-message');if(msg)msg.textContent='답을 전송하고 있어…';
@@ -245,7 +247,14 @@ document.head.append(style);
    showFeedback();
   }catch(e){const p=$('mb-ranked-message');if(p)p.textContent='⚠ '+e.message;
    dialog.querySelectorAll('[data-ranked-answer],#mb-ranked-write button').forEach(b=>b.disabled=false);
-  }finally{busy=false}
+  }finally{
+   busy=false;answerChecking=false;
+   // A first Space during answer verification must still advance once.
+   if(advanceQueued&&active&&dialog.open&&dialog.querySelector('#mb-ranked-next')){
+    advanceQueued=false;
+    queueMicrotask(()=>{if(active&&!busy&&dialog.open&&dialog.querySelector('#mb-ranked-next'))next()});
+   }else advanceQueued=false;
+  }
  }
  function showFeedback(){
   const f=lastResult;
@@ -257,16 +266,15 @@ document.head.append(style);
    '<button id="mb-ranked-stop" type="button">도전 종료하고 기록 저장</button>');
   $('mb-ranked-next')?.addEventListener('click',next);
   $('mb-ranked-stop')?.addEventListener('click',finish);
-  // Result screens replace the focused answer button. Restore focus to the
-  // stable dialog surface without scrolling so both keyboard and screen
-  // readers have a predictable destination.
+  // Put focus directly on NEXT so Space has an accessible native fallback.
   const resultNext=$('mb-ranked-next');
-  if(resultNext)requestAnimationFrame(()=>{
-   if(dialog.open&&active&&dialog.contains(resultNext)){
-    dialog.tabIndex=-1;
-    dialog.focus({preventScroll:true});
-   }
-  });
+  if(resultNext){
+   resultNext.focus({preventScroll:true});
+   requestAnimationFrame(()=>{
+    if(dialog.open&&active&&dialog.contains(resultNext)&&document.activeElement!==resultNext)
+     resultNext.focus({preventScroll:true});
+   });
+  }
  }
  async function next(){
   if(!active||busy)return;
@@ -288,7 +296,7 @@ document.head.append(style);
   finally{busy=false}
  }
  function showEnd(out){
-  active=false;run=null;deadline=null;
+  active=false;run=null;deadline=null;answerChecking=false;advanceQueued=false;
   if(Number.isFinite(out.correct))correct=out.correct;
   if(Number.isFinite(out.answered))answered=out.answered;
   if(Number.isFinite(out.score))score=out.score;
@@ -306,7 +314,7 @@ document.head.append(style);
    const out={action:'finish',run};
    // Closing the dialog must not silently lose the confirmed rank record.
    try{navigator.sendBeacon?.('/api/ranked',new Blob([JSON.stringify(out)],{type:'application/json'}))}catch(_){}
-   active=false;run=null;
+   active=false;run=null;answerChecking=false;advanceQueued=false;
   }
  }
  dialog.addEventListener('click',e=>{
@@ -314,28 +322,28 @@ document.head.append(style);
    stopWithoutPause();dialog.close();
   }
  });
- // Capture keyboard events at WINDOW level. The previous listener lived on
- // dialog, but frame() replaces its focused answer button. After replacement,
- // focus can fall onto BODY: Space then scrolls the whole page and never bubbles
- // through dialog. A capture-phase window handler works regardless of focus.
+ // When first Space arrives while answer verification is pending, queue
+ // the advance and block page-down immediately. Keyup must also be captured.
  function handleRankedSpaceKey(e){
   if(!dialog.open||!active)return;
   if(e.code!=='Space'&&e.key!==' '&&e.key!=='Spacebar')return;
-  if(e.isComposing||e.keyCode===229)return;
-  const target=e.target;
-  if(target?.closest?.('input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
-  const focused=document.activeElement;
-  if(focused?.matches?.('input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
-  // Only the displayed result can advance. Preserve Space while composing
-  // written answers or choosing from quiz options.
+  if(e.isComposing||e.keyCode===229||e.ctrlKey||e.altKey||e.metaKey)return;
+  const textSelector='input,textarea,select,[contenteditable="true"],[role="textbox"]';
+  if(e.target?.closest?.(textSelector)||document.activeElement?.matches?.(textSelector))return;
+  // Stop the default page scroll and stale button activation before any
+  // result-screen or busy checks. The old early-return caused the first scroll.
+  e.preventDefault();
+  e.stopImmediatePropagation?.();
+  e.stopPropagation();
+  if(e.type==='keyup'||e.repeat)return;
+  if(answerChecking){advanceQueued=true;return;}
   if(!dialog.querySelector('#mb-ranked-next'))return;
-  // Always prevent browser scrolling on the result, even while a network
-  // request is already in flight or the key is being held down.
-  e.preventDefault();e.stopPropagation();
-  if(e.repeat||busy)return;
+  if(busy){advanceQueued=true;return;}
+  advanceQueued=false;
   next();
  }
  window.addEventListener('keydown',handleRankedSpaceKey,true);
+ window.addEventListener('keyup',handleRankedSpaceKey,true);
  // Keyboard focus should not move the essay box behind the mobile soft keyboard.
  function syncRankedMobileKeyboard(){
   const vv=window.visualViewport;
