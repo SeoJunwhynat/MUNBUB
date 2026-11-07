@@ -135,7 +135,7 @@
  background:radial-gradient(circle,transparent 27%,rgba(34,0,0,.42) 84%,rgba(0,0,0,.82) 100%),
  repeating-linear-gradient(0deg,rgba(255,225,194,.045) 0 1px,transparent 1px 6px);
  animation:monsterCatchFlash .15s steps(2,end) 6}
-#jumpscareGif{display:block;width:min(100vw,100dvh);height:min(100vw,100dvh);
+#jumpscareGif{display:block;width:100vw;height:100dvh;
  object-fit:contain;max-width:none;max-height:none;image-rendering:auto;
  filter:contrast(1.12) saturate(.95);box-shadow:0 0 120px 10px rgba(0,0,0,.75);
  animation:monsterCatchZoom 1.74s cubic-bezier(.18,.81,.22,1) both}
@@ -375,15 +375,22 @@ function resetRunControls(){
  last=performance.now();lastHud=-Infinity;lastFallbackFrame=-Infinity;
  walkPhase=0;lastSound=-.40;
 }
-function start(){clearTimeout(jumpscareTimer);hideJumpscare();clearChaseState();
+function start(){clearTimeout(jumpscareTimer);hideJumpscare();
+ // No previous audio or GLB animation should be able to block retry.
+ try{clearChaseState()}catch(error){console.warn('괴물 초기화 오류, 재시작 계속 진행',error)}
  resetRunControls();$('gameSettingsPanel').classList.add('hidden');gameSettingsOpen=false;
- if(!online.active)rebuildWorld();
+ // Always reset gameplay BEFORE optional graphics/sound work.
  elapsed=online.active?Number(online.room?.elapsed||0):0;
+ stamina=100;player.stamina=100;staminaExhausted=false;runHold=false;player.flash=true;
+ if(!online.active){quizSolved={};owned={spell:false,idiom:false}}
  nextCreakAt=audio?audio.currentTime+12:0;
- stamina=100;player.stamina=100;staminaExhausted=false;runHold=false;player.flash=true;if(!online.active){quizSolved={};owned={spell:false,idiom:false}}
- buildWorldGeometry();game='playing';showScreen('none');inputMode(true);
+ try{if(!online.active)rebuildWorld();buildWorldGeometry();}
+ catch(error){console.warn('미로 그래픽 초기화 오류, 게임 시간과 조작은 유지',error)}
+ game='playing';showScreen('none');inputMode(true);
+ last=performance.now();lastHud=-Infinity;lastFallbackFrame=-Infinity;
  updateHUD();toast('단말기 8개 · 각 3문제, 총 24문제를 풀어 주세요.');
- last=performance.now();ensureGameLoop();lock();startSound();
+ ensureGameLoop();lock();
+ try{startSound()}catch(error){console.warn('오디오 초기화 오류, 게임 진행 유지',error)}
 }
 function renderQuizQuestion(q){
  const target=$('quizQuestion');target.replaceChildren();
@@ -489,6 +496,7 @@ function showJumpscare(){
  if(jumpscareGifBlob)showOnce();else jumpscareGifReady.then(showOnce);
 }
 function finishEnd(won){
+ if(!won&&!online.active&&game!=='jumpscare')return; // Discard stale death timer after retry.
  game='ended';hideJumpscare();unlock();showScreen('endScreen');inputMode(false);
  $('endSub').textContent=won?'탈출 완료':'탐험 종료';$('endIcon').textContent=won?'🏆':'⚠️';
  $('endTitle').textContent=won?'탈출에 성공했어요!':'괴물에게 붙잡혔어요';
@@ -535,20 +543,35 @@ if(player.flash){let spot=c.createRadialGradient(W*.5,H*.59,10,W*.5,H*.55,W*.37)
 }
 // One resilient RAF owner: a rendering/audio exception must never permanently
 // stop stamina, elapsed time, or the next attempt after a jumpscare.
-let gameFrameQueued=false,lastGameFrameErrorAt=-Infinity;
+let gameFrameQueued=false,lastGameFrameErrorAt=-Infinity,lastAudioFrameErrorAt=-Infinity;
 function ensureGameLoop(){
  if(gameFrameQueued)return;
  gameFrameQueued=true;
  requestAnimationFrame(ts=>{
   gameFrameQueued=false;
-  try{render(ts)}
+  // Simulation is independent of audio and WebGL. A graphics failure cannot
+  // freeze the timer, stamina or input on subsequent attempts.
+  const dt=Math.min(.09,Math.max(0,(ts-last)/1000||0));
+  last=ts;
+  try{if(game==='playing')update(dt)}
   catch(error){
-   if(ts-lastGameFrameErrorAt>1800){console.error('백룸 게임 루프 오류 (자동 복구)',error);lastGameFrameErrorAt=ts}
-   last=ts;
+   if(ts-lastGameFrameErrorAt>1800){console.error('게임 상태 갱신 오류 (자동 재시도)',error);lastGameFrameErrorAt=ts}
+  }
+  try{render(ts,dt)}
+  catch(error){
+   if(ts-lastGameFrameErrorAt>1800){console.error('렌더링 오류 (자동 복구)',error);lastGameFrameErrorAt=ts}
   }finally{ensureGameLoop()}
  });
 }
-function render(ts){syncSoundscape();syncChaseCues();if(fallback&&ts-lastFallbackFrame<67){return}lastFallbackFrame=ts;let dt=Math.min(fallback?.09:.045,Math.max(0,(ts-last)/1000||0));last=ts;t=ts/1000;if(game==='playing')update(dt);if(canvas.width!==Math.round(innerWidth*(fallback?Math.min(1,920/Math.max(innerWidth,innerHeight)):Math.min(devicePixelRatio||1,1.75)))||canvas.height!==Math.round(innerHeight*(fallback?Math.min(1,920/Math.max(innerWidth,innerHeight)):Math.min(devicePixelRatio||1,1.75)))){canvas.width=Math.round(innerWidth*(fallback?Math.min(1,920/Math.max(innerWidth,innerHeight)):Math.min(devicePixelRatio||1,1.75)));canvas.height=Math.round(innerHeight*(fallback?Math.min(1,920/Math.max(innerWidth,innerHeight)):Math.min(devicePixelRatio||1,1.75)));gl.viewport(0,0,canvas.width,canvas.height)}let bob=game==='playing'&&walkPhase?Math.sin(walkPhase)*.036:0;let eye=[player.x,1.64+bob,player.z],forward=[Math.sin(player.yaw)*Math.cos(player.pitch),Math.sin(player.pitch),-Math.cos(player.yaw)*Math.cos(player.pitch)];if(fallback){fallbackRender(eye,forward);return}if(game==='jumpscare'){
+function render(ts,frameDt){
+ try{syncSoundscape();syncChaseCues()}
+ catch(error){
+  if(ts-lastAudioFrameErrorAt>1800){console.warn('오디오 오류 - 게임 진행 유지',error);lastAudioFrameErrorAt=ts}
+ }
+ if(fallback&&ts-lastFallbackFrame<67)return;
+ lastFallbackFrame=ts;
+ let dt=Math.min(fallback?.09:.045,frameDt);t=ts/1000;
+ if(canvas.width!==Math.round(innerWidth*(fallback?Math.min(1,920/Math.max(innerWidth,innerHeight)):Math.min(devicePixelRatio||1,1.75)))||canvas.height!==Math.round(innerHeight*(fallback?Math.min(1,920/Math.max(innerWidth,innerHeight)):Math.min(devicePixelRatio||1,1.75)))){canvas.width=Math.round(innerWidth*(fallback?Math.min(1,920/Math.max(innerWidth,innerHeight)):Math.min(devicePixelRatio||1,1.75)));canvas.height=Math.round(innerHeight*(fallback?Math.min(1,920/Math.max(innerWidth,innerHeight)):Math.min(devicePixelRatio||1,1.75)));gl.viewport(0,0,canvas.width,canvas.height)}let bob=game==='playing'&&walkPhase?Math.sin(walkPhase)*.036:0;let eye=[player.x,1.64+bob,player.z],forward=[Math.sin(player.yaw)*Math.cos(player.pitch),Math.sin(player.pitch),-Math.cos(player.yaw)*Math.cos(player.pitch)];if(fallback){fallbackRender(eye,forward);return}if(game==='jumpscare'){
  const vx=enemy.x-player.x,vz=enemy.z-player.z,d=Math.max(.05,Math.hypot(vx,vz));
  const quake=Math.min(1,(performance.now()-jumpscareAt)/500);
  eye=[player.x,1.58+Math.sin(t*49)*.042*quake,player.z];
@@ -632,8 +655,8 @@ function playSample(key,volume,{lowpass=0,pan=0,roaming=false,limit=false}={}){
 function playChaseCue(kind){
  if(kind==='start'||kind==='caught'){
   stopChaseVoices();
-  // The caught/jumpscare scream gets a 3x gain boost; ordinary pursuit is unchanged.
-   return playSample('scream1',kind==='caught'?(0.69*3):.53,{limit:kind==='caught'});
+  // Caught gain is 3x the previous already-boosted level; limiter stays enabled.
+   return playSample('scream1',kind==='caught'?(0.69*9):.53,{limit:kind==='caught'});
  }
  if(kind==='scream2')return playSample('scream2',.29);
  if(kind==='scream3')return playSample('scream3',.34);

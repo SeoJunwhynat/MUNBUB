@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import {readFileSync,statSync} from 'node:fs';
 const html=readFileSync(new URL('../backrooms/index.html',import.meta.url),'utf8');
 const gif=readFileSync(new URL('../backrooms/assets/jumpscare/monster_rush.gif',import.meta.url));
-test('custom jumpscare is a valid 8-frame animated GIF',()=>{
+test('custom jumpscare is the supplied 9-frame animated GIF',()=>{
  assert.equal(gif.subarray(0,6).toString('ascii'),'GIF89a');
- assert.equal(gif.readUInt16LE(6),443);
- assert.equal(gif.readUInt16LE(8),443);
+ assert.equal(gif.readUInt16LE(6),478);
+ assert.equal(gif.readUInt16LE(8),354);
  assert.ok(gif.includes(Buffer.from('NETSCAPE2.0')),'loop metadata missing');
  assert.ok(statSync(new URL('../backrooms/assets/jumpscare/monster_rush.gif',import.meta.url)).size>100_000);
 });
