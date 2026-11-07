@@ -275,3 +275,92 @@ body:has(#workspace.mb-playing-scene:not([hidden])) #mb-achievement-toast{
   top:98px!important;right:7px!important;max-width:220px!important;
  }
 }
+
+
+/* A single portrait composition: full-width question and answer deck,
+   companion moved below the cards instead of overlapping 120px of text. */
+@media(max-width:700px) and (orientation:portrait){
+ #workspace#workspace.app-shell.mb-playing-scene:not([hidden]){
+  width:100vw!important;height:100dvh!important;max-height:100dvh!important;
+  overflow:hidden!important;grid-template-columns:minmax(0,1fr)!important;
+  padding:0!important
+ }
+ #workspace.mb-playing-scene .work-main{
+  box-sizing:border-box!important;width:100%!important;min-width:0!important;
+  height:calc(100dvh - 60px - env(safe-area-inset-bottom,0px))!important;
+  max-height:calc(100dvh - 60px - env(safe-area-inset-bottom,0px))!important;
+  min-height:0!important;padding:clamp(3px,1vw,6px)!important;overflow:hidden!important
+ }
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz.mb-quiz-scene:not([hidden]){
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr) clamp(60px,11dvh,86px)!important;
+  gap:4px!important;align-items:stretch!important;justify-content:stretch!important;
+  flex:1 1 0!important;height:100%!important;max-height:100%!important;
+  min-height:0!important;overflow:hidden!important
+ }
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz.mb-quiz-scene>.panel,
+ #workspace#workspace.app-shell.mb-playing-scene.mb-scene-timed #view-quiz.mb-quiz-scene>.panel{
+  grid-column:1!important;grid-row:1!important;box-sizing:border-box!important;
+  min-width:0!important;width:100%!important;min-height:0!important;
+  height:100%!important;max-height:100%!important;overflow:hidden!important;
+  padding:0!important;margin:0!important;gap:clamp(3px,.9dvh,8px)!important
+ }
+ #workspace.mb-playing-scene #view-quiz .quiz-meta{flex-wrap:wrap!important;min-width:0!important}
+ #workspace.mb-playing-scene #view-quiz .prompt{
+  width:100%!important;min-width:0!important;flex:0 1 auto!important;
+  min-height:clamp(95px,20dvh,155px)!important;max-height:30dvh!important;
+  margin:clamp(3px,1dvh,8px) 0 0!important;box-sizing:border-box!important;
+  overflow-y:auto!important;padding:clamp(9px,2.5vw,15px)!important;
+  font-size:clamp(16px,4.15vw,21px)!important
+ }
+ #workspace.mb-playing-scene #view-quiz .prompt-desc{
+  width:100%!important;max-width:100%!important;box-sizing:border-box!important;
+  line-height:1.3!important;text-align:center!important
+ }
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-quiz-companion{
+  position:relative!important;grid-column:1!important;grid-row:2!important;
+  top:auto!important;right:auto!important;left:auto!important;
+  display:flex!important;flex-direction:row!important;justify-content:center!important;
+  align-items:center!important;gap:8px!important;margin:0!important;
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  height:100%!important;max-height:100%!important;padding:0 5px!important;
+  box-sizing:border-box!important;overflow:hidden!important;z-index:1!important
+ }
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-mascot-button{
+  flex:0 0 clamp(58px,16vw,77px)!important;width:clamp(58px,16vw,77px)!important;
+  height:clamp(58px,10dvh,80px)!important;max-width:none!important;max-height:100%!important;
+  min-height:0!important;margin:0!important;overflow:visible!important
+ }
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-mascot-button img{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  width:100%!important;max-width:100%!important;height:100%!important;
+  max-height:100%!important;object-fit:contain!important;image-rendering:auto!important
+ }
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz .mb-quiz-speech{
+  position:relative!important;flex:1 1 auto!important;min-width:0!important;
+  width:auto!important;max-width:calc(100% - 90px)!important;
+  height:auto!important;min-height:43px!important;max-height:100%!important;
+  padding:6px 10px!important;font-size:clamp(11px,3vw,14px)!important;
+  line-height:1.3!important;overflow-y:auto!important;text-align:left!important
+ }
+ #workspace.mb-playing-scene #view-quiz #answerArea{
+  width:100%!important;min-height:clamp(110px,20dvh,155px)!important;
+  max-height:32dvh!important;flex:0 1 auto!important;
+  margin:auto 0 0!important;overflow-y:auto!important
+ }
+ #workspace.mb-playing-scene #view-quiz .option{min-height:46px!important}
+ #workspace.mb-playing-scene #view-quiz .quiz-bottom{
+  min-height:44px!important;flex-shrink:0!important;align-items:center!important
+ }
+ #workspace.mb-playing-scene #view-quiz .quiz-bottom button{min-height:44px!important}
+ #workspace#workspace.app-shell.mb-playing-scene.mb-scene-timed>.mb-quiz-timer-group{
+  top:clamp(42px,6dvh,65px)!important
+ }
+}
+/* Reduced vertical room: prefer scrolling panel over clipping submit button. */
+@media(max-width:700px) and (orientation:portrait) and (max-height:680px){
+ #workspace.mb-playing-scene .work-main{height:calc(100dvh - 60px - env(safe-area-inset-bottom,0px))!important}
+ #workspace#workspace.app-shell.mb-playing-scene #view-quiz.mb-quiz-scene>.panel{overflow-y:auto!important;overscroll-behavior:contain!important}
+ #workspace.mb-playing-scene #view-quiz .prompt{min-height:75px!important}
+ #workspace.mb-playing-scene #view-quiz #answerArea{min-height:100px!important}
+}

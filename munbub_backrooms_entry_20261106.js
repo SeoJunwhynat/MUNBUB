@@ -47,6 +47,10 @@
  chatScript.src='/munbub_global_chat_20261108.js';
  chatScript.defer=true;
  document.head.append(chatScript);
+ const portraitStyle=document.createElement('link');
+ portraitStyle.rel='stylesheet';portraitStyle.href='/munbub_mobile_portrait_20261108.css';
+ portraitStyle.id='mb-mobile-portrait-20261108';
+ document.head.append(portraitStyle);
  const alertScript=document.createElement('script');alertScript.src='/munbub_global_alert_20261108.js';alertScript.defer=true;document.head.append(alertScript);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();

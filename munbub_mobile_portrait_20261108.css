@@ -1,0 +1,142 @@
+/* One final mobile portrait layout layer. Keep actual uploaded button images. */
+@media(max-width:700px) and (orientation:portrait){
+ html,body{max-width:100%!important;overflow-x:hidden!important}
+ #homeScreen:not([hidden]){
+  box-sizing:border-box!important;max-width:100vw!important;min-width:0!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  -webkit-overflow-scrolling:touch!important
+ }
+ #homeScreen .home-main{
+  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+  width:100%!important;min-width:0!important;max-width:100vw!important;
+  margin:0!important;padding:clamp(8px,2.5vw,14px) clamp(8px,2.8vw,16px)
+   calc(100px + env(safe-area-inset-bottom,0px))!important;overflow:visible!important
+ }
+ #homeScreen .home-main>.mb-home-dashboard{
+  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  gap:clamp(8px,2vw,14px)!important;margin:0!important;align-items:stretch!important
+ }
+ #homeScreen .mb-home-dashboard>.mb-mascot-stage{
+  display:flex!important;flex-direction:column!important;order:1!important;
+  position:relative!important;box-sizing:border-box!important;align-self:center!important;
+  grid-column:auto!important;grid-row:auto!important;min-width:0!important;
+  width:min(100%,430px)!important;max-width:430px!important;
+  height:auto!important;min-height:0!important;margin:0 auto!important;
+  overflow:visible!important;visibility:visible!important
+ }
+ #homeScreen .mb-mascot-stage>.hero-character,
+ #homeScreen .mb-mascot-stage>img.hero-character{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  position:relative!important;max-width:100%!important;
+  object-fit:contain!important;image-rendering:auto!important
+ }
+ #homeScreen .mb-home-dashboard>.mb-dashboard-left{
+  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+  order:2!important;position:relative!important;
+  grid-column:auto!important;grid-row:auto!important;
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  align-items:stretch!important;justify-content:flex-start!important;
+  gap:clamp(5px,1.4vw,11px)!important;margin:0!important
+ }
+ #homeScreen .mb-dashboard-left>.home-hero{
+  order:-10!important;display:flex!important;position:relative!important;
+  box-sizing:border-box!important;grid-column:auto!important;grid-row:auto!important;
+  align-items:center!important;justify-content:center!important;
+  width:100%!important;max-width:100%!important;height:clamp(80px,23vw,125px)!important;
+  max-height:125px!important;min-height:70px!important;margin:0 auto!important;
+  overflow:visible!important
+ }
+ #homeScreen .mb-dashboard-left>.home-hero .hero-scroll{
+  position:relative!important;display:block!important;
+  left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+  max-width:100%!important;max-height:100%!important;
+  width:100%!important;height:100%!important;object-fit:contain!important;
+  object-position:center center!important;visibility:visible!important;opacity:1!important
+ }
+ #homeScreen .mb-dashboard-left :is(.resume-group,.timed-home-wrap,.mb-hard-feature,.mb-backrooms-launcher){
+  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;
+  position:relative!important;grid-column:auto!important;grid-row:auto!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  align-self:stretch!important;justify-content:center!important;
+  margin:4px auto!important;transform:none!important;top:auto!important
+ }
+ #homeScreen .mb-dashboard-left :is(.resume-group,.timed-home-wrap,.mb-hard-feature,.mb-backrooms-launcher) img,
+ #homeScreen .home-card-grid .img-button img,
+ #homeScreen .home-actions .img-button img{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  width:100%!important;max-width:100%!important;height:auto!important;
+  object-fit:contain!important;image-rendering:auto!important
+ }
+ #homeScreen .mb-dashboard-left .timed-home-btn{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  width:100%!important;aspect-ratio:266/46!important;height:auto!important;
+  min-height:46px!important;box-sizing:border-box!important;
+  background-size:100% 100%!important;background-repeat:no-repeat!important;
+  background-position:center!important
+ }
+ #homeScreen .mb-dashboard-left>.mb-hard-feature{
+  background-position:center!important;background-size:contain!important;
+  background-repeat:no-repeat!important;aspect-ratio:3/1!important;
+  min-height:75px!important
+ }
+ #homeScreen .mb-dashboard-left #mb-backrooms-mode-button{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  width:100%!important;height:auto!important;min-height:60px!important
+ }
+ #homeScreen .mb-dashboard-left #mb-backrooms-mode-button>img{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  width:100%!important;height:auto!important;object-fit:contain!important
+ }
+ #homeScreen .mb-home-dashboard .mb-online-actions{
+  width:100%!important;min-width:0!important;max-width:100%!important;
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:7px!important;align-items:center!important
+ }
+ #homeScreen button.mb-art-button,
+ #homeScreen .mb-online-actions button{
+  box-sizing:border-box!important;position:relative!important;
+  display:flex!important;justify-content:center!important;align-items:center!important;
+  min-width:0!important;max-width:100%!important;width:100%!important;
+  overflow:visible!important;visibility:visible!important;opacity:1!important;
+  margin:0!important
+ }
+ #homeScreen button.mb-art-button>img.mb-art-button-img,
+ .mobile-drawer button.mb-art-button>img.mb-art-button-img,
+ .mobile-drawer button.mb-ranked-nav>img.mb-ranked-art,
+ .mobile-drawer button img{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  width:100%!important;height:auto!important;max-width:100%!important;
+  object-fit:contain!important;image-rendering:auto!important
+ }
+ #homeScreen .home-main>.home-card-grid,
+ #homeScreen .home-main>.home-actions{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  width:100%!important;max-width:100%!important;gap:clamp(7px,2vw,13px)!important;
+  min-width:0!important;margin:10px auto 0!important
+ }
+ #homeScreen .home-main>.home-card-grid>*,
+ #homeScreen .home-main>.home-actions>*{min-width:0!important;max-width:100%!important}
+ #homeScreen :is(.home-card-grid,.home-actions) .img-button{
+  width:100%!important;height:auto!important;min-width:0!important;
+  padding:0!important;min-height:44px!important;overflow:visible!important
+ }
+ #homeScreen .home-main>.home-card-grid .img-button img,
+ #homeScreen .home-main>.home-actions .img-button img{
+  height:auto!important;max-height:180px!important;object-fit:contain!important
+ }
+ #homeScreen .home-foot{
+  box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+  min-width:0!important;overflow-wrap:anywhere!important
+ }
+ .mobile-drawer:not([hidden]){box-sizing:border-box!important;max-height:calc(100dvh - env(safe-area-inset-top,0px) - 20px)!important;overflow-y:auto!important;overscroll-behavior:contain!important}
+ .mobile-drawer button.mb-ranked-nav,.mobile-drawer button.mb-art-button{max-height:none!important;min-height:50px!important}
+ .mobile-bottom{box-sizing:border-box!important;width:100%!important;max-width:100vw!important;
+  padding-bottom:env(safe-area-inset-bottom,0px)!important}
+ #mb-achievement-launch{min-height:38px!important;max-width:140px!important;visibility:visible!important}
+}
+@media(max-width:380px) and (orientation:portrait){
+ #homeScreen .home-main>.home-card-grid,#homeScreen .home-main>.home-actions{gap:5px!important}
+ #homeScreen .mb-online-actions button{min-height:42px!important}
+ #homeScreen .mb-dashboard-left>.home-hero{height:80px!important}
+}
