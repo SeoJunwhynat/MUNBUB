@@ -373,15 +373,17 @@ function resetRunControls(){
  const stick=$('stick');
  if(stick){stick.style.left='50%';stick.style.top='50%'}
  last=performance.now();lastHud=-Infinity;lastFallbackFrame=-Infinity;
+ lastGameFrameAt=last;
  walkPhase=0;lastSound=-.40;
 }
-function start(){clearTimeout(jumpscareTimer);hideJumpscare();
+function start(){clearTimeout(jumpscareTimer);jumpscareTimer=null;hideJumpscare();
  // No previous audio or GLB animation should be able to block retry.
  try{clearChaseState()}catch(error){console.warn('괴물 초기화 오류, 재시작 계속 진행',error)}
  resetRunControls();$('gameSettingsPanel').classList.add('hidden');gameSettingsOpen=false;
  // Always reset gameplay BEFORE optional graphics/sound work.
  elapsed=online.active?Number(online.room?.elapsed||0):0;
  stamina=100;player.stamina=100;staminaExhausted=false;runHold=false;player.flash=true;
+ enemy.path=[];enemy.pathGoal=null;enemy.pathMode=null;enemy.stuckTicks=0;enemy.pathTime=0;
  if(!online.active){quizSolved={};owned={spell:false,idiom:false}}
  nextCreakAt=audio?audio.currentTime+12:0;
  try{if(!online.active)rebuildWorld();buildWorldGeometry();}
@@ -452,6 +454,8 @@ let jumpscareAt=0,jumpscareTimer=null;
 // GIF is preloaded once. A new Blob URL is used for each catch so the animation
 // reliably restarts at frame one, even after pressing Retry several times.
 const jumpscareGifPath='assets/jumpscare/monster_rush.gif';
+// Verified exact uploaded GIF: Git blob SHA 94590af43870307432b340d1378c24259ff98740.
+const jumpscareGifVersion='94590af43870';
 let jumpscareGifBlob=null,jumpscareGifObjectURL=null;
 // The supplied GIF has 9 frames at about 110ms each and NETSCAPE2.0 infinite repeat metadata.
 // Strip ONLY that 19-byte application extension; the original frames are untouched.
@@ -468,7 +472,7 @@ async function oneShotJumpscareGif(blob){
  }
  return blob;
 }
-const jumpscareGifReady=fetch(jumpscareGifPath,{cache:'no-store'}).then(response=>{
+const jumpscareGifReady=fetch(jumpscareGifPath+'?v='+jumpscareGifVersion,{cache:'no-store'}).then(response=>{
  if(!response.ok)throw new Error('Jumpscare GIF unavailable');
  return response.blob();
 }).then(oneShotJumpscareGif).then(blob=>{jumpscareGifBlob=blob;return blob}).catch(error=>{console.warn('점프스케어 GIF 로딩 실패',error);return null});
@@ -543,26 +547,46 @@ if(player.flash){let spot=c.createRadialGradient(W*.5,H*.59,10,W*.5,H*.55,W*.37)
 }
 // One resilient RAF owner: a rendering/audio exception must never permanently
 // stop stamina, elapsed time, or the next attempt after a jumpscare.
-let gameFrameQueued=false,lastGameFrameErrorAt=-Infinity,lastAudioFrameErrorAt=-Infinity;
+let gameFrameQueued=false,lastGameFrameAt=performance.now(),lastGameFrameErrorAt=-Infinity,lastAudioFrameErrorAt=-Infinity;
+function stepGameSimulation(ts){
+ // The simulation clock is separate from the renderer and survives repeat attempts.
+ const dt=Math.min(.09,Math.max(0,(ts-last)/1000||0));
+ last=ts;
+ if(game==='playing'){
+  try{update(dt)}
+  catch(error){
+   if(ts-lastGameFrameErrorAt>1800){console.error('게임 상태 갱신 오류 (자동 재시도)',error);lastGameFrameErrorAt=ts}
+   // Even a faulty monster/audio callback must not leave stamina or HUD stale.
+   try{updateHUD(Math.hypot(enemy.x-player.x,enemy.z-player.z))}catch{}
+  }
+ }
+ return dt;
+}
 function ensureGameLoop(){
  if(gameFrameQueued)return;
  gameFrameQueued=true;
  requestAnimationFrame(ts=>{
-  gameFrameQueued=false;
-  // Simulation is independent of audio and WebGL. A graphics failure cannot
-  // freeze the timer, stamina or input on subsequent attempts.
-  const dt=Math.min(.09,Math.max(0,(ts-last)/1000||0));
-  last=ts;
-  try{if(game==='playing')update(dt)}
-  catch(error){
-   if(ts-lastGameFrameErrorAt>1800){console.error('게임 상태 갱신 오류 (자동 재시도)',error);lastGameFrameErrorAt=ts}
-  }
+  gameFrameQueued=false;lastGameFrameAt=ts;
+  const dt=stepGameSimulation(ts);
   try{render(ts,dt)}
   catch(error){
    if(ts-lastGameFrameErrorAt>1800){console.error('렌더링 오류 (자동 복구)',error);lastGameFrameErrorAt=ts}
   }finally{ensureGameLoop()}
  });
 }
+// A suspended RAF must never freeze the timer, controls or stamina after Retry.
+// While the page is visible, continue game simulation and re-arm rendering if necessary.
+setInterval(()=>{
+ if(game!=='playing'||document.hidden)return;
+ const now=performance.now();
+ if(now-lastGameFrameAt<=260)return;
+ stepGameSimulation(now);
+ if(now-lastGameFrameAt>1000){
+  gameFrameQueued=false;
+  lastGameFrameAt=now;
+  ensureGameLoop();
+ }
+},100);
 function render(ts,frameDt){
  try{syncSoundscape();syncChaseCues()}
  catch(error){
@@ -655,8 +679,10 @@ function playSample(key,volume,{lowpass=0,pan=0,roaming=false,limit=false}={}){
 function playChaseCue(kind){
  if(kind==='start'||kind==='caught'){
   stopChaseVoices();
-  // Caught gain is 3x the previous already-boosted level; limiter stays enabled.
-   return playSample('scream1',kind==='caught'?(0.69*9):.53,{limit:kind==='caught'});
+  // Triple the current caught-scream input. A dynamics limiter protects output peaks.
+  const previousCaughtGain=.69*9;
+  const jumpscareBoost=3;
+  return playSample('scream1',kind==='caught'?previousCaughtGain*jumpscareBoost:.53,{limit:kind==='caught'});
  }
  if(kind==='scream2')return playSample('scream2',.29);
  if(kind==='scream3')return playSample('scream3',.34);
