@@ -14,29 +14,53 @@ function clickEvent(partial={}){
   preventDefault(){this.prevented=true;},
   stopPropagation(){this.stopped=true;},...partial};
 }
-test('ranked shortcut advances precisely once only on visible feedback screen',()=>{
- const a=ranked.indexOf("dialog.addEventListener('keydown',e=>{");
- const b=ranked.indexOf("dialog.addEventListener('cancel'",a);
- assert.ok(a>0&&b>a,'keyboard handler is attached to ranked dialog');
- const source=ranked.slice(a,ranked.indexOf(" // Keyboard focus",a)>a?ranked.indexOf(" // Keyboard focus",a):b);
+test('Space is captured before browser scroll even when focused answer button disappears',()=>{
+ const a=ranked.indexOf('function handleRankedSpaceKey(e){');
+ const b=ranked.indexOf("window.addEventListener('keydown',handleRankedSpaceKey,true);",a);
+ assert.ok(a>0&&b>a,'register a capture-phase global keyboard listener');
+ const source=ranked.slice(a,b+"window.addEventListener('keydown',handleRankedSpaceKey,true);".length);
  let handler=null,called=0,feedback=true;
- const dialog={open:true,querySelector:(x)=>x==='#mb-ranked-next'&&feedback?{}:null,
-  addEventListener:(type,fn)=>{if(type==='keydown')handler=fn}};
- const ctx={dialog,active:true,busy:false,next:()=>{called++;ctx.busy=true}};
+ const window={addEventListener:(type,fn,capture)=>{
+  assert.equal(type,'keydown');assert.equal(capture,true);handler=fn;
+ }};
+ const document={activeElement:{tagName:'BODY',matches:()=>false}};
+ const dialog={open:true,querySelector:x=>x==='#mb-ranked-next'&&feedback?{}:null};
+ const ctx={window,document,dialog,active:true,busy:false,next:()=>{called++;ctx.busy=true}};
  assert.doesNotThrow(()=>runInNewContext(source,ctx));
  assert.equal(typeof handler,'function');
- const first=clickEvent();handler(first);
- assert.equal(called,1);assert.equal(first.prevented,true);
- const rapid=clickEvent();handler(rapid);
- assert.equal(called,1,'busy prevents accidental double-submit');
+ // Target outside dialog, as happens after frame() removes the old button.
+ const bodySpace=clickEvent({target:{tagName:'BODY',closest:()=>null}});
+ handler(bodySpace);
+ assert.equal(called,1,'the first Space advances');
+ assert.equal(bodySpace.prevented,true,'no default page scroll');
+ assert.equal(bodySpace.stopped,true,'no other game handler sees Space');
+ const whileBusy=clickEvent();handler(whileBusy);
+ assert.equal(called,1,'do not submit twice');
+ assert.equal(whileBusy.prevented,true,'even in-flight requests cannot scroll');
  ctx.busy=false;
- handler(clickEvent({repeat:true}));assert.equal(called,1);
+ const repeat=clickEvent({repeat:true});handler(repeat);
+ assert.equal(called,1);assert.equal(repeat.prevented,true,'held Space cannot scroll or resubmit');
  handler(clickEvent({isComposing:true}));assert.equal(called,1);
- handler(clickEvent({target:{closest:(sel)=>({tag:'INPUT'})}}));assert.equal(called,1);
+ const inputSpace=clickEvent({target:{closest:()=>({tag:'INPUT'})}});handler(inputSpace);
+ assert.equal(called,1);assert.equal(inputSpace.prevented,false,'typing spaces still works');
+ document.activeElement={tagName:'INPUT',matches:()=>true};
+ const focusedInput=clickEvent();handler(focusedInput);assert.equal(focusedInput.prevented,false);
+ document.activeElement={tagName:'BODY',matches:()=>false};
  feedback=false;
- handler(clickEvent());assert.equal(called,1,'not while current question is displayed');
- feedback=true;
+ const unanswered=clickEvent();handler(unanswered);
+ assert.equal(called,1);assert.equal(unanswered.prevented,false,'question screen keeps normal typing');
+ feedback=true;dialog.open=false;
+ const closed=clickEvent();handler(closed);assert.equal(closed.prevented,false);
+ dialog.open=true;ctx.active=false;
+ const inactive=clickEvent();handler(inactive);assert.equal(inactive.prevented,false);
+ ctx.active=true;
  handler(clickEvent({code:'KeyS',key:'s'}));assert.equal(called,1);
+});
+test('result screen actively restores focus to the stable ranked dialog after rerender',()=>{
+ assert.match(ranked,/dialog\.tabIndex=-1/);
+ assert.match(ranked,/dialog\.focus\(\{preventScroll:true\}\)/);
+ assert.match(ranked,/dialog\.contains\(resultNext\)/);
+ assert.doesNotThrow(()=>new Script(ranked));
 });
 test('ranked essay automatically focuses and uses native Enter form submission',()=>{
  assert.match(ranked,/const typed=\$\('mb-ranked-typed'\)/);

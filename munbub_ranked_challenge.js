@@ -257,6 +257,16 @@ document.head.append(style);
    '<button id="mb-ranked-stop" type="button">도전 종료하고 기록 저장</button>');
   $('mb-ranked-next')?.addEventListener('click',next);
   $('mb-ranked-stop')?.addEventListener('click',finish);
+  // Result screens replace the focused answer button. Restore focus to the
+  // stable dialog surface without scrolling so both keyboard and screen
+  // readers have a predictable destination.
+  const resultNext=$('mb-ranked-next');
+  if(resultNext)requestAnimationFrame(()=>{
+   if(dialog.open&&active&&dialog.contains(resultNext)){
+    dialog.tabIndex=-1;
+    dialog.focus({preventScroll:true});
+   }
+  });
  }
  async function next(){
   if(!active||busy)return;
@@ -304,16 +314,28 @@ document.head.append(style);
    stopWithoutPause();dialog.close();
   }
  });
- // Keyboard shortcut works only on the result screen, never while composing
- // an essay or using IME. The user can still type spaces into answers normally.
- dialog.addEventListener('keydown',e=>{
-  if(!dialog.open||!active||busy||e.repeat||e.isComposing||e.keyCode===229)return;
+ // Capture keyboard events at WINDOW level. The previous listener lived on
+ // dialog, but frame() replaces its focused answer button. After replacement,
+ // focus can fall onto BODY: Space then scrolls the whole page and never bubbles
+ // through dialog. A capture-phase window handler works regardless of focus.
+ function handleRankedSpaceKey(e){
+  if(!dialog.open||!active)return;
   if(e.code!=='Space'&&e.key!==' '&&e.key!=='Spacebar')return;
+  if(e.isComposing||e.keyCode===229)return;
   const target=e.target;
   if(target?.closest?.('input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
+  const focused=document.activeElement;
+  if(focused?.matches?.('input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
+  // Only the displayed result can advance. Preserve Space while composing
+  // written answers or choosing from quiz options.
   if(!dialog.querySelector('#mb-ranked-next'))return;
-  e.preventDefault();e.stopPropagation();next();
- });
+  // Always prevent browser scrolling on the result, even while a network
+  // request is already in flight or the key is being held down.
+  e.preventDefault();e.stopPropagation();
+  if(e.repeat||busy)return;
+  next();
+ }
+ window.addEventListener('keydown',handleRankedSpaceKey,true);
  // Keyboard focus should not move the essay box behind the mobile soft keyboard.
  function syncRankedMobileKeyboard(){
   const vv=window.visualViewport;
