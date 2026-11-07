@@ -10,6 +10,7 @@ import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import backroomsRelay from './backrooms/server.js';
 import { session, sameOrigin } from './lib/mb-server.js';
+import {activeCount,pingPresence,forgetPresence} from './lib/mb-presence.js';
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const handlers = new Map();
 const apiRoutes = new Set(['account','duel','health','leaderboard','public-arena','public-rooms','ranked','score']);
@@ -70,6 +71,18 @@ async function handle(req,res){
     backroomsRelay.server.emit('request',req,res);
     return;
   }
+  if(pathname==='/api/presence'){
+    if(req.method==='GET'||req.method==='HEAD')return json(res,200,{online:activeCount()});
+    if(req.method!=='POST'&&req.method!=='DELETE')return json(res,405,{error:'Method not allowed'});
+    if(!sameOrigin(req))return json(res,403,{error:'Forbidden'});
+    const body=await parseBody(req);
+    const id=body&&typeof body==='object'&&body.id;
+    if(typeof id!=='string'||!/^[A-Za-z0-9_-]{20,100}$/.test(id))return json(res,400,{error:'Invalid anonymous session'});
+    if(req.method==='DELETE')return json(res,200,{online:forgetPresence(id)});
+    const online=pingPresence(id);
+    if(online===null)return json(res,429,{error:'Too many active sessions'});
+    return json(res,200,{online});
+  }
   if(pathname.startsWith('/api/')){
     const name=pathname.slice(5);
     if(!apiRoutes.has(name))return json(res,404,{error:'API route not found'});
@@ -87,7 +100,7 @@ async function handle(req,res){
   // Keep answers and private coop server files inaccessible over HTTP.
   if(pathname.startsWith('/backrooms/')){
     // Only expose explicitly approved game assets, never answers or server code.
-    const publicAsset=/^\/backrooms\/(?:assets\/(?:jumpscare\/[A-Za-z0-9_.-]+\.gif|sfx\/[A-Za-z0-9_.-]+\.(?:mp3|wav|ogg)|monsters\/[A-Za-z0-9_.-]+\.glb)|src\/[A-Za-z0-9_.-]+\.mjs)$/i;
+    const publicAsset=/^\/backrooms\/(?:assets\/(?:jumpscare\/[A-Za-z0-9_.-]+\.gif|sfx\/[A-Za-z0-9_.-]+\.(?:mp3|wav|ogg)|monsters\/[A-Za-z0-9_.-]+\.glb)|src\/(?:[A-Za-z0-9_.-]+\.mjs|monster-nav\.js))$/i;
     if(!publicAsset.test(pathname))return json(res,404,{error:'Not found'});
     if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'GET only'});
     const filePath=resolve(ROOT,pathname.replace(/^\/+/, ''));

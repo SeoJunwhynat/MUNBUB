@@ -88,7 +88,7 @@ test('visual controller uses the exclusive capture state and server-authoritativ
  assert.match(visual,/chooseMonsterAIState\(\{/);
  assert.match(visual,/if\(aiState==='attack'&&!this\.attacking\)this\.attack\(\)/);
  assert.doesNotMatch(visual,/game==='jumpscare'\|\|this\.attacking/);
- assert.match(visual,/this\.controller\.setAnimationSpeed\(aiState==='chase'\?1\.3\*1\.3:1\.3\)/);
+ assert.match(visual,/this\.controller\.setAnimationSpeed\(aiState==='chase'\?1\.3\*\(5\.75\*\.93\)\/\(2\.05\*1\.3\):1\.3\)/);
  assert.match(html,/chasing:online\.active\?!!enemy\.chasing/);
  assert.match(visual,/this\.bridge\.update\(enemy/);
 });

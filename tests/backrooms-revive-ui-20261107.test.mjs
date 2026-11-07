@@ -78,7 +78,7 @@ test('client keeps coop death in a downed view and exposes leave/settings/team i
 test('monster accelerates only when a player is visible',()=>{
  const html=readFileSync(new URL('../backrooms/index.html',import.meta.url),'utf8');
  const server=readFileSync(new URL('../backrooms/server.js',import.meta.url),'utf8');
- assert.match(html,/2\.08\*1\.3\*\(soloMonsterSeesPlayer\(\)\?1\.3:1\)/);
- assert.match(server,/2\.05\*1\.3\*\(room\.enemy\.chasing\?1\.3:1\)/);
+ assert.match(html,/nav\.MONSTER_CHASE_SPEED/);
+ assert.match(server,/Nav\.MONSTER_CHASE_SPEED/);
  assert.match(server,/function seesPlayer\(room,player\)/);
 });

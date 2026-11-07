@@ -195,6 +195,7 @@
   <button id="gameSettingsLeave" type="button" class="dangerButton">🚪 탐험 나가기</button>
  </div></div></div>
 <div class="screen hidden" id="endScreen"><div class="screenCard" style="max-width:640px;text-align:center"><div class="eyebrow" id="endSub">EXPEDITION COMPLETE</div><div style="font-size:67px;margin-top:13px" id="endIcon">🏆</div><h2 class="bigTitle" id="endTitle" style="font-size:43px">탈출 성공</h2><p class="paragraph" id="endDesc">두 개의 열쇠로 문을 열었습니다.</p><div class="btnRow" style="justify-content:center"><button class="bigBtn" id="retryBtn">↻ 다시 플레이</button><button class="bigBtn dark" id="homeBtn">타이틀로</button></div></div></div>
+<script src="/backrooms/src/monster-nav.js"></script>
 <script>
 (()=>{'use strict';
 const grain=document.createElement('canvas');grain.width=128;grain.height=128;
@@ -235,7 +236,7 @@ function box(arr,x0,y0,z0,x1,y1,z1,s=0,top=s,btm=s,g=0){quad(arr,[x0,y1,z1],[x1,
 function planeY(a,x0,z0,x1,z1,y,tile,n=1,g=0){let normal=[0,n,0];if(n>0)quad(a,[x0,y,z1],[x1,y,z1],[x1,y,z0],[x0,y,z0],tile,normal,g);else quad(a,[x0,y,z0],[x1,y,z0],[x1,y,z1],[x0,y,z1],tile,normal,g)}
 function buffer(data){let b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(data),gl.STATIC_DRAW);return {b,count:data.length/9}}
 function draw(buf){if(!buf||!buf.count)return;gl.bindBuffer(gl.ARRAY_BUFFER,buf.b);gl.enableVertexAttribArray(loc.p);gl.enableVertexAttribArray(loc.uv);gl.enableVertexAttribArray(loc.n);gl.enableVertexAttribArray(loc.g);gl.vertexAttribPointer(loc.p,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(loc.uv,2,gl.FLOAT,false,36,12);gl.vertexAttribPointer(loc.n,3,gl.FLOAT,false,36,20);gl.vertexAttribPointer(loc.g,1,gl.FLOAT,false,36,32);gl.drawArrays(gl.TRIANGLES,0,buf.count)}
-let map=[],objects=[],staticBuf=null;const player={x:6,z:6,yaw:0,pitch:0,stamina:100,flash:true};let enemy={x:0,z:0,path:[],pathTime:0,grace:0,phase:0},game='menu',active=null,quizSolved={},owned={spell:false,idiom:false},elapsed=0,toastClock=0,stamina=100,staminaExhausted=false,seconds=0,locked=false,runHold=false,joy={x:0,y:0};const keys={};
+let map=[],objects=[],staticBuf=null;const player={x:6,z:6,yaw:0,pitch:0,stamina:100,flash:true};let enemy={x:0,z:0,path:[],pathTime:0,grace:0,phase:0,aiMode:'patrol',lastSeen:null,lastSeenAt:-1000,patrolGoal:null,pathGoal:null,stuckTicks:0},game='menu',active=null,quizSolved={},owned={spell:false,idiom:false},elapsed=0,toastClock=0,stamina=100,staminaExhausted=false,seconds=0,locked=false,runHold=false,joy={x:0,y:0};const keys={};
 let editingControls=false,controlReturnState="menu",controlSelected="joystick",touchLayouts={};
 let onlineQuizPending=null;let online={active:false,code:"",token:"",me:"",url:"",room:null,host:false,source:null,version:-1,players:[],lastSend:0,dead:false};
 let coopTeamUpdateAt=0,gameSettingsOpen=false,gameSettingsReturn="playing",mouseGain=1;
@@ -270,9 +271,23 @@ if(staticBuf&&staticBuf.b)gl.deleteBuffer(staticBuf.b);staticBuf=buffer(m)}funct
 let openDirs=[[0,1,PI],[1,0,PI/2],[0,-1,0],[-1,0,-PI/2]];
 openDirs=openDirs.filter(([dx,dz])=>map[1+dz]?.[1+dx]===0);
 openDirs.sort((a,b)=>{let count=d=>{let v=0;for(let k=1;k<=6;k++){if(map[1+d[1]*k]?.[1+d[0]*k]!==0)break;v++}return v};return count(b)-count(a)});
-player.yaw=openDirs.length?openDirs[0][2]:PI;player.pitch=0;enemy.x=(spawn.x+.5)*CELL;enemy.z=(spawn.z+.5)*CELL;enemy.grace=28;enemy.pathTime=0;enemy.phase=0;enemy.path=[];return objects.length}
+player.yaw=openDirs.length?openDirs[0][2]:PI;player.pitch=0;enemy.x=(spawn.x+.5)*CELL;enemy.z=(spawn.z+.5)*CELL;enemy.grace=28;enemy.pathTime=0;enemy.phase=0;enemy.path=[];enemy.lastSeen=null;enemy.lastSeenAt=-1000;enemy.patrolGoal=null;enemy.pathGoal=null;enemy.stuckTicks=0;enemy.aiMode='patrol';return objects.length}
 function isWall(x,z){let gx=Math.floor(x/CELL),gz=Math.floor(z/CELL);return !map[gz]||map[gz][gx]!==0}function collides(x,z){let r=.33,ix0=Math.floor((x-r)/CELL),ix1=Math.floor((x+r)/CELL),iz0=Math.floor((z-r)/CELL),iz1=Math.floor((z+r)/CELL);for(let gz=iz0;gz<=iz1;gz++)for(let gx=ix0;gx<=ix1;gx++){if(map[gz]?.[gx]===0)continue;let a=gx*CELL,b=gz*CELL,xx=Math.max(a,Math.min(x,a+CELL)),zz=Math.max(b,Math.min(z,b+CELL));if((x-xx)**2+(z-zz)**2<r*r)return true}for(let o of objects){if(o.type==='exit')continue;let cx=(o.x+.5)*CELL,cz=(o.z+.5)*CELL,half=o.type==='quiz'?.72:.88,xx=Math.max(cx-half,Math.min(x,cx+half)),zz=Math.max(cz-half,Math.min(z,cz+half));if((x-xx)**2+(z-zz)**2<r*r)return true}return false}function safeMove(dx,dz){let steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.115));for(let i=0;i<steps;i++){let sx=dx/steps,sz=dz/steps;if(!collides(player.x+sx,player.z))player.x+=sx;if(!collides(player.x,player.z+sz))player.z+=sz}}
-function enemyPath(){let [sx,sz]=gcell(enemy.x,enemy.z),[tx,tz]=gcell(player.x,player.z);let prev=Array.from({length:WORLD},()=>Array(WORLD).fill(null)),q=[[sx,sz]];prev[sz]&& (prev[sz][sx]=[-1,-1]);for(let i=0;i<q.length;i++){let [x,z]=q[i];if(x===tx&&z===tz)break;for(let [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){let xx=x+dx,zz=z+dz;if(xx<0||zz<0||xx>=WORLD||zz>=WORLD||map[zz][xx]||prev[zz][xx])continue;prev[zz][xx]=[x,z];q.push([xx,zz])}}let path=[],cx=tx,cz=tz;while(prev[cz]&&prev[cz][cx]&&!(cx===sx&&cz===sz)&&path.length<500){path.unshift([(cx+.5)*CELL,(cz+.5)*CELL]);[cx,cz]=prev[cz][cx]}enemy.path=path}
+function enemyPath(goal){
+  const nav=window.MonsterNav;
+  if(!nav){enemy.path=[];return;}
+  const dest=goal||{x:player.x,z:player.z};
+  enemy.path=nav.route(map,enemy,dest,{blocked:(x,z)=>collides(x,z)}).map(p=>[p.x,p.z]);
+  enemy.pathGoal={x:dest.x,z:dest.z};
+}
+function chooseSoloPatrolGoal(){
+ const [cx,cz]=gcell(enemy.x,enemy.z),candidates=[];
+ for(let z=Math.max(1,cz-6);z<=Math.min(WORLD-2,cz+6);z++)
+  for(let x=Math.max(1,cx-6);x<=Math.min(WORLD-2,cx+6);x++)
+   if(map[z]?.[x]===0&&Math.abs(x-cx)+Math.abs(z-cz)>2)
+    candidates.push({x:(x+.5)*CELL,z:(z+.5)*CELL});
+ return candidates[Math.floor(Math.random()*candidates.length)]||{x:enemy.x,z:enemy.z};
+}
 // Draining stamina to zero causes a full-recharge lockout, for both keyboard and mobile sprint.
 function updateSprint(dt,wantsToSprint){
  const sprint=wantsToSprint&&!staminaExhausted&&stamina>0;
@@ -305,7 +320,40 @@ let last=0,t=0,lastHud=0,walkPhase=0,lastSound=0,lastFallbackFrame=0;function so
  return true;
 }
 function update(dt){elapsed+=dt;let forward=(keys['KeyW']?1:0)-(keys['KeyS']?1:0)-joy.y,strafe=(keys['KeyD']?1:0)-(keys['KeyA']?1:0)+joy.x;let len=Math.hypot(forward,strafe);if(len>0){forward/=Math.max(1,len);strafe/=Math.max(1,len)}let sprint=updateSprint(dt,(keys.ShiftLeft||keys.ShiftRight||runHold)&&len>.1);let speed=sprint?5.75:3.30;let dx=(Math.sin(player.yaw)*forward+Math.cos(player.yaw)*strafe)*speed*dt,dz=(-Math.cos(player.yaw)*forward+Math.sin(player.yaw)*strafe)*speed*dt;const oldPX=player.x,oldPZ=player.z;safeMove(dx,dz);const moving=len>.1&&Math.hypot(player.x-oldPX,player.z-oldPZ)>Math.max(.001,dt*.12);if(moving){walkPhase+=dt*(sprint?14:9);if(elapsed-lastSound>(sprint?.29:.46)){lastSound=elapsed;sound('step',sprint)}}else walkPhase=0;for(let o of objects){if(o.type==='quiz'&&o.cooldownUntil&&performance.now()>=o.cooldownUntil){o.cooldownUntil=0;buildWorldGeometry();}}
-if(online.active){enemy.phase+=dt*7*1.3}else if(enemy.grace>0)enemy.grace-=dt;else{enemy.pathTime-=dt;if(enemy.pathTime<=0){enemyPath();enemy.pathTime=.48}let p=enemy.path[0]||[player.x,player.z],vx=p[0]-enemy.x,vz=p[1]-enemy.z,dist=Math.hypot(vx,vz);if(dist<.22){enemy.path.shift()}else{let spd=2.08*1.3*(soloMonsterSeesPlayer()?1.3:1),delta=Math.min(dist,spd*dt);enemy.x+=vx/dist*delta;enemy.z+=vz/dist*delta}enemy.phase+=dt*7*1.3;if(Math.hypot(enemy.x-player.x,enemy.z-player.z)<1.12){end(false);return}}
+if(online.active){enemy.phase+=dt*7*1.3}else if(enemy.grace>0)enemy.grace-=dt;else{
+ const nav=window.MonsterNav,spotted=soloMonsterSeesPlayer();
+ let goal=null;
+ if(spotted){
+  enemy.lastSeen={x:player.x,z:player.z};enemy.lastSeenAt=elapsed;
+  enemy.aiMode='chase';enemy.patrolGoal=null;
+  const lead={x:player.x+(player.x-oldPX)/Math.max(.01,dt)*.27,z:player.z+(player.z-oldPZ)/Math.max(.01,dt)*.27};
+  goal=nav?.walkable(map,lead.x,lead.z,.38)&&!collides(lead.x,lead.z)?lead:{x:player.x,z:player.z};
+ }else if(enemy.lastSeen&&elapsed-enemy.lastSeenAt<3){
+  enemy.aiMode='chase';goal=enemy.lastSeen;
+ }else if(enemy.lastSeen&&elapsed-enemy.lastSeenAt<7.2){
+  enemy.aiMode='search';goal=enemy.lastSeen;
+ }else{
+  enemy.aiMode='patrol';enemy.lastSeen=null;enemy.lastSeenAt=-1000;
+  if(!enemy.patrolGoal||Math.hypot(enemy.x-enemy.patrolGoal.x,enemy.z-enemy.patrolGoal.z)<.85)
+   enemy.patrolGoal=chooseSoloPatrolGoal();
+  goal=enemy.patrolGoal;
+ }
+ enemy.pathTime-=dt;
+ if(goal&&(enemy.pathTime<=0||!enemy.path.length||!enemy.pathGoal||
+    Math.hypot(goal.x-enemy.pathGoal.x,goal.z-enemy.pathGoal.z)>1.15||enemy.stuckTicks>=2)){
+  enemyPath(goal);enemy.pathTime=.32;enemy.stuckTicks=0;
+ }
+ while(enemy.path.length&&Math.hypot(enemy.x-enemy.path[0][0],enemy.z-enemy.path[0][1])<.43)enemy.path.shift();
+ const waypoint=enemy.path[0];
+ if(waypoint&&nav){
+  const spd=enemy.aiMode==='chase'?nav.MONSTER_CHASE_SPEED:enemy.aiMode==='search'?nav.MONSTER_SEARCH_SPEED:nav.MONSTER_PATROL_SPEED;
+  const moved=nav.advance(map,enemy,{x:waypoint[0],z:waypoint[1]},spd*dt,{blocked:(x,z)=>collides(x,z)});
+  if(moved.moved){enemy.x=moved.x;enemy.z=moved.z;enemy.stuckTicks=0;}
+  else{enemy.stuckTicks++;enemy.pathTime=0;}
+ }else if(enemy.aiMode==='patrol')enemy.patrolGoal=null;
+ enemy.phase+=dt*(enemy.aiMode==='chase'?12:7)*1.3;
+ if(Math.hypot(enemy.x-player.x,enemy.z-player.z)<1.12&&nav?.clearLine(map,enemy,player,{radius:.15})){end(false);return}
+}
 let teammate=closestDownedTeammate(),near=nearest();$('interact').classList.toggle('hidden',!near&&!teammate);if(teammate){$('interact').textContent='✚ '+teammate.name+' 부활시키기 · '+(coarse?'조사':'E');}else if(near){$('interact').innerHTML=`<span class="key">${coarse?'◎':'E'}</span>${nearText(near)}`};let distance=Math.hypot(enemy.x-player.x,enemy.z-player.z);$('danger').style.opacity=enemy.grace>0?'0':String(Math.max(0,Math.min(.88,(13-distance)/13*.94)));if(elapsed-lastHud>.11){lastHud=elapsed;updateHUD(distance)}if(online.active&&performance.now()-online.lastSend>130){online.lastSend=performance.now();sendMultiPosition()}}
 function nearText(o){if(o.type==='quiz'){let st=screenState(o);return st==='done'?'🟢 3/3 해결한 문제 단말기':st==='lock'?`🔴 잠금 해제까지 ${Math.max(1,Math.ceil((o.cooldownUntil-performance.now())/1000))}초`:`⚪ ${o.kind==='spell'?'맞춤법':'사자성어'} 단말기 (${progressOf(o)}/3)`}if(o.type==='key')return owned[o.kind]?'이미 획득한 열쇠':`${o.kind==='spell'?'맞춤법':'사자성어'}의 방 · 열쇠 확인`;return owned.spell&&owned.idiom?'문이 열렸습니다 · 탈출하기':'출구가 잠겨 있습니다 · 열쇠 2개 필요'}
 function nearest(){let best=null,dist=2.95;for(let o of objects){let dd=Math.hypot(player.x-(o.x+.5)*CELL,player.z-(o.z+.5)*CELL);if(dd<dist){dist=dd;best=o}}return best}
@@ -478,7 +526,7 @@ function render(ts){syncSoundscape();syncChaseCues();if(fallback&&ts-lastFallbac
  gl.useProgram(prog);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);
  let view=matLook(eye,[eye[0]+forward[0],eye[1]+forward[1],eye[2]+forward[2]]);let proj=matPerspective(game==='jumpscare'?1.06:1.29,canvas.width/Math.max(1,canvas.height),.065,96);gl.uniformMatrix4fv(loc.vp,false,mulMat(proj,view));gl.uniform3fv(loc.eye,eye);gl.uniform3fv(loc.fwd,forward);gl.uniform1f(loc.time,t);gl.uniform1f(loc.flash,player.flash?1:0);gl.uniform1f(loc.fog,30);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);draw(staticBuf);if(online.active){let b=makePeerModels();draw(b);gl.deleteBuffer(b.b)}if((enemy.grace<=0||game==='ended'||game==='jumpscare')&&!window.__backroomsMonsterVisual?.ready){let d=makeEnemy();draw(d);gl.deleteBuffer(d.b)}
  const monsterVisual=window.__backroomsMonsterVisual;
- if(monsterVisual?.ready){try{monsterVisual.renderAfterWorld({enemy,player,eye,forward,dt,width:canvas.width,height:canvas.height,phase:enemy.phase,game,chasing:online.active?!!enemy.chasing:!!(chaseActive||(game==='playing'&&soloMonsterSeesPlayer()))})}catch(err){console.warn('GLB renderer reset to fallback',err);monsterVisual.ready=false;}}
+ if(monsterVisual?.ready){try{monsterVisual.renderAfterWorld({enemy,player,eye,forward,dt,width:canvas.width,height:canvas.height,phase:enemy.phase,game,chasing:online.active?!!enemy.chasing:enemy.aiMode==='chase'})}catch(err){console.warn('GLB renderer reset to fallback',err);monsterVisual.ready=false;}}
 
  requestAnimationFrame(render)}
 // Backrooms chase SFX: user-supplied MP3s embedded for standalone and hosted HTML parity.
@@ -979,4 +1027,4 @@ try{
  if(gl)window.__backroomsMonsterVisual=setupBackroomsMonsterVisual(canvas,gl);
 }catch(err){console.warn('GLB visual module unavailable; using original monster fallback',err);}
 </script>
-</body></html>
+<script defer src="/mb_live_presence_20261107.js"></script></body></html>

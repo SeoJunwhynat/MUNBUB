@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const BANK = require('./bank.json');
+const Nav = require('./src/monster-nav.js');
 const PORT = Number(process.env.PORT || 8787);
 const HOST = process.env.HOST || '0.0.0.0';
 const ROOT = __dirname;
@@ -69,11 +70,11 @@ function listPublicRooms(){
 }
 function snapshot(room) {
  return {code:room.code,title:room.title,visibility:room.visibility,limit:room.limit,status:room.status,host:room.host,won:room.won||false,version:room.version,players:[...room.players.values()].map(playerInfo),
- map:room.map,objects:room.objects.map(o=>({type:o.type,kind:o.kind,quizId:o.quizId,x:o.x,z:o.z,question:o.question?publicQuestion(o.question):undefined,cooldownRemaining:Math.max(0,o.cooldownUntil-stamp())})),quizSolved:room.quizSolved,owned:room.owned,enemy:{x:room.enemy.x,z:room.enemy.z,grace:Math.max(0,room.enemy.grace),chasing:!!room.enemy.chasing},elapsed:room.elapsed};
+ map:room.map,objects:room.objects.map(o=>({type:o.type,kind:o.kind,quizId:o.quizId,x:o.x,z:o.z,question:o.question?publicQuestion(o.question):undefined,cooldownRemaining:Math.max(0,o.cooldownUntil-stamp())})),quizSolved:room.quizSolved,owned:room.owned,enemy:{x:room.enemy.x,z:room.enemy.z,grace:Math.max(0,room.enemy.grace),chasing:!!room.enemy.chasing,mode:room.enemy.mode||'patrol'},elapsed:room.elapsed};
 }
 function dispatch(room,only=null){const payload=JSON.stringify(snapshot(room));const message='data: '+payload+'\n\n';for(const [token,client] of room.listeners){if(only&&token!==only)continue;try{client.write(message);}catch{room.listeners.delete(token);}}}
 function resultEvent(room,p,body){for(const [token,res] of room.listeners){if(token===p.token){try{res.write('event: notice\ndata: '+JSON.stringify(body)+'\n\n')}catch{};break}}}
-function createRoom(name,world,accountId,options={}){if(rooms.size>=MAX_ROOMS)throw badRequest('서버 방 개수가 가득 찼습니다.');let id=code();while(rooms.has(id))id=code();let token=rand(),pid=rand(6);let p={token,id:pid,accountId,name:safeName(name),x:6,z:6,yaw:0,pitch:0,stamina:100,ready:true,alive:true,lastMove:stamp(),respawnAt:0,reviveProtectedUntil:0,revives:0};let room={code:id,host:pid,title:options.title||'두 개의 열쇠',visibility:options.visibility||'private',limit:options.limit||4,status:'lobby',players:new Map([[token,p]]),listeners:new Map(),createdAt:stamp(),lastActivity:stamp(),version:0,elapsed:0,enemy:{x:world.enemy.x,z:world.enemy.z,grace:START_GRACE,path:[],pathAt:0,chasing:false,sightedUntil:0},map:world.map,objects:world.objects,quizSolved:{},owned:{spell:false,idiom:false},won:false};rooms.set(id,room);return {room,p};}
+function createRoom(name,world,accountId,options={}){if(rooms.size>=MAX_ROOMS)throw badRequest('서버 방 개수가 가득 찼습니다.');let id=code();while(rooms.has(id))id=code();let token=rand(),pid=rand(6);let p={token,id:pid,accountId,name:safeName(name),x:6,z:6,yaw:0,pitch:0,stamina:100,ready:true,alive:true,vx:0,vz:0,lastMove:stamp(),respawnAt:0,reviveProtectedUntil:0,revives:0};let room={code:id,host:pid,title:options.title||'두 개의 열쇠',visibility:options.visibility||'private',limit:options.limit||4,status:'lobby',players:new Map([[token,p]]),listeners:new Map(),createdAt:stamp(),lastActivity:stamp(),version:0,elapsed:0,enemy:{x:world.enemy.x,z:world.enemy.z,grace:START_GRACE,path:[],pathAt:0,chasing:false,sightedUntil:0,targetId:null,lastSeen:null,lastSeenAt:0,mode:'patrol',stuckTicks:0,patrolGoal:null},map:world.map,objects:world.objects,quizSolved:{},owned:{spell:false,idiom:false},won:false};rooms.set(id,room);return {room,p};}
 function auth(b,account){
  const room=rooms.get(String(b.code||'').toUpperCase());
  const player=room&&[...room.players.values()].find(p=>p.accountId===account?.id);
@@ -85,7 +86,7 @@ function solvedCount(room,kind){return room.objects.filter(o=>o.type==='quiz'&&o
 function handleAction(room,p,b){let type=b.type;
  if(type==='leave'){room.players.delete(p.token);room.listeners.get(p.token)?.end();room.listeners.delete(p.token);if(room.host===p.id)room.host=[...room.players.values()][0]?.id;if(!room.players.size)rooms.delete(room.code);return {ok:true,message:'방에서 나왔어요.'};}
  if(type==='ready'){if(room.status!=='lobby')throw badRequest('준비 상태를 변경할 수 없습니다.');p.ready=!p.ready;dispatch(room);return {ok:true};}
- if(type==='start'){if(room.status!=='lobby')throw badRequest('이미 시작한 방입니다.');if(room.host!==p.id)throw badRequest('방장만 시작할 수 있어요.');if(room.players.size<2)throw badRequest('최소 2명이 필요해요.');if([...room.players.values()].some(x=>!x.ready))throw badRequest('모든 참가자가 준비해야 해요.');room.status='playing';room.elapsed=0;room.enemy.grace=START_GRACE;const candidates=[];for(let dx of [-.52,.0,.52])for(let dz of [-.52,0,.52])candidates.push({x:6+dx,z:6+dz});let ix=0;for(const pp of room.players.values()){let pos=candidates[ix++];pp.x=pos.x;pp.z=pos.z;pp.alive=true;pp.ready=true;pp.lastMove=stamp();pp.respawnAt=0;pp.reviveProtectedUntil=0;pp.revives=0;}room.version++;dispatch(room);return {ok:true,message:'협동 탐험을 시작합니다!'};}
+ if(type==='start'){if(room.status!=='lobby')throw badRequest('이미 시작한 방입니다.');if(room.host!==p.id)throw badRequest('방장만 시작할 수 있어요.');if(room.players.size<2)throw badRequest('최소 2명이 필요해요.');if([...room.players.values()].some(x=>!x.ready))throw badRequest('모든 참가자가 준비해야 해요.');room.status='playing';room.elapsed=0;room.enemy.grace=START_GRACE;const candidates=[];for(let dx of [-.52,.0,.52])for(let dz of [-.52,0,.52])candidates.push({x:6+dx,z:6+dz});let ix=0;for(const pp of room.players.values()){let pos=candidates[ix++];pp.x=pos.x;pp.z=pos.z;pp.alive=true;pp.ready=true;pp.vx=0;pp.vz=0;pp.lastMove=stamp();pp.respawnAt=0;pp.reviveProtectedUntil=0;pp.revives=0;}room.version++;dispatch(room);return {ok:true,message:'협동 탐험을 시작합니다!'};}
  if(type==='ping')return {ok:true};if(room.status!=='playing')throw badRequest('현재 플레이 중인 방이 아닙니다.');
  if(type==='revive'){
    if(!p.alive)throw badRequest('쓰러진 상태에서는 다른 팀원을 부활시킬 수 없어요.');
@@ -101,7 +102,7 @@ function handleAction(room,p,b){let type=b.type;
    if(p.alive)throw badRequest('이미 탐험 중이에요.');
    const now=stamp();
    if(now<(p.respawnAt||0))throw badRequest('부활 대기 시간이 남아 있어요.');
-   p.alive=true;p.x=6;p.z=6;p.stamina=100;p.lastMove=now;
+   p.alive=true;p.x=6;p.z=6;p.vx=0;p.vz=0;p.stamina=100;p.lastMove=now;
    p.respawnAt=0;p.reviveProtectedUntil=now+REVIVE_PROTECTION_MS;
    p.revives=(p.revives||0)+1;
    room.version++;dispatch(room);
@@ -111,7 +112,7 @@ function handleAction(room,p,b){let type=b.type;
    let x=Number(b.x),z=Number(b.z),yaw=Number(b.yaw),pitch=Number(b.pitch);
    if(!p.alive)return {ok:true};
    const now=stamp(),dt=Math.max(.04,Math.min(2,(now-p.lastMove)/1000)),d=Math.hypot(x-p.x,z-p.z);
-   if(Number.isFinite(x)&&Number.isFinite(z)&&d<=Math.max(1.15,7.4*dt)&&canMove(room,p,{x,z})){p.x=x;p.z=z;}
+   if(Number.isFinite(x)&&Number.isFinite(z)&&d<=Math.max(1.15,7.4*dt)&&canMove(room,p,{x,z})){p.vx=Math.max(-7.4,Math.min(7.4,(x-p.x)/dt));p.vz=Math.max(-7.4,Math.min(7.4,(z-p.z)/dt));p.x=x;p.z=z;}else{p.vx=0;p.vz=0;}
    if(Number.isFinite(yaw))p.yaw=Math.max(-1e6,Math.min(1e6,yaw));if(Number.isFinite(pitch))p.pitch=Math.max(-1.4,Math.min(1.4,pitch));p.stamina=Number.isFinite(Number(b.stamina))?Math.max(0,Math.min(100,Number(b.stamina))):100;p.lastMove=now;return {ok:true};}
  if(!p.alive)throw badRequest('괴물에게 붙잡혀 행동할 수 없어요.');
  if(type==='answer'){
@@ -160,20 +161,56 @@ let lastTick=stamp();function tick(){let now=stamp(),dt=Math.min(.25,(now-lastTi
  for(let o of room.objects){if(o.type==='quiz'&&o.cooldownUntil&&o.cooldownUntil<=now){o.cooldownUntil=0;room.version++;}}
  room.elapsed+=dt;if(room.enemy.grace>0){room.enemy.grace=Math.max(0,room.enemy.grace-dt)}else{
   const active=[...room.players.values()].filter(p=>p.alive);
+  const e=room.enemy;
   if(active.length){
-   let target=active.sort((a,b)=>distance(a,room.enemy)-distance(b,room.enemy))[0];
-   if(active.some(p=>seesPlayer(room,p)))room.enemy.sightedUntil=now+1700;
-   room.enemy.chasing=room.enemy.sightedUntil>now;
-   if(now-room.enemy.pathAt>540||!room.enemy.path.length){
-    room.enemy.path=bfsPath(room,room.enemy.x,room.enemy.z,target.x,target.z);room.enemy.pathAt=now;
+   // Prefer an already followed player to avoid target swapping every 220ms.
+   const visible=active.filter(p=>seesPlayer(room,p)).sort((a,b)=>distance(a,e)-distance(b,e));
+   const current=visible.find(p=>p.id===e.targetId);
+   const nearest=visible[0];
+   const target=current&&(!nearest||distance(current,e)<distance(nearest,e)*1.55)?current:nearest;
+   let goal=null;
+   if(target){
+    e.targetId=target.id;e.lastSeen={x:target.x,z:target.z};e.lastSeenAt=now;
+    e.sightedUntil=now+3000;e.mode='chase';e.chasing=true;e.patrolGoal=null;
+    // Anticipate player direction for a short time, but never predict into walls.
+    const lead={x:target.x+(target.vx||0)*.27,z:target.z+(target.vz||0)*.27};
+    goal=Nav.walkable(room.map,lead.x,lead.z,.38)?lead:{x:target.x,z:target.z};
+   }else if(e.lastSeen&&now-e.lastSeenAt<3000){
+    e.mode='chase';e.chasing=true;goal=e.lastSeen;
+   }else if(e.lastSeen&&now-e.lastSeenAt<7200){
+    e.mode='search';e.chasing=false;goal=e.lastSeen;
+   }else{
+    e.mode='patrol';e.chasing=false;e.targetId=null;e.lastSeen=null;e.lastSeenAt=0;
+    if(!e.patrolGoal||distance(e,e.patrolGoal)<.85){
+     const gx=Math.floor(e.x/CELL),gz=Math.floor(e.z/CELL);
+     const candidates=[];
+     for(let z=Math.max(1,gz-6);z<=Math.min(WORLD-2,gz+6);z++)
+      for(let x=Math.max(1,gx-6);x<=Math.min(WORLD-2,gx+6);x++)
+       if(room.map[z]?.[x]===0&&Math.abs(x-gx)+Math.abs(z-gz)>2)candidates.push({x:(x+.5)*CELL,z:(z+.5)*CELL});
+     e.patrolGoal=candidates[Math.floor(Math.random()*candidates.length)]||{x:e.x,z:e.z};
+    }
+    goal=e.patrolGoal;
    }
-   let [x,z]=room.enemy.path[0]||[target.x,target.z],dx=x-room.enemy.x,dz=z-room.enemy.z,d=Math.hypot(dx,dz);
-   if(d<.3)room.enemy.path.shift();
-   else {let m=Math.min(d,2.05*1.3*(room.enemy.chasing?1.3:1)*dt);room.enemy.x+=dx/d*m;room.enemy.z+=dz/d*m;}
-   for(const p of active)if(distance(p,room.enemy)<1.05&&now>=(p.reviveProtectedUntil||0)){
+   const targetMoved=goal&&(!e.pathGoal||distance(goal,e.pathGoal)>1.15);
+   if(goal&&(now-e.pathAt>320||!e.path?.length||targetMoved||e.stuckTicks>=2)){
+    e.path=Nav.route(room.map,e,goal,{blocked:(x,z)=>blocks(room,x,z)});
+    e.pathGoal={x:goal.x,z:goal.z};e.pathAt=now;e.stuckTicks=0;
+   }
+   while(e.path?.length&&distance(e,e.path[0])<.43)e.path.shift();
+   const waypoint=e.path?.[0];
+   if(waypoint){
+    const speed=e.mode==='chase'?Nav.MONSTER_CHASE_SPEED:e.mode==='search'?Nav.MONSTER_SEARCH_SPEED:Nav.MONSTER_PATROL_SPEED;
+    const next=Nav.advance(room.map,e,waypoint,speed*dt,{blocked:(x,z)=>blocks(room,x,z)});
+    if(next.moved){e.x=next.x;e.z=next.z;e.stuckTicks=0;}
+    else{e.stuckTicks++;e.pathAt=0;}
+   }else if(e.mode==='patrol')e.patrolGoal=null;
+   for(const p of active)if(distance(p,e)<1.05&&now>=(p.reviveProtectedUntil||0)&&Nav.clearLine(room.map,p,e,{radius:.15})){
     p.alive=false;p.respawnAt=now+SELF_RESPAWN_MS;p.lastMove=now;room.version++;
    }
-  }else{room.enemy.chasing=false;room.enemy.path=[];room.enemy.sightedUntil=0;}
+  }else{
+    e.mode='idle';e.chasing=false;e.path=[];e.targetId=null;
+    e.patrolGoal=null;e.lastSeen=null;e.lastSeenAt=0;e.sightedUntil=0;
+  }
   // Keep the room running when everybody is downed. Teammates can revive one another,
   // and all players can self-respawn after their server-authorized cooldown.
  }}
@@ -198,7 +235,7 @@ const server=http.createServer(async(req,res)=>{
     if(!Number.isInteger(limit)||limit<2||limit>4)return error(res,400,'방 정원은 2~4명이어야 합니다.');
     const title=String(b.title||'두 개의 열쇠').normalize('NFC').replace(/[<>\r\n\t]/g,'').trim().slice(0,24)||'두 개의 열쇠';
     const {room,p}=createRoom(req._mbBackroomsUser.name,world,req._mbBackroomsUser.id,{title,limit,visibility});return json(res,200,{ok:true,code:room.code,token:p.token,playerId:p.id,isHost:true,room:snapshot(room)});}
-   if(req.method==='POST'&&url.pathname==='/api/join'){const b=await read(req),room=rooms.get(String(b.code||'').toUpperCase());if(!room)return error(res,404,'해당 방이 없습니다. 방 코드를 다시 확인하세요.');const existing=[...room.players.values()].find(p=>p.accountId===req._mbBackroomsUser.id);if(existing)return json(res,200,{ok:true,code:room.code,token:existing.token,playerId:existing.id,isHost:existing.id===room.host,room:snapshot(room)});if(room.status!=='lobby')return error(res,409,'이미 탐험이 시작된 방입니다.');if(room.players.size>=room.limit)return error(res,409,'이 방은 정원이 찼습니다.');const token=rand(),pid=rand(6);room.players.set(token,{token,id:pid,name:safeName(req._mbBackroomsUser.name),accountId:req._mbBackroomsUser.id,x:6,z:6,yaw:0,pitch:0,stamina:100,ready:false,alive:true,lastMove:stamp(),respawnAt:0,reviveProtectedUntil:0,revives:0});room.lastActivity=stamp();dispatch(room);return json(res,200,{ok:true,code:room.code,token,playerId:pid,isHost:false,room:snapshot(room)});}
+   if(req.method==='POST'&&url.pathname==='/api/join'){const b=await read(req),room=rooms.get(String(b.code||'').toUpperCase());if(!room)return error(res,404,'해당 방이 없습니다. 방 코드를 다시 확인하세요.');const existing=[...room.players.values()].find(p=>p.accountId===req._mbBackroomsUser.id);if(existing)return json(res,200,{ok:true,code:room.code,token:existing.token,playerId:existing.id,isHost:existing.id===room.host,room:snapshot(room)});if(room.status!=='lobby')return error(res,409,'이미 탐험이 시작된 방입니다.');if(room.players.size>=room.limit)return error(res,409,'이 방은 정원이 찼습니다.');const token=rand(),pid=rand(6);room.players.set(token,{token,id:pid,name:safeName(req._mbBackroomsUser.name),accountId:req._mbBackroomsUser.id,x:6,z:6,yaw:0,pitch:0,stamina:100,ready:false,alive:true,vx:0,vz:0,lastMove:stamp(),respawnAt:0,reviveProtectedUntil:0,revives:0});room.lastActivity=stamp();dispatch(room);return json(res,200,{ok:true,code:room.code,token,playerId:pid,isHost:false,room:snapshot(room)});}
    if(req.method==='POST'&&url.pathname==='/api/action'){let b=await read(req),{room,player}=auth(b,req._mbBackroomsUser);let r=handleAction(room,player,b);return json(res,200,r);}
    if(req.method==='POST'&&url.pathname==='/api/leave'){let b=await read(req),{room,player}=auth(b,req._mbBackroomsUser);let r=handleAction(room,player,{type:'leave'});return json(res,200,r);}
    if(req.method==='GET'&&['/','/index.html','/favicon.ico'].includes(url.pathname)){
