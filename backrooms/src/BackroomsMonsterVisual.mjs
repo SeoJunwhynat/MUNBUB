@@ -133,7 +133,7 @@ export class BackroomsMonsterVisual {
   renderAfterWorld({enemy,player,eye,forward,dt,width,height,phase,game,chasing,mode=null}) {
     if(!this.ready||!enemy||!player)return;
     const now=performance.now();
-    const showing=enemy.grace<=0||game==='jumpscare'||game==='ended';
+    const showing=enemy.active!==false&&(enemy.grace<=0||game==='jumpscare'||game==='ended');
     const pursuing=!!chasing && enemy.grace<=0 && game!=='jumpscare' && game!=='ended';
     if(game!=='jumpscare'&&this.attacking){
       this.attacking=false;

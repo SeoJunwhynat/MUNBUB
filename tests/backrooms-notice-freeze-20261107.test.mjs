@@ -30,6 +30,7 @@ test('server holds position and delays capture through the initial Notice, then 
   try {
     room.status = 'playing';
     room.enemy.grace = 0;
+    room.enemy.active = true;
     p.x = 12.6;
     p.z = 10;
     p.lastSeen = Date.now();
