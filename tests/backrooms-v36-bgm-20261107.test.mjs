@@ -25,7 +25,7 @@ test('new GLB loads high detail desktop or LOD2 mobile and falls back if assets 
 test('supplied chase BGM starts on detection, loops and stops on exit/mute/background',()=>{
  assert.match(html,/new Audio\('assets\/sfx\/The_Weight_Behind_You\.mp3'\)/);
  assert.match(html,/backroomsChaseBgm\.loop=true/);
- assert.match(html,/if\(!aware\)return/);
+ assert.match(html,/const detected=enemy\.active&&enemy\.grace<=0/);
  assert.match(html,/startBackroomsChaseBgm\(\)/);
  assert.match(html,/stopBackroomsChaseBgm\(\)/);
  assert.match(html,/if\(audioMuted\)stopBackroomsChaseBgm\(\)/);

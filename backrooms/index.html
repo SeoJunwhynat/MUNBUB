@@ -373,11 +373,13 @@ if(online.active){if(enemy.active)enemy.phase+=dt*7*1.3}else if(!enemy.active){e
    enemy.path=[];enemy.pathTime=0;enemy.pathMode=null;
   }
   enemy.aiMode=elapsed<enemy.noticeUntil?'notice':'chase';enemy.patrolGoal=null;
+  if(!chaseActive)beginChaseAudio();
   goal=nav?.predict(map,player,{
    x:(player.x-oldPX)/Math.max(.01,dt),z:(player.z-oldPZ)/Math.max(.01,dt)
   },{blocked:(x,z)=>collides(x,z)})||{x:player.x,z:player.z};
  }else if(enemy.lastSeen&&elapsed-enemy.lastSeenAt<3){
   enemy.aiMode=elapsed<enemy.noticeUntil?'notice':'chase';goal=enemy.lastSeen;
+  if(!chaseActive)beginChaseAudio();
  }else if(enemy.lastSeen&&elapsed-enemy.lastSeenAt<7.2){
   enemy.aiMode='search';enemy.noticeUntil=0;goal=enemy.lastSeen;
  }else{
@@ -428,7 +430,7 @@ function resetRunControls(){
  if(stick){stick.style.left='50%';stick.style.top='50%'}
  last=performance.now();lastHud=-Infinity;lastFallbackFrame=-Infinity;
  lastGameFrameAt=last;
- walkPhase=0;lastSound=-.40;
+ walkPhase=0;lastSound=-.40;nextHeartBeatAt=0;nextMonsterStepAt=0;monsterStepTrackX=null;monsterStepTrackZ=null;monsterMovingUntil=0;
 }
 function start(){clearTimeout(jumpscareTimer);jumpscareTimer=null;hideJumpscare();
  // No previous audio or GLB animation should be able to block retry.
@@ -710,11 +712,11 @@ function stopChaseVoices(){stopVoices(chaseVoiceSources);stopVoices(roamVoiceSou
 // Starts only after a user action has activated audio; stops on chase exit,
 // defeat, pause, mute and backgrounding. Never starts on page load.
 const backroomsChaseBgm=new Audio('assets/sfx/The_Weight_Behind_You.mp3');
-backroomsChaseBgm.loop=true;backroomsChaseBgm.preload='none';backroomsChaseBgm.volume=.28;
+backroomsChaseBgm.loop=true;backroomsChaseBgm.preload='auto';backroomsChaseBgm.volume=.34;
 let backroomsChaseBgmUnavailable=false;
 backroomsChaseBgm.addEventListener('error',()=>{backroomsChaseBgmUnavailable=true;});
 function startBackroomsChaseBgm(){
- if(backroomsChaseBgmUnavailable||audioMuted||document.hidden||!audio||audio.state!=='running')return;
+ if(backroomsChaseBgmUnavailable||audioMuted||document.hidden)return;
  if(!backroomsChaseBgm.paused)return;
  const attempt=backroomsChaseBgm.play();
  attempt?.catch(err=>{if(backroomsChaseBgm.error)backroomsChaseBgmUnavailable=true;});
@@ -769,6 +771,83 @@ function playChaseCue(kind){
  if(kind==='scream3')return playSample('scream3',.34);
  return false;
 }
+
+/** Audible first appearance, with no on-screen location reveal. */
+function playDistantMonsterCry(){
+ if(!audio||audio.state!=='running'||audioMuted||document.hidden)return;
+ playSample('scream2',.14,{lowpass:440,pan:-.45,roaming:true});
+ const ctx=audio,n=ctx.currentTime;
+ for(const [frequency,level] of [[102,.075],[151,.025]]){
+  const tone=ctx.createOscillator(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+  tone.type='sawtooth';tone.frequency.setValueAtTime(frequency,n);
+  tone.frequency.exponentialRampToValueAtTime(frequency*.48,n+2.1);
+  filter.type='lowpass';filter.frequency.value=390;
+  gain.gain.setValueAtTime(.0001,n);
+  gain.gain.exponentialRampToValueAtTime(level,n+.28);
+  gain.gain.exponentialRampToValueAtTime(.0001,n+2.12);
+  tone.connect(filter).connect(gain).connect(audioMaster);
+  tone.start(n);tone.stop(n+2.15);
+ }
+}
+let nextHeartBeatAt=0,nextMonsterStepAt=0,monsterStepTrackX=null,monsterStepTrackZ=null,monsterMovingUntil=0;
+function playHeartbeat(proximity){
+ if(!audio||!audioMaster||audioMuted||document.hidden)return;
+ const ctx=audio,n=ctx.currentTime,level=.045+.16*Math.pow(proximity,1.5);
+ for(const [offset,weight] of [[0,1],[.17,.72]]){
+  const beat=ctx.createOscillator(),gain=ctx.createGain(),begin=n+offset;
+  beat.type='sine';beat.frequency.setValueAtTime(91,begin);
+  beat.frequency.exponentialRampToValueAtTime(43,begin+.13);
+  gain.gain.setValueAtTime(.0001,begin);
+  gain.gain.linearRampToValueAtTime(level*weight,begin+.014);
+  gain.gain.exponentialRampToValueAtTime(.0001,begin+.22);
+  beat.connect(gain).connect(audioMaster);beat.start(begin);beat.stop(begin+.24);
+ }
+}
+function playMonsterFootstep(distance,chasing){
+ if(!audio||!stepNoise||audioMuted||document.hidden||audio.state!=='running')return;
+ const loudness=Math.max(0,Math.min(1,(31-distance)/27));
+ if(loudness<.025)return;
+ const ctx=audio,n=ctx.currentTime;
+ const panValue=Math.max(-.86,Math.min(.86,Math.sin(Math.atan2(enemy.x-player.x,-(enemy.z-player.z))-player.yaw)));
+ const noise=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();
+ noise.buffer=stepNoise;filter.type='lowpass';filter.frequency.value=chasing?710:490;
+ gain.gain.setValueAtTime(.0001,n);
+ gain.gain.linearRampToValueAtTime((chasing?.30:.23)*loudness,n+.018);
+ gain.gain.exponentialRampToValueAtTime(.0001,n+.23);
+ const pan=ctx.createStereoPanner?ctx.createStereoPanner():null;
+ if(pan)noise.connect(filter).connect(gain).connect(pan).connect(audioMaster);
+ else noise.connect(filter).connect(gain).connect(audioMaster);
+ if(pan)pan.pan.value=panValue;
+ noise.start(n);noise.stop(n+.25);
+ const impact=ctx.createOscillator(),thump=ctx.createGain();
+ impact.type='sine';impact.frequency.setValueAtTime(chasing?79:70,n);
+ impact.frequency.exponentialRampToValueAtTime(38,n+.16);
+ thump.gain.setValueAtTime(.0001,n);
+ thump.gain.linearRampToValueAtTime(.16*loudness,n+.014);
+ thump.gain.exponentialRampToValueAtTime(.0001,n+.19);
+ impact.connect(thump).connect(audioMaster);impact.start(n);impact.stop(n+.21);
+}
+function syncMonsterPresenceAudio(now,distance){
+ const playing=['playing','quiz','map'].includes(game)&&!audioMuted&&!document.hidden;
+ if(!playing||!enemy.active||enemy.grace>0){
+  monsterStepTrackX=null;monsterStepTrackZ=null;monsterMovingUntil=0;return;
+ }
+ const proximity=Math.max(0,Math.min(1,(22-distance)/19));
+ if(proximity>.035&&now>=nextHeartBeatAt){
+  playHeartbeat(proximity);
+  nextHeartBeatAt=now+(1.55-.9*proximity);
+ }
+ if(monsterStepTrackX!==null&&Math.hypot(enemy.x-monsterStepTrackX,enemy.z-monsterStepTrackZ)>.014)
+  monsterMovingUntil=now+.55;
+ monsterStepTrackX=enemy.x;monsterStepTrackZ=enemy.z;
+ const mode=enemy.aiMode;
+ if(mode!=='idle'&&mode!=='notice'&&now<monsterMovingUntil&&now>=nextMonsterStepAt){
+  const chasing=mode==='chase';
+  playMonsterFootstep(distance,chasing);
+  nextMonsterStepAt=now+(chasing?.44:.77);
+ }
+}
+
 function playRoamingCue(distance){
  if(chaseActive)return false;
  // Old creature sounds are for wandering, not for chase or jumpscare.
@@ -776,36 +855,40 @@ function playRoamingCue(distance){
  const atten=Math.max(.06,Math.min(1,(43-distance)/38));
  return playSample(key,(key==='main'?.21:.11)*atten,{lowpass:900+atten*700,pan:(Math.random()*1.6-.8),roaming:true});
 }
+function beginChaseAudio(){
+ if(chaseActive||!enemy.active||enemy.grace>0)return false;
+ chaseActive=true;chaseOutSince=0;
+ stopVoices(roamVoiceSources);
+ playChaseCue('start');
+ startBackroomsChaseBgm();
+ window.__backroomsMonsterVisual?.notice();
+ nextChaseAccentAt=(audio?.currentTime||0)+4.5+Math.random()*5;
+ return true;
+}
 function syncChaseCues(){
- if(!audio||document.hidden)return;
+ if(!audio||document.hidden){stopBackroomsChaseBgm();return;}
  const activeGameplay=game==='playing'||(online.active&&(game==='quiz'||game==='map'));
  if(!activeGameplay){stopBackroomsChaseBgm();return;}
  if(audioMuted)stopBackroomsChaseBgm();
- if(chaseActive&&!audioMuted)startBackroomsChaseBgm();
  const distance=Math.hypot(enemy.x-player.x,enemy.z-player.z),now=audio.currentTime;
+ const detected=enemy.active&&enemy.grace<=0&&
+  (enemy.aiMode==='notice'||enemy.aiMode==='chase'||(online.active&&enemy.chasing));
+ if(detected){
+  chaseOutSince=0;
+  if(!chaseActive)beginChaseAudio();
+  else if(!audioMuted)startBackroomsChaseBgm();
+ }else if(chaseActive){
+  if(!chaseOutSince)chaseOutSince=now;
+  if(now-chaseOutSince>=3.5){clearChaseState(false);stopVoices(chaseVoiceSources);return;}
+ }
  if(!chaseActive){
-  if(enemy.grace<=0&&distance<19){
-   const aware=online.active?!!enemy.chasing:(enemy.aiMode==='notice'||enemy.aiMode==='chase');
-   if(!aware)return;
-   chaseActive=true;chaseOutSince=0;
-   stopVoices(roamVoiceSources);
-   playChaseCue('start');
-   startBackroomsChaseBgm();
-   window.__backroomsMonsterVisual?.notice();
-   nextChaseAccentAt=now+4.5+Math.random()*5;
-   return;
-  }
   if(nextRoamAt===Infinity)nextRoamAt=now+2+Math.random()*6;
-  if(enemy.grace<=0&&now>=nextRoamAt){
+  if(enemy.active&&enemy.grace<=0&&now>=nextRoamAt){
    if(distance<43)playRoamingCue(distance);
    nextRoamAt=now+11+Math.random()*14;
   }
   return;
  }
- if(enemy.grace>0||distance>27){
-  if(!chaseOutSince)chaseOutSince=now;
-  if(now-chaseOutSince>=3.5){clearChaseState(false);stopVoices(chaseVoiceSources);return;}
- }else chaseOutSince=0;
  if(now>=nextChaseAccentAt && !chaseOutSince){
   // Alternate screams 2 and 3; variable delay avoids mechanical repetition.
   const pick=lastChaseAccent==='scream2'?'scream3':'scream2';
@@ -832,11 +915,12 @@ function buildNoiseBuffer(ctx,duration,color){
  return b;
 }
 function startSound(){
- if(audio){if(audio.state==='suspended')audio.resume().catch(()=>{});preloadChaseSamples();return;}
+ if(audio){if(audio.state==='suspended')audio.resume().catch(()=>{});preloadChaseSamples();if(chaseActive)startBackroomsChaseBgm();return;}
  try{
   const AudioContextImpl=window.AudioContext||window.webkitAudioContext;
   if(!AudioContextImpl)return;
   const ctx=new AudioContextImpl();audio=ctx;preloadChaseSamples();
+  try{if(backroomsChaseBgm.readyState===0)backroomsChaseBgm.load()}catch{}
   audioMaster=ctx.createGain();audioMaster.gain.value=audioMuted?0:.78;
   audioMaster.connect(ctx.destination);
   ambientBus=ctx.createGain();ambientBus.gain.value=0;
@@ -882,14 +966,15 @@ function syncSoundscape(){
  if(desired!==ambientActive){
   ambientActive=desired;const g=ambientBus.gain;g.cancelScheduledValues(n);g.setTargetAtTime(desired,n,desired?.42:.16);
  }
- if(monsterBackgroundGain)monsterBackgroundGain.gain.setTargetAtTime(chaseActive?.025:.065,n,.3);
+ if(monsterBackgroundGain)monsterBackgroundGain.gain.setTargetAtTime(enemy.active?(chaseActive?.025:.065):0,n,.3);
   if(!dreadBus||n-lastSoundscapeUpdate<.10)return;
  lastSoundscapeUpdate=n;
  const distance=Math.hypot(enemy.x-player.x,enemy.z-player.z);
  const hearsThreat=(game==='playing'||game==='quiz')&&!document.hidden&&!audioMuted;
- const proximity=hearsThreat&&enemy.grace<=0?Math.max(0,Math.min(1,(19-distance)/16)):0;
+ const proximity=hearsThreat&&enemy.active&&enemy.grace<=0?Math.max(0,Math.min(1,(19-distance)/16)):0;
  dreadBus.gain.setTargetAtTime(proximity*proximity*(game==='quiz'?.22:.43),n,.16);
  dreadFilter.frequency.setTargetAtTime(100+proximity*160,n,.3);
+ syncMonsterPresenceAudio(n,distance);
  if(playing&&n>nextCreakAt){
   nextCreakAt=n+12+Math.random()*15;
   // A very quiet creak, only if a game is actually in progress.
@@ -908,7 +993,7 @@ function refreshSoundButtons(){
 function toggleSound(){
  if(editingControls)return;
  audioMuted=!audioMuted;
- if(audioMuted)stopChaseVoices();
+ if(audioMuted){stopChaseVoices();stopBackroomsChaseBgm();}else if(chaseActive)startBackroomsChaseBgm();
  try{localStorage.setItem('backrooms_audio_muted_v1',audioMuted?'1':'0')}catch{}
  refreshSoundButtons();
  if(!audioMuted)startSound();
@@ -921,10 +1006,10 @@ function playFootstep(running){
  const ctx=audio,n=ctx.currentTime,side=(stepSide++%2)?1:-1;
  const noise=ctx.createBufferSource();noise.buffer=stepNoise;
  const filter=ctx.createBiquadFilter();filter.type='lowpass';
- filter.frequency.setValueAtTime(running?950:670,n);
+ filter.frequency.setValueAtTime(running?1120:890,n);
  filter.frequency.exponentialRampToValueAtTime(running?380:280,n+.17);
  const gain=ctx.createGain();gain.gain.setValueAtTime(.0001,n);
- gain.gain.linearRampToValueAtTime(running?.22:.15,n+.012);
+ gain.gain.linearRampToValueAtTime(running?.43:.33,n+.012);
  gain.gain.exponentialRampToValueAtTime(.0001,n+(running?.19:.17));
  const pan=ctx.createStereoPanner?ctx.createStereoPanner():null;
  if(pan){pan.pan.value=side*.13;noise.connect(filter).connect(gain).connect(pan).connect(audioMaster)}
@@ -934,7 +1019,7 @@ function playFootstep(running){
  heel.type='sine';heel.frequency.setValueAtTime(running?113:96,n);
  heel.frequency.exponentialRampToValueAtTime(52,n+.10);
  thump.gain.setValueAtTime(.0001,n);
- thump.gain.linearRampToValueAtTime(running?.084:.061,n+.009);
+ thump.gain.linearRampToValueAtTime(running?.135:.112,n+.009);
  thump.gain.exponentialRampToValueAtTime(.0001,n+.125);
  heel.connect(thump).connect(audioMaster);heel.start(n);heel.stop(n+.14);
 }
@@ -1132,6 +1217,7 @@ function gotSnapshot(r){if(!online.active||r.code!==online.code)return;
    enemy.x=r.enemy.x;enemy.z=r.enemy.z;enemy.grace=r.enemy.grace;enemy.active=!!r.enemy.active;
    if(enemyAwakenedNow)playDistantMonsterCry();
   enemy.chasing=!!r.enemy.chasing;enemy.aiMode=r.enemy.mode||(enemy.chasing?'chase':'patrol');elapsed=r.elapsed;
+   if(!chaseActive&&enemy.active&&(enemy.aiMode==='notice'||enemy.aiMode==='chase'))beginChaseAudio();
   const me=r.players.find(p=>p.id===online.me);if(!me)return;
   if(game==='lobby'){player.x=me.x;player.z=me.z;player.yaw=me.yaw;start()}
   if(!me.alive){if(!online.dead)showCoopDowned();else updateDownedUI();}

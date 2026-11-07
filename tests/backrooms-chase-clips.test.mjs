@@ -25,7 +25,7 @@ test('three screams and ambient MP3s are fully embedded and match original files
 });
 
 test('scream 1 is used for chase onset and caught jumpscare',()=>{
- assert.match(html,/if\(enemy\.grace<=0&&distance<19\)/);
+ assert.match(html,/const detected=enemy\.active&&enemy\.grace<=0/);
  assert.match(html,/playChaseCue\('start'\)/);
  assert.match(html,/playChaseCue\('caught'\)/);
  assert.match(html,/playSample\('scream1',kind==='caught'/);
