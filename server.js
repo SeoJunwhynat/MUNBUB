@@ -126,7 +126,7 @@ async function handle(req,res){
   let file;
   try{file=await stat(path)}catch{return json(res,404,{error:'Not found'})}
   if(!file.isFile())return json(res,404,{error:'Not found'});
-  const cache=ext==='.html'?'no-store':'public, max-age=300';
+  const cache=['.html','.js','.mjs','.css'].includes(ext)?'no-cache, max-age=0, must-revalidate':'public, max-age=300';
   res.writeHead(200,{'Content-Type':mime[ext],'Content-Length':file.size,'Cache-Control':cache,'X-Content-Type-Options':'nosniff'});
   if(req.method==='HEAD')return res.end();
   createReadStream(path).on('error',()=>res.destroy()).pipe(res);
