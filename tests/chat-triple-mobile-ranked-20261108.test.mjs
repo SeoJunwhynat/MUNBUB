@@ -52,7 +52,7 @@ test('private chats expose only sender/receiver, server-side account identity an
  assert.match(backend,/body->>'id'/);
  assert.match(backend,/activeUserIds\(\)/);
  assert.match(backend,/WHERE id=\$1::bigint AND receiver_id=\$2/);
- assert.match(backend,/action==='send_dm'/);
+ assert.match(backend,/\['send_dm','block','unblock'\]\.includes\(body\.action\)/);
  assert.match(backend,/action==='block'/);
  assert.match(backend,/action==='unblock'/);
  assert.match(storage,/CREATE TABLE IF NOT EXISTS mb_private_chat/);
