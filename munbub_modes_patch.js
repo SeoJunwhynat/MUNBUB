@@ -195,7 +195,7 @@ style.textContent=[
    if(document.getElementById('mb-ranked-script'))return;
    const ranked=document.createElement('script');
    ranked.id='mb-ranked-script';
-   ranked.src='./munbub_ranked_challenge.js';
+   ranked.src='./munbub_ranked_challenge.js?v=20261108-space2';
    ranked.onerror=()=>console.error('랭킹전 게임을 불러오지 못했어.');
    document.body.append(ranked);
   },{once:true});
