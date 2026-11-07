@@ -14,52 +14,79 @@ function clickEvent(partial={}){
   preventDefault(){this.prevented=true;},
   stopPropagation(){this.stopped=true;},...partial};
 }
-test('Space is captured before browser scroll even when focused answer button disappears',()=>{
- const a=ranked.indexOf('function handleRankedSpaceKey(e){');
- const b=ranked.indexOf("window.addEventListener('keydown',handleRankedSpaceKey,true);",a);
- assert.ok(a>0&&b>a,'register a capture-phase global keyboard listener');
- const source=ranked.slice(a,b+"window.addEventListener('keydown',handleRankedSpaceKey,true);".length);
- let handler=null,called=0,feedback=true;
- const window={addEventListener:(type,fn,capture)=>{
-  assert.equal(type,'keydown');assert.equal(capture,true);handler=fn;
- }};
- const document={activeElement:{tagName:'BODY',matches:()=>false}};
- const dialog={open:true,querySelector:x=>x==='#mb-ranked-next'&&feedback?{}:null};
- const ctx={window,document,dialog,active:true,busy:false,next:()=>{called++;ctx.busy=true}};
- assert.doesNotThrow(()=>runInNewContext(source,ctx));
- assert.equal(typeof handler,'function');
- // Target outside dialog, as happens after frame() removes the old button.
- const bodySpace=clickEvent({target:{tagName:'BODY',closest:()=>null}});
- handler(bodySpace);
- assert.equal(called,1,'the first Space advances');
- assert.equal(bodySpace.prevented,true,'no default page scroll');
- assert.equal(bodySpace.stopped,true,'no other game handler sees Space');
- const whileBusy=clickEvent();handler(whileBusy);
- assert.equal(called,1,'do not submit twice');
- assert.equal(whileBusy.prevented,true,'even in-flight requests cannot scroll');
+test('FIRST Space during server verification cannot scroll and queues one advance',()=>{
+ const from=ranked.indexOf('function handleRankedSpaceKey(e){');
+ const to=ranked.indexOf("window.addEventListener('keyup',handleRankedSpaceKey,true);",from);
+ assert.ok(from>0&&to>from,'global capture handler found');
+ const text=ranked.slice(from,to+"window.addEventListener('keyup',handleRankedSpaceKey,true);".length);
+ const handlers={},document={activeElement:{matches:()=>false}};
+ let calls=0,result=false;
+ const ctx={document,dialog:{open:true,querySelector:id=>id==='#mb-ranked-next'&&result?{}:null},
+  active:true,busy:true,answerChecking:true,advanceQueued:false,
+  next:()=>{calls++;ctx.busy=true},
+  window:{addEventListener:(type,fn,capture)=>{assert.equal(capture,true);handlers[type]=fn}}};
+ assert.doesNotThrow(()=>runInNewContext(text,ctx));
+ assert.equal(typeof handlers.keydown,'function');
+ assert.equal(typeof handlers.keyup,'function');
+ const first=clickEvent({type:'keydown',target:{closest:()=>null},
+  stopImmediatePropagation(){this.immediate=true}});
+ handlers.keydown(first);
+ assert.equal(first.prevented,true,'prevent FIRST Space default scroll before response');
+ assert.equal(first.immediate,true,'stop other key handlers from triggering');
+ assert.equal(ctx.advanceQueued,true,'queue first Space during answer API request');
+ assert.equal(calls,0,'cannot advance until server returns');
+ const up=clickEvent({type:'keyup'});
+ handlers.keyup(up);
+ assert.equal(up.prevented,true,'keyup also cannot scroll or activate old choice');
+ const repeat=clickEvent({type:'keydown',repeat:true});
+ handlers.keydown(repeat);
+ assert.equal(repeat.prevented,true,'held key may not scroll');
+ assert.equal(calls,0);
+ // Simulate submit finally: after showFeedback renders and busy becomes false,
+ // the queued FIRST keystroke must invoke next, with no second keystroke.
+ result=true;ctx.answerChecking=false;ctx.busy=false;
+ const finallyStart=ranked.indexOf('if(advanceQueued&&active&&dialog.open&&dialog.querySelector(',ranked.indexOf('async function submit('));
+ const finallyEnd=ranked.indexOf('  }\n }\n function showFeedback',finallyStart);
+ assert.ok(finallyStart>0&&finallyEnd>finallyStart);
+ const cleanup=ranked.slice(finallyStart,finallyEnd).trim();
+ // This fragment is an if/else statement from the successful answer's finally.
+ ctx.queueMicrotask=fn=>fn();
+ assert.doesNotThrow(()=>runInNewContext(cleanup,ctx));
+ assert.equal(calls,1,'FIRST Space advances automatically after feedback');
+ assert.equal(ctx.advanceQueued,false,'consumed exactly once');
+ // On an already visible feedback screen, one Space immediately advances.
  ctx.busy=false;
- const repeat=clickEvent({repeat:true});handler(repeat);
- assert.equal(called,1);assert.equal(repeat.prevented,true,'held Space cannot scroll or resubmit');
- handler(clickEvent({isComposing:true}));assert.equal(called,1);
- const inputSpace=clickEvent({target:{closest:()=>({tag:'INPUT'})}});handler(inputSpace);
- assert.equal(called,1);assert.equal(inputSpace.prevented,false,'typing spaces still works');
- document.activeElement={tagName:'INPUT',matches:()=>true};
- const focusedInput=clickEvent();handler(focusedInput);assert.equal(focusedInput.prevented,false);
- document.activeElement={tagName:'BODY',matches:()=>false};
- feedback=false;
- const unanswered=clickEvent();handler(unanswered);
- assert.equal(called,1);assert.equal(unanswered.prevented,false,'question screen keeps normal typing');
- feedback=true;dialog.open=false;
- const closed=clickEvent();handler(closed);assert.equal(closed.prevented,false);
- dialog.open=true;ctx.active=false;
- const inactive=clickEvent();handler(inactive);assert.equal(inactive.prevented,false);
- ctx.active=true;
- handler(clickEvent({code:'KeyS',key:'s'}));assert.equal(called,1);
+ const second=clickEvent({type:'keydown'});
+ handlers.keydown(second);
+ assert.equal(second.prevented,true);assert.equal(calls,2);
+ const busySpace=clickEvent({type:'keydown'});
+ handlers.keydown(busySpace);
+ assert.equal(busySpace.prevented,true,'must block scroll during next request');
+ assert.equal(calls,2,'do not double request');
+ ctx.busy=false;
+ const input=clickEvent({type:'keydown',target:{closest:()=>({tagName:'INPUT'})}});
+ handlers.keydown(input);
+ assert.equal(input.prevented,false,'leave whitespace in essays untouched');
+ document.activeElement={matches:()=>true};
+ const focused=clickEvent({type:'keydown'});handlers.keydown(focused);
+ assert.equal(focused.prevented,false);
+ document.activeElement={matches:()=>false};
+ result=false;
+ const question=clickEvent({type:'keydown'});handlers.keydown(question);
+ assert.equal(question.prevented,true,'even on question screen prevent page scroll');
+ assert.equal(calls,2,'do not skip unanswered question');
+ ctx.active=false;
+ const closed=clickEvent({type:'keydown'});handlers.keydown(closed);
+ assert.equal(closed.prevented,false,'outside ranked mode Space works normally');
 });
-test('result screen actively restores focus to the stable ranked dialog after rerender',()=>{
- assert.match(ranked,/dialog\.tabIndex=-1/);
- assert.match(ranked,/dialog\.focus\(\{preventScroll:true\}\)/);
+test('result view focuses NEXT button and uses versioned script so the new fix is loaded',()=>{
+ assert.match(ranked,/resultNext\.focus\(\{preventScroll:true\}\)/);
  assert.match(ranked,/dialog\.contains\(resultNext\)/);
+ assert.match(ranked,/answerChecking=false;advanceQueued=false/);
+ const modes=read('munbub_modes_patch.js');
+ const server=read('server.js');
+ assert.match(modes,/ranked\.src='\.\/munbub_ranked_challenge\.js\?v=20261108-space2'/);
+ assert.match(server,/no-cache, max-age=0, must-revalidate/);
  assert.doesNotThrow(()=>new Script(ranked));
 });
 test('ranked essay automatically focuses and uses native Enter form submission',()=>{
