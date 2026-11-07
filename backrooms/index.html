@@ -380,8 +380,7 @@ function start(){clearTimeout(jumpscareTimer);hideJumpscare();clearChaseState();
  if(!online.active)rebuildWorld();
  elapsed=online.active?Number(online.room?.elapsed||0):0;
  nextCreakAt=audio?audio.currentTime+12:0;
- stamina=100;player.stamina=100;staminaExhausted=false;player.flash=true;
- if(!online.active){quizSolved={};owned={spell:false,idiom:false}}
+ stamina=100;player.stamina=100;staminaExhausted=false;runHold=false;player.flash=true;if(!online.active){quizSolved={};owned={spell:false,idiom:false}}
  buildWorldGeometry();game='playing';showScreen('none');inputMode(true);
  updateHUD();toast('단말기 8개 · 각 3문제, 총 24문제를 풀어 주세요.');
  last=performance.now();ensureGameLoop();lock();startSound();
