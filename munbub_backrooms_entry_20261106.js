@@ -42,5 +42,10 @@
  presenceScript.src='/mb_live_presence_20261107.js';
  presenceScript.defer=true;
  document.head.append(presenceScript);
+ // Home global chat is opt-in; uses the same signed account as 1:1 and rankings.
+ const chatScript=document.createElement('script');
+ chatScript.src='/munbub_global_chat_20261108.js';
+ chatScript.defer=true;
+ document.head.append(chatScript);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();
