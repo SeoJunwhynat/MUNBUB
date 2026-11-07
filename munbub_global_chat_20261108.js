@@ -44,7 +44,7 @@
   input.disabled=true;input.placeholder='로그인이 필요해';input.setAttribute('aria-label','채팅 메시지');
   const send=document.createElement('button');send.type='submit';send.disabled=true;send.textContent='전송';
   form.append(input,send);panel.append(head,tabs,note,people,peerBar,messages,status,form);home.append(toggle,panel);
-  let visible=false,busy=false,posting=false,logged=false,mode='global',peer=null;
+  let visible=false,busy=false,posting=false,logged=false,mode='global',peer=null,lastLoginCheck=0;
   let previousIds='',users=[],threads=[],requestVersion=0,searchDelay=0;
   const say=text=>{status.textContent=text};
   const authorize=ok=>{
@@ -157,7 +157,14 @@
     }
     const payload=await fetchChat(null,path);
     if(req!==requestVersion||mode!==which||peer?.id!==who)return;
-    authorize(true);
+    if(which==='all'){
+     // Anyone can read announcements, but sending still requires login.
+     if(Date.now()-lastLoginCheck>12000){
+      const account=await fetch('/api/account',{credentials:'same-origin',cache:'no-store'}).then(r=>r.json()).catch(()=>({}));
+      logged=!!account.loggedIn;lastLoginCheck=Date.now();
+     }
+     authorize(logged);
+    }else authorize(true);
     say(which==='global'?'최근 7일 · 최신 60개 메시지':which==='all'?'최근 모두에게 보낸 알림':'개인 대화 · 로그인 계정만 볼 수 있어');
     draw(Array.isArray(payload.messages)?payload.messages:[]);
    }catch(e){

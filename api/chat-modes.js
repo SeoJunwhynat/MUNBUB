@@ -29,7 +29,7 @@ export default async function handleChatModes(req,res,user){
     '(EXTRACT(EPOCH FROM created_at)*1000)::bigint AS at',
     'FROM mb_chat_broadcast WHERE id>$1::bigint',
     "AND created_at>NOW()-INTERVAL '24 hours'",
-    'ORDER BY id DESC LIMIT 15'
+    'ORDER BY mb_chat_broadcast.id DESC LIMIT 15'
    ].join(' '),[since]);
    return output(res,200,{ok:true,messages:rows.reverse().map(record)});
   }catch(e){console.error('Broadcast read',e.name);return output(res,503,{error:'전체 알림 조회 오류'})}
@@ -64,7 +64,7 @@ export default async function handleChatModes(req,res,user){
       'FROM mb_private_chat',
       'WHERE ((sender_id=$1 AND receiver_id=$2) OR (sender_id=$2 AND receiver_id=$1))',
       'AND NOT EXISTS(SELECT 1 FROM mb_chat_blocks b WHERE b.owner_id=$1 AND b.target_id=mb_private_chat.sender_id)',
-      'ORDER BY id DESC LIMIT 60'
+      'ORDER BY mb_private_chat.id DESC LIMIT 60'
     ].join(' '),[user.id,peer]);
     return output(res,200,{ok:true,peer:profile.name,messages:rows.reverse().map(record)});
    }
@@ -77,7 +77,7 @@ export default async function handleChatModes(req,res,user){
       'CASE WHEN sender_id=$1 THEN receiver_name ELSE sender_name END AS name',
       'FROM mb_private_chat WHERE sender_id=$1 OR receiver_id=$1) threads',
       'WHERE NOT EXISTS(SELECT 1 FROM mb_chat_blocks b WHERE b.owner_id=$1 AND b.target_id=peer)',
-      'ORDER BY peer,id DESC LIMIT 80'
+      'ORDER BY peer,threads.id DESC LIMIT 80'
     ].join(' '),[user.id]);
     return output(res,200,{ok:true,threads:rows.sort((a,b)=>Number(b.at)-Number(a.at)).map(x=>({peer:x.peer,name:x.name,id:String(x.id),at:Number(x.at)}))});
    }

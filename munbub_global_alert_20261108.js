@@ -35,7 +35,7 @@
    const data=await r.json(),rows=Array.isArray(data.messages)?data.messages:[];
    for(const message of rows){
     if(!/^[0-9]{1,18}$/.test(String(message.id||'')))continue;
-    if(!first)announce(message);
+    if(!first||(Number(message.at)>Date.now()-9000&&Number(message.at)<Date.now()+1000))announce(message);
     if(BigInt(message.id)>BigInt(cursor))cursor=message.id;
    }
    first=false;
