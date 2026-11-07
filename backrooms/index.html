@@ -105,7 +105,7 @@
 /* v4: Center-bottom symmetric stamina filament; red only when regenerating. */
 #hud #hudStamina,#hud.hudLayoutEnabled #hudStamina{
  position:fixed!important;left:50%!important;top:auto!important;
- bottom:calc(55px + env(safe-area-inset-bottom,0px))!important;
+ bottom:calc(72px + env(safe-area-inset-bottom,0px))!important;
  transform:translateX(-50%)!important;width:clamp(320px,56vw,600px)!important;
  height:18px!important;min-width:0!important;max-height:none!important;
  padding:0!important;margin:0!important;border:0!important;border-radius:0!important;
@@ -125,12 +125,12 @@
 .screenCard{max-width:min(95vw,800px);max-height:calc(100dvh - 22px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
 #hudTools .iconBtn{min-height:39px}
 @media(pointer:coarse){
- #hud #hudStamina,#hud.hudLayoutEnabled #hudStamina{bottom:calc(26dvh + env(safe-area-inset-bottom,0px))!important;width:min(420px,84vw)!important}
+ #hud #hudStamina,#hud.hudLayoutEnabled #hudStamina{bottom:calc(26dvh + 14px + env(safe-area-inset-bottom,0px))!important;width:min(420px,84vw)!important}
  #hud .mission{max-height:min(33dvh,225px);overflow-y:auto;overscroll-behavior:contain}
  #mobile #touchMap,#mobile #touchRun,#mobile #touchUse{font-size:clamp(11px,2.6vw,15px)}
 }
 @media(pointer:coarse) and (orientation:landscape){
- #hud #hudStamina,#hud.hudLayoutEnabled #hudStamina{bottom:calc(9px + env(safe-area-inset-bottom,0px))!important;width:min(460px,68vw)!important}
+ #hud #hudStamina,#hud.hudLayoutEnabled #hudStamina{bottom:calc(24px + env(safe-area-inset-bottom,0px))!important;width:min(460px,68vw)!important}
  #hud.hudLayoutEnabled #hudMission{max-height:34dvh!important}
  #controlPanel .configCard{max-height:55dvh}
 }
@@ -335,7 +335,7 @@ function updateSprint(dt,wantsToSprint){
  const sprint=wantsToSprint&&!staminaExhausted&&stamina>0;
  staminaRecovering=false;
  if(sprint){
-  stamina=Math.max(0,stamina-48*dt);
+  stamina=Math.max(0,stamina-37.2*dt);
   if(stamina<=0){
    stamina=0;
    staminaExhausted=true;
@@ -699,9 +699,30 @@ function startMonsterBackground(){
 }
 function stopVoices(set){for(const src of set){try{src.stop()}catch{}}set.clear();}
 function stopChaseVoices(){stopVoices(chaseVoiceSources);stopVoices(roamVoiceSources);}
+// The Weight Behind You: supplied chase BGM, stored as a separate user-owned MP3.
+// Starts only after a user action has activated audio; stops on chase exit,
+// defeat, pause, mute and backgrounding. Never starts on page load.
+const backroomsChaseBgm=new Audio('assets/sfx/The_Weight_Behind_You.mp3');
+backroomsChaseBgm.loop=true;backroomsChaseBgm.preload='none';backroomsChaseBgm.volume=.28;
+let backroomsChaseBgmUnavailable=false;
+backroomsChaseBgm.addEventListener('error',()=>{backroomsChaseBgmUnavailable=true;});
+function startBackroomsChaseBgm(){
+ if(backroomsChaseBgmUnavailable||audioMuted||document.hidden||!audio||audio.state!=='running')return;
+ if(!backroomsChaseBgm.paused)return;
+ const attempt=backroomsChaseBgm.play();
+ attempt?.catch(err=>{if(backroomsChaseBgm.error)backroomsChaseBgmUnavailable=true;});
+}
+function stopBackroomsChaseBgm(){
+ if(!backroomsChaseBgm.paused)backroomsChaseBgm.pause();
+ try{backroomsChaseBgm.currentTime=0;}catch{}
+}
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden)stopBackroomsChaseBgm();
+});
 function clearChaseState(stopVoicesNow=true){
  chaseActive=false;chaseOutSince=0;nextChaseAccentAt=Infinity;nextRoamAt=Infinity;
  if(stopVoicesNow)stopChaseVoices();
+ stopBackroomsChaseBgm();
  window.__backroomsMonsterVisual?.reset();
 }
 function playSample(key,volume,{lowpass=0,pan=0,roaming=false,limit=false}={}){
@@ -751,13 +772,18 @@ function playRoamingCue(distance){
 function syncChaseCues(){
  if(!audio||document.hidden)return;
  const activeGameplay=game==='playing'||(online.active&&(game==='quiz'||game==='map'));
- if(!activeGameplay)return;
+ if(!activeGameplay){stopBackroomsChaseBgm();return;}
+ if(audioMuted)stopBackroomsChaseBgm();
+ if(chaseActive&&!audioMuted)startBackroomsChaseBgm();
  const distance=Math.hypot(enemy.x-player.x,enemy.z-player.z),now=audio.currentTime;
  if(!chaseActive){
   if(enemy.grace<=0&&distance<19){
+   const aware=online.active?!!enemy.chasing:(enemy.aiMode==='notice'||enemy.aiMode==='chase');
+   if(!aware)return;
    chaseActive=true;chaseOutSince=0;
    stopVoices(roamVoiceSources);
    playChaseCue('start');
+   startBackroomsChaseBgm();
    window.__backroomsMonsterVisual?.notice();
    nextChaseAccentAt=now+4.5+Math.random()*5;
    return;

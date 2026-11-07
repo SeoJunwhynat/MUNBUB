@@ -8,6 +8,45 @@ import {BackroomsMonsterBridge,chooseMonsterAIState} from './BackroomsMonsterBri
  * This is not a second canvas/overlay: wall and model depth testing is shared.
  * Physics, monster AI, SSE and scoring remain in original code.
  */
+
+/**
+ * v3.6 model controller compatibility for the Backrooms' existing 3D scene.
+ * The v3.6 source module is packaged with the supplied model assets; it is
+ * loaded only if the new GLBs are present. Legacy v3 remains a safe fallback.
+ */
+function wrapV36(model){
+  const stateMap={Idle:'Idle',Patrol:'Patrol',Search:'Investigate',
+    Notice:'Detect',Chase:'Chasing',Attack:'Attacking',Stun:'Stunned',
+    Pivot:'Chase_Turn',Transition:'Chase_Stop'};
+  return {
+    object:model.root,
+    clips:Object.keys(model.clips).map(name=>({name})),
+    currentName:'Idle',
+    setAnimation(name,{fade=.18}={}){
+      try{
+        // Enter the chase ONCE; the source controller then starts Chase_Loop
+        // and automatically selects corner clips with its four-hand IK.
+        const state=name==='Chase'&&this.currentName!=='Chase'
+          ?'ChaseEnter':(stateMap[name]||'Idle');
+        if(name!==this.currentName||name==='Chase'&&model.actionName==='Chase_Stop')
+          model.play(state,fade);
+        this.currentName=name;
+        return true;
+      }catch(err){console.warn('v36 animation transition:',err);return false;}
+    },
+    sync({x,z,vx,vz,visible=true}={}){
+      model.root.visible=visible;
+      model.setServerSnapshot({
+        position:{x:Number.isFinite(x)?x:0,y:.09,z:Number.isFinite(z)?z:0},
+        velocity:{x:Number.isFinite(vx)?vx:0,z:Number.isFinite(vz)?vz:0},
+        serverTime:performance.now()
+      });
+    },
+    setAnimationSpeed(rate){model.setPlaybackRate(rate);},
+    update(dt){model.update(dt);}
+  };
+}
+
 export class BackroomsMonsterVisual {
   constructor(canvas, gl) {
     if (!gl || !canvas) throw Error('WebGL context not available');
@@ -38,9 +77,28 @@ export class BackroomsMonsterVisual {
   }
   async load() {
     try {
-      const url=new URL('../assets/monsters/spelling_monster_v3.glb',import.meta.url).href;
-      this.controller=await loadSpellingMonster({url,targetHeight:2.90,floorOffset:0.09,castShadow:false});
-      this.controller.setAnimationSpeed(1.3);
+      // Native v3.6 loader and animation controller: PC high detail, mobile LOD2.
+      // The original GLB stays available until the binary assets are uploaded.
+      const mobile=!!(globalThis.matchMedia?.('(pointer:coarse)').matches
+        ||globalThis.innerWidth<700);
+      const variant=mobile?'spelling_monster_v36_lod2.glb':'spelling_monster_v36_high.glb';
+      const v36url=new URL('../assets/monsters/'+variant,import.meta.url).href;
+      this.usingV36=false;
+      try{
+        const {SpellingMonsterV36}=await import('./SpellingMonsterV36.mjs');
+        const rig=await SpellingMonsterV36.load({
+          url:v36url,scale:2.90/5.55,mobile,
+          getFloorHeight:()=>0
+        });
+        this.controller=wrapV36(rig);
+        this.usingV36=true;
+        this.controller.setAnimationSpeed(1);
+      }catch(v36Error){
+        console.info('v3.6 asset not available: using the previous GLB safely.',v36Error);
+        const url=new URL('../assets/monsters/spelling_monster_v3.glb',import.meta.url).href;
+        this.controller=await loadSpellingMonster({url,targetHeight:2.90,floorOffset:0.09,castShadow:false});
+        this.controller.setAnimationSpeed(1.3);
+      }
       this.bridge=new BackroomsMonsterBridge(this.controller);
       this.scene.add(this.controller.object);
       this.controller.object.visible=false;
@@ -99,7 +157,7 @@ export class BackroomsMonsterVisual {
     this.wasChasing=pursuing;
     // Existing global animation multiplier is 1.3x; the sight-based 30%
     // pursuit acceleration is mirrored by Chase playback to avoid foot sliding.
-    this.controller.setAnimationSpeed(aiState==='chase'?1.3*((5.75*1.05)*.93)/(2.05*1.3):1.3);
+    if(!this.usingV36)this.controller.setAnimationSpeed(aiState==='chase'?(((5.75*1.05*.93)*1.08)*.8)/2.05:1.3);
     this.bridge.update(enemy,Math.min(dt,.09),{aiState,visible:showing});
     this.state=this.bridge.state;
     this.controller.object.visible=showing;

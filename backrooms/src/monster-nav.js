@@ -6,7 +6,7 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
  const CELL=4;
- const MONSTER_CHASE_SPEED=(5.75*1.05)*0.93;
+ const MONSTER_CHASE_SPEED=((5.75*1.05*.93)*1.08)*0.8;
  const MONSTER_NOTICE_DURATION_MS=1200;
  const MONSTER_PATROL_SPEED=2.65;
  const MONSTER_SEARCH_SPEED=3.2;

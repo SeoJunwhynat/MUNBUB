@@ -11,8 +11,8 @@ function mapOf(size=13){
 }
 const point=(x,z)=>({x:x*4+2,z:z*4+2});
 test('player sprint is 1.08 times the monster pursuit speed in both modes',()=>{
- assert.equal(Nav.MONSTER_CHASE_SPEED,(5.75*1.05)*.93);
- assert.equal(Number(Nav.MONSTER_CHASE_SPEED.toFixed(4)),5.6149);
+ assert.equal(Nav.MONSTER_CHASE_SPEED,((5.75*1.05*.93)*1.08)*0.8);
+ assert.equal(Number(Nav.MONSTER_CHASE_SPEED.toFixed(4)),4.8513);
  const html=readFileSync(new URL('../backrooms/index.html',import.meta.url),'utf8');
  const server=readFileSync(new URL('../backrooms/server.js',import.meta.url),'utf8');
  assert.match(html,/nav\.MONSTER_CHASE_SPEED/);

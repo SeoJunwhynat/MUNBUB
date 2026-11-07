@@ -8,13 +8,13 @@ const html = readFileSync(new URL('../backrooms/index.html', import.meta.url), '
 const visual = readFileSync(new URL('../backrooms/src/BackroomsMonsterVisual.mjs', import.meta.url), 'utf8');
 const bridge = readFileSync(new URL('../backrooms/src/BackroomsMonsterBridge.mjs', import.meta.url), 'utf8');
 
-test('sprint is 1.08 times monster chase; stamina rates and HUD are doubled', () => {
+test('monster chase is 0.8 of sprint; stamina drain is 0.775x and HUD stays doubled', () => {
   const speedMatch = html.match(/PLAYER_WALK_SPEED=3\.30\*1\.05,PLAYER_SPRINT_SPEED=([^;]+);/);
   assert.ok(speedMatch, 'player speed settings exist');
   const sprint = (5.75 * 1.05 * .93) * 1.08;
   assert.equal(speedMatch[1], '(5.75*1.05*.93)*1.08');
-  assert.ok(Math.abs(sprint / Nav.MONSTER_CHASE_SPEED - 1.08) < 1e-10);
-  assert.match(html, /stamina=Math\.max\(0,stamina-48\*dt\)/);
+  assert.ok(Math.abs(Nav.MONSTER_CHASE_SPEED / sprint - 0.8) < 1e-10);
+  assert.match(html, /stamina=Math\.max\(0,stamina-37\.2\*dt\)/);
   assert.match(html, /STAMINA_REGEN_PER_SECOND=18\*4/);
   assert.match(html, /width:clamp\(320px,56vw,600px\)!important/);
   assert.match(html, /width:min\(420px,84vw\)!important/);

@@ -11,7 +11,7 @@ test('stamina 300, drain and regen doubled and sprint 1.08x chase',()=>{
  assert.match(html,/let speed=sprint\?PLAYER_SPRINT_SPEED:PLAYER_WALK_SPEED/);
  assert.match(html,/stamina=Math\.min\(MAX_STAMINA,stamina\+STAMINA_REGEN_PER_SECOND\*dt\)/);
  assert.match(html,/stamina\/MAX_STAMINA\*100/);
- assert.equal(Nav.MONSTER_CHASE_SPEED,(5.75*1.05)*.93);
+ assert.equal(Nav.MONSTER_CHASE_SPEED,((5.75*1.05*.93)*1.08)*0.8);
 });
 test('coop spawn and respawn use stamina capacity 300',()=>{
  const map=Array.from({length:25},(_,z)=>Array.from({length:25},(_,x)=>x===0||z===0||x===24||z===24?1:0));
