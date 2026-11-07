@@ -141,6 +141,20 @@
  #hud.hudLayoutEnabled #hudMission{max-width:48vw!important}
 }
 
+
+/* Mobile convenience: 44px touch targets and scroll-safe settings. */
+@media(pointer:coarse){
+ #hud .iconBtn,#gameSettingsPanel button,#pauseScreen button,#mobile button{min-height:44px!important;touch-action:manipulation!important}
+ #gameSettingsPanel .gameSettingsCard{box-sizing:border-box!important;max-height:calc(100dvh - 20px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))!important;overflow-y:auto!important;overscroll-behavior:contain!important;width:min(96vw,560px)!important;padding:clamp(10px,3vw,24px)!important}
+ #gameSettingsPanel input[type=range]{touch-action:pan-x!important;min-height:32px!important}
+ #hud .hudTools{gap:4px!important}
+ #hud #hudTools button{font-size:clamp(11px,2.6vw,15px)!important;min-width:44px!important}
+ #interact{max-width:calc(100vw - 25px)!important;box-sizing:border-box!important}
+}
+@media(pointer:coarse) and (orientation:landscape) and (max-height:500px){
+ #gameSettingsPanel .gameSettingsCard{max-height:92dvh!important}
+ #hud .hudTop{max-height:30dvh!important}
+}
 </style>
 <style id="monsterV3Styles">
 
@@ -243,6 +257,8 @@
   <button id="gameSettingsLeave" type="button" class="dangerButton">🚪 탐험 나가기</button>
  </div></div></div>
 <div class="screen hidden" id="endScreen"><div class="screenCard" style="max-width:640px;text-align:center"><div class="eyebrow" id="endSub">EXPEDITION COMPLETE</div><div style="font-size:67px;margin-top:13px" id="endIcon">🏆</div><h2 class="bigTitle" id="endTitle" style="font-size:43px">탈출 성공</h2><p class="paragraph" id="endDesc">두 개의 열쇠로 문을 열었습니다.</p><div class="btnRow" style="justify-content:center"><button class="bigBtn" id="retryBtn">↻ 다시 플레이</button><button class="bigBtn dark" id="homeBtn">타이틀로</button></div></div></div>
+<script src="/mb_live_presence_20261107.js"></script>
+<script src="/munbub_global_alert_20261108.js"></script>
 <script src="/backrooms/src/monster-nav.js"></script>
 <script>
 (()=>{'use strict';
