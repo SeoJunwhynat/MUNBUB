@@ -61,7 +61,8 @@ test('BGM preloads and starts on notice/chase, in real user gesture context',()=
  assert.match(html,/function beginChaseAudio\(\)/);
  assert.match(html,/if\(!chaseActive\)beginChaseAudio\(\)/);
  assert.match(html,/const detected=enemy\.active&&enemy\.grace<=0/);
- assert.match(html,/\['playing','quiz','map'\]\.includes\(game\)&&!audioMuted\)/);\n assert.match(html,/if\(chaseActive\)startBackroomsChaseBgm\(\)/);
+ assert.match(html,/\['playing','quiz','map'\]\.includes\(game\)&&!audioMuted\)/);
+ assert.match(html,/if\(chaseActive\)startBackroomsChaseBgm\(\)/);
  const rawScripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)];
  const main=rawScripts.find(([all])=>!all.includes('type='));
  assert.ok(main);assert.doesNotThrow(()=>new Script(main[1]));
