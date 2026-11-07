@@ -992,3 +992,67 @@
  observer.observe(feedback,{attributes:true,attributeFilter:['class','hidden'],childList:true,subtree:true});
  observer.observe(quiz,{attributes:true,attributeFilter:['hidden']});
 })();
+
+
+/* v4: Auto-focus descriptive answers on every new question and Enter to advance. */
+(()=>{
+ 'use strict';
+ if(window.__mbEssayAutoFocusV4)return;window.__mbEssayAutoFocusV4=true;
+ const area=document.getElementById('answerArea'),quiz=document.getElementById('view-quiz');
+ if(!area||!quiz)return;
+ const getInput=()=>area.querySelector('input#essayInput:not(:disabled)');
+ function focusEssay(){
+  const input=getInput();
+  if(!input||quiz.hidden||document.hidden)return;
+  requestAnimationFrame(()=>{
+   if(!input.isConnected||input.disabled||quiz.hidden||document.hidden)return;
+   try{input.focus({preventScroll:true})}catch{input.focus()}
+  });
+ }
+ const watcher=new MutationObserver(focusEssay);
+ watcher.observe(area,{childList:true,subtree:true});
+ document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter'||e.isComposing||e.keyCode===229||e.altKey||e.metaKey||e.ctrlKey||quiz.hidden)return;
+  const input=area.querySelector('#essayInput');
+  if(!input)return;
+  const feedback=document.getElementById('feedback');
+  if(feedback&&!feedback.hidden){
+   e.preventDefault();e.stopImmediatePropagation();
+   document.getElementById('nextBtn')?.click();
+  }else if(!input.disabled&&document.activeElement!==input){
+   // Native form submit handles Enter once the field has focus.
+   e.preventDefault();focusEssay();
+  }
+ },true);
+ focusEssay();
+})();
+(()=>{
+ 'use strict';
+ if(document.getElementById('munbub-mobile-v4'))return;
+ const style=document.createElement('style');style.id='munbub-mobile-v4';
+ style.textContent=`
+ /* Prevent horizontal clipping and soft-keyboard viewport jumps. */
+ html,body{max-width:100%;overflow-x:clip}
+ #answerArea .essay-form{width:100%;min-width:0}
+ #answerArea .essay-form input{min-width:0;max-width:100%;font-size:16px}
+ #view-quiz .panel,#view-quiz .prompt{overflow-wrap:anywhere;min-width:0}
+ @media(max-width:850px){
+  #workspace.app-shell,#workspace .main-content,#workspace main{min-width:0;max-width:100%}
+  #view-quiz{width:100%;min-width:0}
+  #view-quiz .panel{width:100%;max-width:100%;padding:clamp(12px,3.2vw,22px);margin-inline:auto}
+  #answerArea .essay-form{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+  #answerArea .essay-form button{width:100%;min-height:44px}
+  .quiz-bottom{display:flex;gap:8px;flex-wrap:wrap}
+  .quiz-bottom button{min-height:44px}
+  .mobile-bottom{padding-bottom:env(safe-area-inset-bottom,0px);min-height:calc(58px + env(safe-area-inset-bottom,0px))}
+  #workspace{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+  #homeScreen .home-main{padding-bottom:calc(105px + env(safe-area-inset-bottom,0px))}
+ }
+ @media(max-width:850px) and (orientation:landscape) and (max-height:540px){
+  #view-quiz .panel{padding:10px 16px}
+  #workspace{padding-bottom:calc(65px + env(safe-area-inset-bottom,0px))}
+  #view-quiz .prompt{font-size:clamp(17px,3vw,23px);line-height:1.4}
+ }
+ `;
+ document.head.append(style);
+})();

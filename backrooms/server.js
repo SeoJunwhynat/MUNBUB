@@ -18,7 +18,7 @@ const QUESTIONS_PER_TERMINAL = 3;
 const SELF_RESPAWN_MS = 12000;
 const REVIVE_PROTECTION_MS = 6500;
 const CHASE_SIGHT_DISTANCE = 17;
-const MAX_STAMINA = 150;
+const MAX_STAMINA = 300;
 const CELL = 4, WORLD = 25;
 function badRequest(message){return Object.assign(new Error(message),{httpStatus:400});}
 const jsonHeaders = {'content-type':'application/json; charset=utf-8','cache-control':'no-store','x-content-type-options':'nosniff'};
