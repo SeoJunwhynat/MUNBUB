@@ -52,5 +52,8 @@
  portraitStyle.id='mb-mobile-portrait-20261108';
  document.head.append(portraitStyle);
  const alertScript=document.createElement('script');alertScript.src='/munbub_global_alert_20261108.js';alertScript.defer=true;document.head.append(alertScript);
+ const mobileArt=document.createElement('script');
+ mobileArt.src='/munbub_mobile_menu_art_20261109.js';
+ mobileArt.defer=true;document.head.append(mobileArt);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();
