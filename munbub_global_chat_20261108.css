@@ -141,3 +141,34 @@
  #mb-global-chat-panel .mbg-form button{min-width:60px!important}
  #mb-global-chat-panel .mbg-note{font-size:12px!important}
 }
+
+/* Chat is a drawer entry, NOT a floating overlay, on narrow screens. */
+.mb-mobile-chat-entry{display:none!important}
+@media(max-width:700px){
+ #mb-global-chat-toggle{
+  display:none!important;visibility:hidden!important;
+  pointer-events:none!important;
+ }
+ #mobileDrawer button.mb-mobile-chat-entry,
+ .mobile-drawer button.mb-mobile-chat-entry{
+  display:flex!important;flex-direction:row!important;
+  align-items:center!important;justify-content:center!important;
+  gap:12px!important;box-sizing:border-box!important;
+  width:100%!important;min-width:0!important;
+  min-height:58px!important;flex:none!important;
+  padding:9px 12px!important;margin:7px 0 0!important;
+  background:linear-gradient(150deg,#4b3544,#312633)!important;
+  color:#ffe8c7!important;border:3px double #d9a97d!important;
+  border-radius:12px!important;box-shadow:0 3px 0 #1b111c!important;
+  font:900 17px/1.4 system-ui,'Malgun Gothic',sans-serif!important;
+  cursor:pointer!important;overflow:visible!important;opacity:1!important;
+ }
+ .mb-mobile-chat-entry .mb-mobile-chat-symbol{
+  display:inline-grid!important;place-items:center!important;
+  font-size:23px!important;line-height:1!important;
+  width:31px!important;height:35px!important;flex:none!important;
+ }
+ .mb-mobile-chat-entry:focus-visible{
+  outline:3px solid #f9d39e!important;outline-offset:3px!important;
+ }
+}
