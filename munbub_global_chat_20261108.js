@@ -43,9 +43,19 @@
   const input=document.createElement('input');input.type='text';input.maxLength=180;input.autocomplete='off';
   input.disabled=true;input.placeholder='로그인이 필요해';input.setAttribute('aria-label','채팅 메시지');
   const send=document.createElement('button');send.type='submit';send.disabled=true;send.textContent='전송';
-  form.append(input,send);panel.append(head,tabs,note,people,peerBar,messages,status,form);home.append(toggle,panel);
+  form.append(input,send);panel.append(head,tabs,note,people,peerBar,messages,status,form);
+  // Fixed-position controls must not be clipped by the transformed/scaled Home.
+  document.body.append(toggle,panel);
+  function liftChat(){
+   const dialogs=[...document.querySelectorAll('dialog[open]')];
+   const host=dialogs.at(-1)||document.body;
+   if(toggle.parentElement!==host)host.append(toggle);
+   if(panel.parentElement!==host)host.append(panel);
+  }
+  liftChat();
   let visible=false,busy=false,posting=false,logged=false,mode='global',peer=null,lastLoginCheck=0;
   let previousIds='',users=[],threads=[],requestVersion=0,searchDelay=0;
+  let adjustKeyboard=()=>{};
   const say=text=>{status.textContent=text};
   const authorize=ok=>{
    logged=ok;input.disabled=!ok||mode==='dm'&&!peer;send.disabled=input.disabled;
@@ -118,6 +128,7 @@
   function updateView(){
    for(const [key,button] of Object.entries(tabButtons))button.setAttribute('aria-pressed',String(mode===key));
    people.hidden=mode!=='dm'||!!peer;peerBar.hidden=mode!=='dm'||!peer;
+   form.hidden=mode==='dm'&&!peer;
    messages.hidden=mode==='dm'&&!peer;
    note.textContent=mode==='all'?'📢 보낸 메시지는 접속 중인 모든 사람의 화면 상단에 표시돼요.':
       mode==='dm'?'✉️ 특정 사용자와의 대화는 본인과 상대만 볼 수 있어요.':'🌐 전체 채팅 · 메시지는 모두에게 공개돼요.';
@@ -174,10 +185,19 @@
   }
   function display(state){
    visible=state;panel.hidden=!state;toggle.setAttribute('aria-expanded',String(state));
+   liftChat();
+   document.documentElement.classList.toggle('mb-chat-open',state&&window.innerWidth<=700);
    if(state){updateView();refresh();}else input.blur();
+   requestAnimationFrame(adjustKeyboard);
   }
   toggle.addEventListener('click',()=>display(!visible));
   close.addEventListener('click',()=>display(false));
+  window.addEventListener('mb:open-private-chat',e=>{
+   const detail=e.detail||{};
+   if(!/^[a-f0-9-]{36}$/i.test(String(detail.id||'')))return;
+   display(true);chooseMode('dm');
+   choosePeer({id:String(detail.id),name:String(detail.name||'이용자'),blocked:false});
+  });
   form.addEventListener('submit',async e=>{
    e.preventDefault();
    const text=input.value.trim();
@@ -192,21 +212,27 @@
    finally{posting=false;send.disabled=!logged||mode==='dm'&&!peer;}
   });
   document.addEventListener('keydown',e=>{if(visible&&e.key==='Escape')display(false)});
-  setInterval(()=>{if(visible&&!document.hidden)refresh()},3200);
+  setInterval(()=>{liftChat();if(visible&&!document.hidden)refresh()},2600);
+  window.addEventListener('resize',()=>document.documentElement.classList.toggle('mb-chat-open',visible&&window.innerWidth<=700));
   document.addEventListener('visibilitychange',()=>{if(visible&&!document.hidden)refresh()});
   window.addEventListener('pageshow',()=>{if(visible)refresh()});
   // Avoid the virtual keyboard covering the compose row on Android/iOS.
   const vv=window.visualViewport;
   if(vv){
    const reposition=()=>{
+    // The visual viewport excludes the mobile keyboard. Keep the form inside it.
     const keyboard=Math.max(0,window.innerHeight-vv.height-vv.offsetTop);
-    if(visible&&window.innerWidth<701&&keyboard>95){
-     panel.style.setProperty('bottom',Math.round(keyboard+8)+'px','important');
-     panel.style.setProperty('height',Math.max(180,Math.min(500,vv.height-24))+'px','important');
+    if(visible&&window.innerWidth<=700&&keyboard>80){
+     panel.style.setProperty('top',Math.round(vv.offsetTop)+'px','important');
+     panel.style.setProperty('bottom','auto','important');
+     panel.style.setProperty('height',Math.max(170,Math.round(vv.height))+'px','important');
     }else{
-     panel.style.removeProperty('bottom');panel.style.removeProperty('height');
+     panel.style.removeProperty('top');
+     panel.style.removeProperty('bottom');
+     panel.style.removeProperty('height');
     }
    };
+   adjustKeyboard=reposition;
    vv.addEventListener('resize',reposition);vv.addEventListener('scroll',reposition);
    input.addEventListener('focus',()=>requestAnimationFrame(reposition));
    input.addEventListener('blur',()=>requestAnimationFrame(reposition));
