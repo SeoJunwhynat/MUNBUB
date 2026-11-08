@@ -17,15 +17,26 @@
  document.head.append(style);
  const modal=document.createElement('dialog');modal.id='mb-online-modal';document.body.append(modal);
  async function api(url,data){
-  const res=await fetch(url,{method:data?'POST':'GET',headers:data?{'Content-Type':'application/json'}:{},credentials:'same-origin',body:data?JSON.stringify(data):undefined});
-  const out=await res.json().catch(()=>({}));
-  if(!res.ok){
-   const detail=res.status===404?'배포된 사이트에서 /api 경로를 찾지 못했어. Vercel 프로젝트 루트에 api 폴더가 포함됐는지 확인해 줘.':
-    res.status===503?'온라인 저장소가 연결되지 않았어. Vercel의 BLOB_READ_WRITE_TOKEN 설정을 확인해 줘.':
-    res.status===401?'닉네임 또는 비밀번호를 확인해 줘.':'서버와 통신할 수 없어 ('+res.status+').';
-   throw Error(out.error||detail);
+  // Keep stalled database/cold-start connections from leaving login and rankings loading forever.
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),30000);
+  try{
+   const res=await fetch(url,{method:data?'POST':'GET',headers:data?{'Content-Type':'application/json'}:{},credentials:'same-origin',body:data?JSON.stringify(data):undefined,signal:controller.signal});
+   const out=await res.json().catch(()=>({}));
+   if(!res.ok){
+    const detail=res.status===404?'요청한 API를 찾지 못했어. Render 배포와 API 경로를 확인해 줘.':
+     res.status===503?'서버 또는 데이터베이스가 준비되지 않았어. 잠시 후 다시 시도해 줘.':
+     res.status===401?'닉네임 또는 비밀번호를 확인해 줘.':'서버와 통신할 수 없어 ('+res.status+').';
+    throw Error(out.error||detail);
+   }
+   return out;
+  }catch(error){
+   if(error?.name==='AbortError')throw Error('서버 응답이 30초 넘게 없어 요청을 종료했어. 잠시 후 다시 시도해 줘.');
+   if(error instanceof TypeError)throw Error('서버에 연결하지 못했어. 네트워크를 확인하고 다시 시도해 줘.');
+   throw error;
+  }finally{
+   clearTimeout(timeout);
   }
-  return out;
  }
  function open(body){
   modal.classList.toggle('mb-ranking-modal',body.includes('mb-ranking-board'));
