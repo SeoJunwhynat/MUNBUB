@@ -48,17 +48,17 @@ function player(){
  };
 }
 
-test('homepage starts with an installed theme while Full Tilt Parade is missing',()=>{
+test('homepage starts with Full Tilt Parade when installed',()=>{
  const p=player();
- assert.match(p.audio.src,/home-new\.mp3$/);
+ assert.match(p.audio.src,/Full_Tilt_Parade\.mp3$/);
  assert.equal(p.audio.volume,.28);
  assert.equal(p.audio.loop,false);
 });
 
-test('infinite mode uses an installed fallback while Transit at Midnight is missing',()=>{
+test('infinite mode starts Transit at Midnight when installed',()=>{
  const p=player();
  p.go('quiz','infinite',{infinite:true});
- assert.match(p.audio.src,/infinite\.mp3$/);
+ assert.match(p.audio.src,/Transit_at_Midnight\.mp3$/);
 });
 
 test('ranked infinite uses the available theme; other ranked variants change mode',()=>{
@@ -66,7 +66,7 @@ test('ranked infinite uses the available theme; other ranked variants change mod
  p.rank.open=true;
  p.rank.dataset.mbRankedMode='infinite';
  p.window.syncBgm();
- assert.match(p.audio.src,/infinite\.mp3$/);
+ assert.match(p.audio.src,/Transit_at_Midnight\.mp3$/);
  p.rank.dataset.mbRankedMode='hardcore';
  p.window.syncBgm();
  assert.doesNotMatch(p.audio.src,/Transit_at_Midnight\.mp3$/);
@@ -74,11 +74,11 @@ test('ranked infinite uses the available theme; other ranked variants change mod
 
 test('existing music remains in shuffled playlists after the first song',()=>{
  const p=player();
- assert.match(p.audio.src,/home-new\.mp3$/);
+ assert.match(p.audio.src,/Full_Tilt_Parade\.mp3$/);
  p.end();
  assert.doesNotMatch(p.audio.src,/Full_Tilt_Parade\.mp3$/);
  p.go('quiz','infinite',{infinite:true});
- assert.match(p.audio.src,/infinite\.mp3$/);
+ assert.match(p.audio.src,/Transit_at_Midnight\.mp3$/);
  p.end();
  assert.doesNotMatch(p.audio.src,/Transit_at_Midnight\.mp3$/);
  assert.equal(p.audio.loop,false);

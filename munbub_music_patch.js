@@ -81,7 +81,19 @@
   'assets/bgm/Behind_the_Organ_Pipes.mp3',
   'assets/bgm/Beneath_the_Painted_Arch.mp3',
   'assets/bgm/The_Final_Sugar_Rush.mp3',
-  'assets/bgm/Evening_Rain_On_Paper.mp3'
+  'assets/bgm/Evening_Rain_On_Paper.mp3',
+  'assets/bgm/Full_Tilt_Parade.mp3',
+  'assets/bgm/Transit_at_Midnight.mp3',
+  'assets/bgm/playful_mischief.mp3',
+  'assets/bgm/east_asian_fantasy.mp3',
+  'assets/bgm/triumphant_orchestra.mp3',
+  'assets/bgm/retro_vhs_horror.mp3',
+  'assets/bgm/dreamcore_ambient.mp3',
+  'assets/bgm/late_night_study_1.mp3',
+  'assets/bgm/late_night_study_2.mp3',
+  'assets/bgm/magical_bookshelf_1.mp3',
+  'assets/bgm/magical_bookshelf_2.mp3',
+  'assets/bgm/neon_loop_2.mp3'
  ]);
  const KEY='matchunbeom_home_bgm_choice_v2';
  let homeChoice=PUBLISHED_BGM.has(HOME[0][2])?'parade':'new',duelObserver=null,rankObserver=null,updating=false,lastLabel='',lastVolume=-1;
@@ -231,7 +243,7 @@
   }
   select.value=homeChoice;
   const note=document.createElement('small');
-  note.textContent='서버에 실제 업로드된 음악만 선택할 수 있어. 원본이 없는 Full Tilt Parade와 Transit at Midnight는 음원 업로드 후 활성화돼.';
+  note.textContent='서버에 등록된 음악만 선택할 수 있어. Full Tilt Parade는 홈에서, Transit at Midnight는 무한모드에서 먼저 재생돼.';
   div.append(title,select,note);host.append(div);
   select.addEventListener('change',()=>{
    homeChoice=select.value;
@@ -293,7 +305,7 @@
    if(currentTrack&&!available(currentTrack))currentTrack=null;
    installPicker();
    const note=document.querySelector('#view-settings .mb-home-bgm-picker small');
-   if(note)note.textContent='서버에 등록된 곡만 재생해. Full Tilt Parade와 Transit at Midnight도 음원이 등록되면 자동 활성화돼.';
+   if(note)note.textContent='서버에 등록된 곡만 재생해. Full Tilt Parade와 Transit at Midnight를 포함한 추가 음원들도 사용할 수 있어.';
    update(restoreHomeTheme&&mode()==='home');
   }catch(_){}
  }
