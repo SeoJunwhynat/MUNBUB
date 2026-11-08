@@ -24,5 +24,9 @@ test('catch GIF decodes one-shot by dropping infinite loop extension and ignores
 test('solo and co-op movement and GLB animation all use 1.3x multiplier',()=>{
  assert.match(html,/nav\.MONSTER_CHASE_SPEED/);
  assert.match(server,/Nav\.MONSTER_CHASE_SPEED/);
- assert.match(visual,/this\.controller\.setAnimationSpeed\(1\.3\)/);
+ assert.match(visual,/this\.controller\.setAnimationSpeed\(this\.usingV321\|\|this\.usingV36\?1:1\.3\)/);
+ assert.match(visual,/this\.usingV321=false/);
+ assert.match(visual,/spelling_monster_v321_high\.glb/);
+ assert.match(visual,/SpellingMonsterV321\.mjs/);
+ assert.match(visual,/this\.controller\.setLookTarget\(/);
 });
