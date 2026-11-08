@@ -13,8 +13,17 @@
   const parent=dialogs.at(-1)||document.body;
   if(frame.parentElement!==parent)parent.append(frame);
  }
+ style.textContent+='#mb-global-alerts .mb-private-alert{background:linear-gradient(115deg,#234355f5,#274d43f5)!important;border-color:#82d9c8!important;text-align:left!important;pointer-events:auto!important;cursor:pointer!important;max-height:130px;overflow-y:auto}#mb-global-alerts .mb-private-alert:focus-visible{outline:3px solid #fff1a8!important;outline-offset:3px}';
  document.head.append(style);
  const KEY='mb_global_announcement_cursor_20261108';
+ const DM_KEY='mb_private_notification_cursor_v2';
+ let privateUser='',privateCursor='0',privateBusy=false;
+ try{
+  const saved=JSON.parse(sessionStorage.getItem(DM_KEY)||'null');
+  if(saved&&/^[a-f0-9-]{36}$/i.test(saved.me)&&/^[0-9]{1,18}$/.test(saved.cursor)){
+   privateUser=saved.me;privateCursor=saved.cursor;
+  }
+ }catch{}
  let cursor='0',first=true,running=false;
  try{const stored=sessionStorage.getItem(KEY);if(/^[0-9]{1,18}$/.test(stored||'')){cursor=stored;first=false;}}catch{}
  function announce(msg){
@@ -25,6 +34,68 @@
   card.append(who,body);frame.append(card);
   while(frame.childElementCount>3)frame.firstElementChild.remove();
   setTimeout(()=>card.remove(),7600);
+ }
+
+ function announcePrivate(msg){
+  anchor();
+  const card=document.createElement('div');
+  card.className='mb-global-alert mb-private-alert';
+  const who=document.createElement('strong');
+  who.textContent='✉️ '+String(msg.name||'이용자')+':';
+  const body=document.createElement('span');
+  body.textContent=String(msg.text||'');
+  card.append(who,body);
+  if(/^[a-f0-9-]{36}$/i.test(String(msg.senderId||''))){
+   card.tabIndex=0;
+   card.setAttribute('role','button');
+   card.setAttribute('aria-label','개인 채팅 열기');
+   const open=()=>{
+    if(!document.getElementById('mb-global-chat-toggle'))return;
+    window.dispatchEvent(new CustomEvent('mb:open-private-chat',{
+     detail:{id:String(msg.senderId),name:String(msg.name||'이용자')}
+    }));
+    card.remove();
+   };
+   card.addEventListener('click',open);
+   card.addEventListener('keydown',e=>{
+    if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}
+   });
+  }
+  frame.append(card);
+  while(frame.childElementCount>3)frame.firstElementChild.remove();
+  setTimeout(()=>card.remove(),9800);
+ }
+ async function pollPrivate(){
+  if(privateBusy||document.hidden)return;
+  privateBusy=true;
+  try{
+   const r=await fetch('/api/chat?mode=dm_notifications&since='+encodeURIComponent(privateCursor),{
+    credentials:'same-origin',cache:'no-store'
+   });
+   if(r.status===401){
+    privateCursor='0';privateUser='';
+    try{sessionStorage.removeItem(DM_KEY)}catch{}
+    return;
+   }
+   if(!r.ok)return;
+   const data=await r.json();
+   const me=String(data.me||'');
+   if(!/^[a-f0-9-]{36}$/i.test(me))return;
+   if(privateUser!==me){
+    privateUser=me;privateCursor='0';
+    try{sessionStorage.setItem(DM_KEY,JSON.stringify({me,cursor:'0'}))}catch{}
+    return;
+   }
+   const fresh=privateCursor==='0',rows=Array.isArray(data.messages)?data.messages:[];
+   for(const msg of rows){
+    const id=String(msg.id||'');
+    if(!/^[0-9]{1,18}$/.test(id)||BigInt(id)<=BigInt(privateCursor))continue;
+    const at=Number(msg.at);
+    if(!fresh||(at>Date.now()-60000&&at<Date.now()+60000))announcePrivate(msg);
+    privateCursor=id;
+   }
+   try{sessionStorage.setItem(DM_KEY,JSON.stringify({me,cursor:privateCursor}))}catch{}
+  }catch{}finally{privateBusy=false;}
  }
  async function poll(){
   if(running||document.hidden)return;
@@ -43,8 +114,9 @@
   }catch{}finally{running=false;}
  }
  function start(){
-  anchor();poll();setInterval(()=>{anchor();poll()},2700);
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()});
+  anchor();poll();pollPrivate();setInterval(()=>{anchor();poll()},2700);
+  setInterval(pollPrivate,2700);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){poll();pollPrivate();}});
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});
  else start();
