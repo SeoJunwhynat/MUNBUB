@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --experimental-vm-modules --test tests/*.test.mjs",
-    "check": "node scripts/assemble-supplied-bgm.mjs && node --check server.js && node --check backrooms/server.js && node --check munbub_backrooms_entry_20261106.js"
+    "check": "node scripts/assemble-supplied-bgm.mjs && node --check server.js && node --check backrooms/server.js && node --check munbub_backrooms_entry_20261106.js && node --check munbub_music_patch.js"
   },
   "engines": {
     "node": ">=22 <25"
