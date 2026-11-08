@@ -15,14 +15,16 @@ test('Global chat route is connected to the Home launcher',()=>{
  assert.match(client,/getElementById\('mb-global-chat-toggle'\)/);
  assert.match(client,/munbub_global_chat_20261108\.css/);
 });
-test('Neon global chat persists authenticated messages with reporting and throttling',()=>{
+test('Neon global chat persists authenticated messages with reporting and no fixed send delay',()=>{
  assert.match(storage,/CREATE TABLE IF NOT EXISTS mb_global_chat/);
  assert.match(storage,/BIGSERIAL PRIMARY KEY/);
  assert.match(storage,/CREATE TABLE IF NOT EXISTS mb_global_chat_reports/);
  assert.match(backend,/FROM mb_global_chat m/);
  assert.match(backend,/ORDER BY m\.id DESC LIMIT 60/);
- assert.match(backend,/lastPost\.get\(user\.id\)>now-4000/);
- assert.match(backend,/created_at>NOW\(\)-INTERVAL '4 seconds'/);
+ assert.match(backend,/created_at>NOW\(\)-INTERVAL '10 seconds'/);
+ assert.match(backend,/created_at>NOW\(\)-INTERVAL '60 seconds'/);
+ assert.doesNotMatch(backend,/lastPost\.get\(user\.id\)>now-4000/);
+ assert.doesNotMatch(backend,/created_at>NOW\(\)-INTERVAL '4 seconds'/);
  assert.match(backend,/sameOrigin\(req\)/);
  assert.match(backend,/session\(req\)/);
  assert.match(backend,/body\.action==='report'/);
