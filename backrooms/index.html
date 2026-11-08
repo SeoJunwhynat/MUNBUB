@@ -196,6 +196,15 @@
 @keyframes monsterCatchZoom{0%{transform:scale(.9)}18%{transform:scale(1.08) translate(0,-.7%)}42%{transform:scale(1.12) translate(-.8%,.7%)}65%{transform:scale(1.15) translate(.5%,-.5%)}100%{transform:scale(1.19)}}
 @keyframes monsterCatchFlash{0%{opacity:.95}50%{opacity:.45}100%{opacity:.87}}
 @media(prefers-reduced-motion:reduce){#jumpscareFx::after,#jumpscareGif{animation:none}#jumpscareGif{transform:none}}
+
+/* MB_BACKROOMS_LOBBY_BGM_20261109: mobile-friendly lobby music controls */
+#mbLobbyMusicBar{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:12px 0 17px;padding:11px 13px;background:rgba(16,22,19,.74);border:1px solid rgba(224,191,116,.35);border-radius:10px}
+#mbLobbyMusicBar label{font-size:12px;font-weight:850;color:#f2d895;white-space:nowrap}
+#mbLobbyBgmSelect{flex:1;min-width:174px;max-width:300px;padding:9px 11px;border:1px solid #8c7950;border-radius:8px;background:#161d18;color:#f7e6b9;font-size:13px}
+#mbLobbyBgmToggle{border:1px solid rgba(223,195,127,.53);border-radius:8px;padding:9px 11px;background:#2a2b20;color:#f9e8ba;font-size:12px;white-space:nowrap}
+#mbLobbyBgmState{flex:1 1 180px;min-width:0;font-size:11px;color:#bdbda8}
+@media(max-width:620px){#mbLobbyMusicBar{gap:7px;padding:9px;margin:10px 0 12px}#mbLobbyBgmSelect{flex:1 1 calc(100% - 96px);min-width:0;max-width:none}#mbLobbyBgmToggle{flex:0 0 auto}#mbLobbyBgmState{flex-basis:100%;font-size:10px}}
+
 </style>
 </head><body>
 <canvas id="gl" tabindex="0"></canvas><div id="vignette"></div><div id="fluorescentGlow"></div><div id="noise"></div><div id="danger"></div><div id="jumpscareFx" class="hidden" aria-hidden="true"><img id="jumpscareGif" alt="괴물이 플레이어를 향해 돌진하는 모습" decoding="async"></div>
@@ -212,6 +221,17 @@
 
 <div class="screen hidden" id="multiLobby"><div class="screenCard multiplayerCard">
  <div class="eyebrow">친구와 함께하는 협동 탐험 · 최대 4명</div><h2 class="bigTitle" style="font-size:clamp(25px,5vw,38px)">👥 백룸 멀티플레이</h2>
+
+ <div id="mbLobbyMusicBar" aria-label="백룸 멀티플레이 로비 배경음악">
+  <label for="mbLobbyBgmSelect">♫ 로비 BGM</label>
+  <select id="mbLobbyBgmSelect" aria-label="백룸 로비 음악 선택">
+   <option value="auto">두 곡 자동 교대</option>
+   <option value="retro">Retro VHS Horror</option>
+   <option value="dream">Dreamcore Ambient</option>
+  </select>
+  <button id="mbLobbyBgmToggle" type="button" aria-pressed="true">🔊 음악 켜짐</button>
+  <span id="mbLobbyBgmState" role="status" aria-live="polite">로비에서 음악이 재생됩니다.</span>
+ </div>
  <div id="multiConnect"><p class="paragraph">공개방에서 함께 탐험하거나 친구와 비공개 방 코드를 공유해 보세요.</p>
   <section id="mbPublicBrowser" class="mb-room-browser" aria-label="백룸 공개방 목록">
    <div class="mb-room-browser-head"><strong>▣ 공개방 탐색</strong><button type="button" class="miniBtn" id="mbPublicRefresh">↻ 새로고침</button></div>
@@ -446,7 +466,7 @@ function interact(){if(game!=='playing')return;
  let o=nearest();if(!o)return;if(o.type==='quiz'){if(progressOf(o)>=QUESTIONS_PER_TERMINAL){toast('이 단말기의 3문제를 모두 해결했어요.');return}if(screenState(o)==='lock'){toast(`🔴 ${Math.max(1,Math.ceil((o.cooldownUntil-performance.now())/1000))}초 후 새 문제를 풀 수 있어요.`);return}openQuiz(o)}else if(o.type==='key'){if(online.active){multiAction('collect',{kind:o.kind}).then(handleAction);return}if(owned[o.kind]){toast('이미 열쇠를 획득했어요.');return}if(solved(o.kind)!==4){toast(`🔒 ${o.kind==='spell'?'맞춤법':'사자성어'} 단말기 4개를 모두 해결해야 해요. (${solved(o.kind)}/4)`);sound('wrong');return}owned[o.kind]=true;buildWorldGeometry();toast(`🗝️ ${o.kind==='spell'?'맞춤법':'사자성어'}의 열쇠를 획득했어요!`);sound('success');updateHUD()}else if(o.type==='exit'){if(online.active){multiAction('escape',{}).then(handleAction);return}if(owned.spell&&owned.idiom){end(true)}else{toast(`🔒 출구를 열려면 열쇠 2개가 필요해요. (${Number(owned.spell)+Number(owned.idiom)}/2)`);sound('wrong')}}}
 function updateStaminaHUD(){$('staminaFill').style.width=(Math.max(0,Math.min(100,stamina/MAX_STAMINA*100)))+'%';$('staminaText').textContent=Math.round(stamina)+' / '+MAX_STAMINA+(staminaExhausted?' · 회복 중':'');$('hudStamina').setAttribute('aria-valuenow',String(Math.round(stamina)));$('hudStamina').classList.toggle('recovering',staminaRecovering&&stamina<MAX_STAMINA);$('hudStamina').classList.toggle('staminaExhausted',staminaExhausted);$('touchRun').classList.toggle('staminaExhausted',staminaExhausted);$('touchRun').setAttribute('aria-disabled',String(staminaExhausted));$('touchRun').title=staminaExhausted?'스태미나가 완전히 회복되면 다시 달릴 수 있어요.':'누르고 있으면 달리기';}
 function updateHUD(distance=99){let s=solved('spell'),i=solved('idiom'),k=Number(owned.spell)+Number(owned.idiom);$('obSpell').innerHTML=`📝 맞춤법 <strong>${answeredOf('spell')} / 12문제 · ${s}/4기</strong>`;$('obSpell').classList.toggle('done',s===4);$('obIdiom').innerHTML=`📜 사자성어 <strong>${answeredOf('idiom')} / 12문제 · ${i}/4기</strong>`;$('obIdiom').classList.toggle('done',i===4);$('obKeys').innerHTML=`🗝️ 모은 열쇠 <strong>${k} / 2</strong>`;$('obKeys').classList.toggle('done',k===2);$('obExit').innerHTML=`🚪 탈출문 <strong>${k===2?'열림':'잠김'}</strong>`;$('spellKey').classList.toggle('owned',owned.spell);$('idiomKey').classList.toggle('owned',owned.idiom);updateStaminaHUD();/* Hide the monster's exact position, distance and countdown. */}
-function showScreen(id){for(let p of ['menu','multiLobby','quiz','mapScreen','pauseScreen','downedScreen','endScreen'])$(p).classList.toggle('hidden',p!==id)}function inputMode(on){$('hud').classList.toggle('hidden',!on);$('crosshair').classList.toggle('hidden',!on);$('mobile').classList.toggle('hidden',!on||(!coarse&&!editingControls));$('interact').classList.add('hidden')}function lock(){if(!coarse&&game==='playing'&&document.pointerLockElement!==canvas&&canvas.requestPointerLock)canvas.requestPointerLock().catch(()=>{})}function unlock(){if(document.pointerLockElement===canvas)document.exitPointerLock()}function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(toastClock);toastClock=setTimeout(()=>$('toast').classList.remove('show'),2600)}
+function showScreen(id){for(let p of ['menu','multiLobby','quiz','mapScreen','pauseScreen','downedScreen','endScreen'])$(p).classList.toggle('hidden',p!==id);if(id!=='multiLobby')stopLobbyMusic(true)}function inputMode(on){$('hud').classList.toggle('hidden',!on);$('crosshair').classList.toggle('hidden',!on);$('mobile').classList.toggle('hidden',!on||(!coarse&&!editingControls));$('interact').classList.add('hidden')}function lock(){if(!coarse&&game==='playing'&&document.pointerLockElement!==canvas&&canvas.requestPointerLock)canvas.requestPointerLock().catch(()=>{})}function unlock(){if(document.pointerLockElement===canvas)document.exitPointerLock()}function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(toastClock);toastClock=setTimeout(()=>$('toast').classList.remove('show'),2600)}
 function resetRunControls(){
  active=null;runHold=false;joy.x=0;joy.y=0;
  Object.keys(keys).forEach(key=>{keys[key]=false});
@@ -937,11 +957,104 @@ function updateBackroomsMixer(){
  if(audio&&audioMaster)audioMaster.gain.setTargetAtTime(audioMuted?0:.78*soundPrefs.master/100,audio.currentTime,.045);
  if(audio&&backroomsBgmGain)backroomsBgmGain.gain.setTargetAtTime((3/.78)*soundPrefs.bgm/100,audio.currentTime,.045);
  if(!backroomsBgmRouted)backroomsChaseBgm.volume=Math.min(1,.34*3*soundPrefs.bgm/100*soundPrefs.master/100);
+ syncLobbyVolume();
 }
 
 let dreadBus=null,dreadFilter=null,dreadSource=null,lastSoundscapeUpdate=0,nextCreakAt=0;
 let audioMuted=false;
 try{audioMuted=localStorage.getItem('backrooms_audio_muted_v1')==='1'}catch{}
+
+// MB_BACKROOMS_LOBBY_BGM_20261109: dedicated lobby music, separate from monster audio.
+const mbLobbyTracks=[
+ {key:'retro',title:'Retro VHS Horror',url:new URL('../assets/bgm/retro_vhs_horror.mp3',document.baseURI).href},
+ {key:'dream',title:'Dreamcore Ambient',url:new URL('../assets/bgm/dreamcore_ambient.mp3',document.baseURI).href}
+];
+const mbLobbyAudio=new Audio();
+mbLobbyAudio.preload='metadata';
+mbLobbyAudio.loop=false;
+let mbLobbyChoice='auto',mbLobbyTrackIndex=-1;
+const mbLobbyFailed=new Set();
+try{
+ const saved=localStorage.getItem('backrooms_lobby_bgm_choice_v1');
+ if(['auto','retro','dream'].includes(saved))mbLobbyChoice=saved;
+}catch{}
+$('mbLobbyBgmSelect').value=mbLobbyChoice;
+function mbInLobby(){return game==='lobby'&&!$('multiLobby').classList.contains('hidden');}
+function syncLobbyVolume(){mbLobbyAudio.volume=audioMuted?0:Math.min(1,.32*soundPrefs.master/100*soundPrefs.bgm/100);}
+function updateLobbyMusicUI(){
+ const toggle=$('mbLobbyBgmToggle'),status=$('mbLobbyBgmState');
+ if(!toggle||!status)return;
+ toggle.textContent=audioMuted?'🔇 음악 꺼짐':'🔊 음악 켜짐';
+ toggle.setAttribute('aria-pressed',String(!audioMuted));
+ const track=mbLobbyTracks[mbLobbyTrackIndex];
+ status.textContent=audioMuted?'음악이 꺼져 있어요.'
+  :mbInLobby()&&mbLobbyFailed.size===2?'음악 파일을 불러오지 못했어요.'
+  :mbInLobby()&&!mbLobbyAudio.paused&&track?'♪ 재생 중: '+track.title
+  :mbInLobby()?'♪ 선택한 음악을 재생해요.':'로비에 들어오면 재생돼요.';
+}
+function stopLobbyMusic(reset=false){
+ if(!mbLobbyAudio.paused)mbLobbyAudio.pause();
+ if(reset){try{mbLobbyAudio.currentTime=0}catch{}}
+ updateLobbyMusicUI();
+}
+function setLobbyTrack(index){
+ if(index===mbLobbyTrackIndex&&mbLobbyAudio.src)return;
+ mbLobbyTrackIndex=index;
+ mbLobbyAudio.src=mbLobbyTracks[index].url;
+ mbLobbyAudio.load();
+}
+function syncLobbyMusic(force=false){
+ if(!mbInLobby()||audioMuted||document.hidden){stopLobbyMusic();return}
+ syncLobbyVolume();
+ const target=mbLobbyChoice==='auto'
+  ?(mbLobbyTrackIndex>=0&&!mbLobbyFailed.has(mbLobbyTrackIndex)?mbLobbyTrackIndex:(mbLobbyFailed.has(0)?1:0))
+  :mbLobbyTracks.findIndex(track=>track.key===mbLobbyChoice);
+ if(target<0||mbLobbyFailed.has(target)){updateLobbyMusicUI();return}
+ if(force||target!==mbLobbyTrackIndex||!mbLobbyAudio.src)setLobbyTrack(target);
+ const pending=mbLobbyAudio.play();
+ pending?.then(updateLobbyMusicUI).catch(error=>{
+  // If mobile autoplay is blocked, retry on the next real user gesture.
+  if(mbLobbyAudio.error)mbLobbyFailed.add(mbLobbyTrackIndex);
+  updateLobbyMusicUI();
+ });
+ updateLobbyMusicUI();
+}
+mbLobbyAudio.addEventListener('ended',()=>{
+ if(!mbInLobby())return;
+ if(mbLobbyChoice==='auto'){
+  const next=(mbLobbyTrackIndex+1)%mbLobbyTracks.length;
+  if(!mbLobbyFailed.has(next))setLobbyTrack(next);
+ }else{
+  try{mbLobbyAudio.currentTime=0}catch{}
+ }
+ syncLobbyMusic();
+});
+mbLobbyAudio.addEventListener('error',()=>{
+ const failed=mbLobbyTrackIndex;
+ if(failed<0)return;
+ mbLobbyFailed.add(failed);
+ if(mbLobbyChoice==='auto'){
+  const next=(failed+1)%mbLobbyTracks.length;
+  if(!mbLobbyFailed.has(next)){setLobbyTrack(next);syncLobbyMusic();return}
+ }
+ updateLobbyMusicUI();
+});
+$('mbLobbyBgmSelect').addEventListener('change',event=>{
+ mbLobbyChoice=event.target.value;
+ try{localStorage.setItem('backrooms_lobby_bgm_choice_v1',mbLobbyChoice)}catch{}
+ if(mbLobbyChoice!=='auto'){
+  const next=mbLobbyTracks.findIndex(track=>track.key===mbLobbyChoice);
+  if(next>=0){mbLobbyTrackIndex=-1;setLobbyTrack(next)}
+ }
+ syncLobbyMusic();
+});
+$('mbLobbyBgmToggle').addEventListener('click',()=>{toggleSound();syncLobbyMusic()});
+document.addEventListener('visibilitychange',syncLobbyMusic);
+document.addEventListener('pointerdown',()=>{
+ if(mbInLobby()&&!audioMuted&&mbLobbyAudio.paused)syncLobbyMusic();
+},{passive:true});
+updateLobbyMusicUI();
+
 function buildNoiseBuffer(ctx,duration,color){
  const b=ctx.createBuffer(1,Math.ceil(ctx.sampleRate*duration),ctx.sampleRate);
  const data=b.getChannelData(0);let pink=0,brown=0;
@@ -1049,6 +1162,7 @@ function toggleSound(){
  if(!audioMuted)startSound();
  if(audioMaster&&audio){const n=audio.currentTime;audioMaster.gain.cancelScheduledValues(n);updateBackroomsMixer();}
  syncSoundscape();
+ syncLobbyMusic();
 }
 // A short double-textured heel impact and carpet scuff; alternate left/right feet.
 function playFootstep(running){
@@ -1156,7 +1270,7 @@ function defaultServerURL(){return location.origin+'/backrooms'}
 function onlineServer(){return defaultServerURL()}
 async function netApi(route,body){let ctrl=new AbortController(),timeout=setTimeout(()=>ctrl.abort(),['create','join'].includes(route)?45000:12000);try{let res=await fetch(onlineServer()+'/api/'+route,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});let data=await res.json();if(!res.ok||data.ok===false)throw Error(data.error||'요청을 처리하지 못했어요.');return data}finally{clearTimeout(timeout)}}
 function setMultiNotice(msg){$('multiNotice').textContent=msg}
-function multiLobbyScreen(){game='lobby';unlock();showScreen('multiLobby');inputMode(false);$('multiServer').value=online.url||defaultServerURL()}
+function multiLobbyScreen(){game='lobby';unlock();showScreen('multiLobby');inputMode(false);$('multiServer').value=online.url||defaultServerURL();syncLobbyMusic()}
 function updateMultiWaiting(){let r=online.room;if(!r)return;$('mbRoomLobbyMeta').textContent=(r.visibility==='public'?'🌐 공개방 · ':'🔒 비공개방 · ')+(r.title||'두 개의 열쇠');$('multiConnect').classList.add('hidden');$('multiWaiting').classList.remove('hidden');$('multiRoomCode').textContent=online.code;$('multiMembers').innerHTML='';for(let p of r.players){let d=document.createElement('div');d.className='member';let nm=document.createElement('b');nm.textContent=(p.id===r.host?'👑 ':'👤 ')+p.name+(p.id===online.me?' (나)':'');let status=document.createElement('span');status.textContent=p.ready?'✓ 준비 완료':'○ 준비 중';d.append(nm,status);$('multiMembers').append(d)}for(let i=r.players.length;i<4;i++){let d=document.createElement('div');d.className='member';d.textContent='＋ 빈 자리';$('multiMembers').append(d)}let me=r.players.find(p=>p.id===online.me);$('multiReady').textContent=me?.ready?'준비 취소':'준비 완료';$('multiReady').classList.toggle('hidden',online.host);$('multiStart').classList.toggle('hidden',!online.host);$('multiStart').disabled=r.players.length<2||r.players.some(p=>!p.ready);$('multiWaitingNote').textContent=r.players.length<2?'친구가 들어올 때까지 기다려 주세요.':r.players.some(p=>!p.ready)?'모든 참가자가 준비를 마치면 방장이 시작할 수 있어요.':'준비 완료! 방장이 탐험을 시작할 수 있어요.'}
 function syncCoopWorld(r){if(!r?.map)return;if(online.version!==r.version){online.version=r.version;map=r.map.map(row=>row.slice());objects=r.objects.map(o=>({...o,cooldownUntil:performance.now()+Math.max(0,o.cooldownRemaining||0)}));quizSolved={...r.quizSolved};owned={...r.owned};if(active)active=objects.find(o=>o.quizId===active.quizId)||active;buildWorldGeometry();updateHUD()}
  else{for(let i=0;i<objects.length;i++){let ref=r.objects[i],o=objects[i];if(ref&&o?.type==='quiz')o.cooldownUntil=performance.now()+Math.max(0,ref.cooldownRemaining||0)}owned={...r.owned};quizSolved={...r.quizSolved}}}
