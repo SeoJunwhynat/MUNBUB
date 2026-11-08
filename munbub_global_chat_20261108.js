@@ -212,7 +212,8 @@
    finally{posting=false;send.disabled=!logged||mode==='dm'&&!peer;}
   });
   document.addEventListener('keydown',e=>{if(visible&&e.key==='Escape')display(false)});
-  setInterval(()=>{liftChat();if(visible&&!document.hidden)refresh()},2600);
+  setInterval(()=>{if(visible&&!document.hidden)refresh()},2600);
+  setInterval(liftChat,1800);
   window.addEventListener('resize',()=>document.documentElement.classList.toggle('mb-chat-open',visible&&window.innerWidth<=700));
   document.addEventListener('visibilitychange',()=>{if(visible&&!document.hidden)refresh()});
   window.addEventListener('pageshow',()=>{if(visible)refresh()});
