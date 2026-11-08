@@ -45,7 +45,7 @@ export class BackroomsMonsterBridge {
   const dx=this.lastX===null?0:enemy.x-this.lastX;
   const dz=this.lastZ===null?0:enemy.z-this.lastZ;
   const vx=dt>0?dx/dt:0,vz=dt>0?dz/dt:0;
-  this.monster.sync({x:enemy.x,z:enemy.z,vx,vz,visible});
+  this.monster.sync({x:enemy.x,z:enemy.z,vx,vz,heading:enemy.yaw,visible});
   const next=MONSTER_STATE_CLIPS[aiState]||'Idle';
   const current=this.monster.currentName||this.state;
   // Looped actions should be restored if the mixer changed unexpectedly.

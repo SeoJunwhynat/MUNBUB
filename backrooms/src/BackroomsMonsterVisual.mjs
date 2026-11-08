@@ -9,15 +9,12 @@ import {BackroomsMonsterBridge,chooseMonsterAIState} from './BackroomsMonsterBri
  * Physics, monster AI, SSE and scoring remain in original code.
  */
 
-/**
- * v3.6 model controller compatibility for the Backrooms' existing 3D scene.
- * The v3.6 source module is packaged with the supplied model assets; it is
- * loaded only if the new GLBs are present. Legacy v3 remains a safe fallback.
- */
-function wrapV36(model){
+/** v3.21 / v3.6 API adapter for the existing Backrooms render and AI bridge. */
+function wrapV36(model,version='v36'){
   const stateMap={Idle:'Idle',Patrol:'Patrol',Search:'Investigate',
     Notice:'Detect',Chase:'Chasing',Attack:'Attacking',Stun:'Stunned',
-    Pivot:'Chase_Turn',Transition:'Chase_Stop'};
+    Pivot:version==='v321'?'Turn':'Chase_Turn',
+    Transition:version==='v321'?'Transition':'Chase_Stop'};
   return {
     object:model.root,
     clips:Object.keys(model.clips).map(name=>({name})),
@@ -28,21 +25,23 @@ function wrapV36(model){
         // and automatically selects corner clips with its four-hand IK.
         const state=name==='Chase'&&this.currentName!=='Chase'
           ?'ChaseEnter':(stateMap[name]||'Idle');
-        if(name!==this.currentName||name==='Chase'&&model.actionName==='Chase_Stop')
+        if(name!==this.currentName||name==='Chase'&&(model.actionName==='Chase_Stop'||model.name==='Chase_Stop'))
           model.play(state,fade);
         this.currentName=name;
         return true;
       }catch(err){console.warn('v36 animation transition:',err);return false;}
     },
-    sync({x,z,vx,vz,visible=true}={}){
+    sync({x,z,vx,vz,heading,visible=true}={}){
       model.root.visible=visible;
       model.setServerSnapshot({
         position:{x:Number.isFinite(x)?x:0,y:.09,z:Number.isFinite(z)?z:0},
+        heading:Number.isFinite(heading)?heading:undefined,
         velocity:{x:Number.isFinite(vx)?vx:0,z:Number.isFinite(vz)?vz:0},
         serverTime:performance.now()
       });
     },
     setAnimationSpeed(rate){model.setPlaybackRate(rate);},
+    setLookTarget(position){model.setLookTarget?.(position);},
     update(dt){model.update(dt);}
   };
 }
@@ -77,28 +76,47 @@ export class BackroomsMonsterVisual {
   }
   async load() {
     try {
-      // Native v3.6 loader and animation controller: PC high detail, mobile LOD2.
-      // The original GLB stays available until the binary assets are uploaded.
+      // Prefer uploaded v3.21 GLBs and its 4-limb IK / gaze controller.
+      // If any file is missing or fails to load, keep the previously deployed monster safe.
       const mobile=!!(globalThis.matchMedia?.('(pointer:coarse)').matches
         ||globalThis.innerWidth<700);
-      const variant=mobile?'spelling_monster_v36_lod2.glb':'spelling_monster_v36_high.glb';
-      const v36url=new URL('../assets/monsters/'+variant,import.meta.url).href;
+      this.usingV321=false;
       this.usingV36=false;
       try{
-        const {SpellingMonsterV36}=await import('./SpellingMonsterV36.mjs');
-        const rig=await SpellingMonsterV36.load({
-          url:v36url,scale:2.90/5.55,mobile,
-          getFloorHeight:()=>0
-        });
-        this.controller=wrapV36(rig);
-        this.usingV36=true;
-        this.controller.setAnimationSpeed(1);
-      }catch(v36Error){
-        console.info('v3.6 asset not available: using the previous GLB safely.',v36Error);
-        const url=new URL('../assets/monsters/spelling_monster_v3.glb',import.meta.url).href;
-        this.controller=await loadSpellingMonster({url,targetHeight:2.90,floorOffset:0.09,castShadow:false});
-        this.controller.setAnimationSpeed(1.3);
+        const {SpellingMonsterV321}=await import('./SpellingMonsterV321.mjs');
+        const files=mobile?['spelling_monster_v321_lod2.glb']:
+          ['spelling_monster_v321_high.glb','spelling_monster_v321_lod1.glb'];
+        let lastError;
+        for(const file of files){
+          try{
+            const rig=await SpellingMonsterV321.load({
+              url:new URL('../assets/monsters/'+file,import.meta.url).href,
+              scale:2.90/5.55,mobile,getFloorHeight:()=>0
+            });
+            this.controller=wrapV36(rig,'v321');
+            this.usingV321=true;
+            break;
+          }catch(error){lastError=error;}
+        }
+        if(!this.usingV321)throw lastError||new Error('v3.21 model files missing');
+      }catch(v321Error){
+        console.info('v3.21 unavailable, retaining existing creature:',v321Error);
+        try{
+          const {SpellingMonsterV36}=await import('./SpellingMonsterV36.mjs');
+          const variant=mobile?'spelling_monster_v36_lod2.glb':'spelling_monster_v36_high.glb';
+          const rig=await SpellingMonsterV36.load({
+            url:new URL('../assets/monsters/'+variant,import.meta.url).href,
+            scale:2.90/5.55,mobile,getFloorHeight:()=>0
+          });
+          this.controller=wrapV36(rig);
+          this.usingV36=true;
+        }catch(v36Error){
+          console.info('v3.6 unavailable; using legacy model.',v36Error);
+          const url=new URL('../assets/monsters/spelling_monster_v3.glb',import.meta.url).href;
+          this.controller=await loadSpellingMonster({url,targetHeight:2.90,floorOffset:0.09,castShadow:false});
+        }
       }
+      this.controller.setAnimationSpeed(this.usingV321||this.usingV36?1:1.3);
       this.bridge=new BackroomsMonsterBridge(this.controller);
       this.scene.add(this.controller.object);
       this.controller.object.visible=false;
@@ -157,7 +175,10 @@ export class BackroomsMonsterVisual {
     this.wasChasing=pursuing;
     // Existing global animation multiplier is 1.3x; the sight-based 30%
     // pursuit acceleration is mirrored by Chase playback to avoid foot sliding.
-    if(!this.usingV36)this.controller.setAnimationSpeed(aiState==='chase'?(((5.75*1.05*.93)*1.08)*.8)/2.05:1.3);
+    if(!this.usingV36)this.controller.setAnimationSpeed(this.usingV321?1:(aiState==='chase'?(((5.75*1.05*.93)*1.08)*.8)/2.05:1.3));
+    if(this.usingV321)this.controller.setLookTarget(showing?{
+      x:Number(eye?.[0])||0,y:Number(eye?.[1])||1.5,z:Number(eye?.[2])||0
+    }:null);
     this.bridge.update(enemy,Math.min(dt,.09),{aiState,visible:showing});
     this.state=this.bridge.state;
     this.controller.object.visible=showing;
