@@ -1,7 +1,7 @@
 /** Reconstruct the four user-supplied MP3 tracks losslessly during Render builds.
  * Each GitHub-safe source part stores a segment of the original base64 bytes.
  */
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
@@ -27,3 +27,12 @@ for (const {file,parts,bytes,sha256} of tracks) {
   await writeFile(output,data);
   console.log(`BGM OK: ${file} (${data.length} bytes, SHA256 verified)`);
 }
+
+// Publish only files present at build time, never placeholders or missing MP3s.
+// Updating the repo assets automatically enables new songs on the next Render build.
+const bgmDir=join(root,'assets','bgm');
+const files=(await readdir(bgmDir,{withFileTypes:true}))
+  .filter(e=>e.isFile()&&/^[A-Za-z0-9_-]+\.mp3$/i.test(e.name))
+  .map(e=>'assets/bgm/'+e.name).sort();
+await writeFile(join(bgmDir,'catalog.json'),JSON.stringify({tracks:files},null,2)+'\n');
+console.log('BGM catalog OK: '+files.length+' installed MP3 tracks');
