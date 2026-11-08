@@ -44,6 +44,25 @@
  const BASIC=[
   ...HOME.filter(x=>!['hard','duel','old-infinite'].includes(x[0]))
  ];
+// MB_20261108_AUDIO_START
+ const ADDED_BGM=[
+  ['mischief','Playful Mischief','assets/bgm/playful_mischief.mp3'],
+  ['eastfantasy','East Asian Fantasy','assets/bgm/east_asian_fantasy.mp3'],
+  ['triumph','Triumphant Orchestra','assets/bgm/triumphant_orchestra.mp3'],
+  ['vhs','Retro VHS Horror','assets/bgm/retro_vhs_horror.mp3'],
+  ['dreamcore','Dreamcore Ambient','assets/bgm/dreamcore_ambient.mp3'],
+  ['night1','Late Night Study Session','assets/bgm/late_night_study_1.mp3'],
+  ['night2','Late Night Study Session · Alternate','assets/bgm/late_night_study_2.mp3'],
+  ['books1','Magical Bookshelf','assets/bgm/magical_bookshelf_1.mp3'],
+  ['books2','Magical Bookshelf · Alternate','assets/bgm/magical_bookshelf_2.mp3'],
+  ['neon1','Neon Loop','assets/bgm/neon_loop_1.mp3'],
+  ['neon2','Neon Loop · Alternate','assets/bgm/neon_loop_2.mp3']
+ ];
+ HOME.push(...ADDED_BGM);
+ BASIC.push(...ADDED_BGM.filter(t=>!['vhs','dreamcore','neon1','neon2'].includes(t[0])));
+ HIGH.push(...ADDED_BGM.filter(t=>['vhs','dreamcore','neon1','neon2','triumph','mischief'].includes(t[0])));
+ INFINITE.push(...ADDED_BGM.filter(t=>['neon1','neon2','mischief','eastfantasy','triumph'].includes(t[0])));
+ // MB_20261108_AUDIO_END
  const KEY='matchunbeom_home_bgm_choice_v2';
  let homeChoice='parade',duelObserver=null,rankObserver=null,updating=false,lastLabel='',lastVolume=-1;
  let currentTrack=null,currentGroup='',lastMode='',lastTrackUrl='',manualPick=true;
