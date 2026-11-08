@@ -183,6 +183,32 @@
     else say(e.message);
    }finally{busy=false}
   }
+  function ensureMobileChatEntry(){
+   // The floating desktop chat button must never cover the mobile bottom bar.
+   // Mobile opens chat only from the existing additional-modes drawer.
+   const drawer=document.getElementById('mobileDrawer')||document.querySelector('.mobile-drawer');
+   if(!drawer)return;
+   let entry=drawer.querySelector('#mb-mobile-chat-entry');
+   if(entry)return;
+   entry=document.createElement('button');
+   entry.id='mb-mobile-chat-entry';
+   entry.className='mb-mobile-chat-entry';
+   entry.type='button';
+   entry.setAttribute('aria-label','채팅 열기');
+   const symbol=document.createElement('span');
+   symbol.className='mb-mobile-chat-symbol';
+   symbol.setAttribute('aria-hidden','true');
+   symbol.textContent='💬';
+   const caption=document.createElement('span');
+   caption.textContent='채팅 열기';
+   entry.append(symbol,caption);
+   entry.addEventListener('click',()=>{
+    drawer.hidden=true;
+    display(true);
+   });
+   drawer.append(entry);
+  }
+  ensureMobileChatEntry();
   function display(state){
    visible=state;panel.hidden=!state;toggle.setAttribute('aria-expanded',String(state));
    liftChat();
@@ -213,7 +239,7 @@
   });
   document.addEventListener('keydown',e=>{if(visible&&e.key==='Escape')display(false)});
   setInterval(()=>{if(visible&&!document.hidden)refresh()},2600);
-  setInterval(liftChat,1800);
+  setInterval(()=>{liftChat();ensureMobileChatEntry()},1800);
   window.addEventListener('resize',()=>document.documentElement.classList.toggle('mb-chat-open',visible&&window.innerWidth<=700));
   document.addEventListener('visibilitychange',()=>{if(visible&&!document.hidden)refresh()});
   window.addEventListener('pageshow',()=>{if(visible)refresh()});
