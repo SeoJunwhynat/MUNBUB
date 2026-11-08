@@ -4,11 +4,12 @@
  */
 (()=>{
  'use strict';
- if(window.__mbBgm2026v5)return;
+ if(window.__mbBgm2026v6)return;
  if(typeof bgmPlayer==='undefined'||!bgmPlayer)return;
- window.__mbBgm2026v5=true;
+ window.__mbBgm2026v6=true;
  const audio=bgmPlayer,$=id=>document.getElementById(id);
  const HOME=[
+  ['parade','Full Tilt Parade · 메인 홈','assets/bgm/Full_Tilt_Parade.mp3'],
   ['new','새 메인 배경음악','assets/bgm/home-new.mp3'],
   ['original','기존 메인 배경음악','assets/bgm/main.mp3'],
   ['old-spelling','기존 맞춤법 BGM','assets/bgm/spelling.mp3'],
@@ -36,18 +37,26 @@
   ['organ','Behind the Organ Pipes','assets/bgm/Behind_the_Organ_Pipes.mp3'],
   ['arch','Beneath the Painted Arch','assets/bgm/Beneath_the_Painted_Arch.mp3']
  ];
+ const INFINITE=[
+  ['transit','Transit at Midnight · 무한모드','assets/bgm/Transit_at_Midnight.mp3'],
+  ...HIGH
+ ];
  const BASIC=[
   ...HOME.filter(x=>!['hard','duel','old-infinite'].includes(x[0]))
  ];
- const KEY='matchunbeom_home_bgm_choice_v1';
- let homeChoice='new',duelObserver=null,rankObserver=null,updating=false,lastLabel='',lastVolume=-1;
- let currentTrack=null,currentGroup='',lastTrackUrl='',manualPick=false;
+ const KEY='matchunbeom_home_bgm_choice_v2';
+ let homeChoice='parade',duelObserver=null,rankObserver=null,updating=false,lastLabel='',lastVolume=-1;
+ let currentTrack=null,currentGroup='',lastMode='',lastTrackUrl='',manualPick=true;
  const missing=new Set(),played=new Set();
  try{const v=localStorage.getItem(KEY);if(HOME.some(q=>q[0]===v))homeChoice=v}catch(_){}
  const absolute=p=>new URL(p,document.baseURI).href;
  function mode(){
   if($('mb-duel-dialog')?.open)return 'duel';
-  if($('mb-ranked-dialog')?.open)return 'ranked';
+  const rank=$('mb-ranked-dialog');
+  if(rank?.open){
+   const chosen=rank.dataset.mbRankedMode||rank.querySelector('[data-rank-pick].selected')?.dataset.rankPick||'';
+   return chosen==='infinite'?'infinite':'ranked';
+  }
   const view=typeof section!=='undefined'?section:'home';
   const active=typeof store!=='undefined'?store.active:null;
   const route=typeof window.__mbSelectedMenu==='function'?window.__mbSelectedMenu():null;
@@ -65,7 +74,7 @@
  const abs=t=>new URL(t[2],document.baseURI).href;
  function playlist(m){
   const basic=m==='home'?[HOME.find(t=>t[0]===homeChoice)||HOME[0],...BASIC]:m==='idiom'?[TRACKS.idiom,...BASIC]:m==='timed'?[HOME.find(x=>x[0]==='old-timed'),...BASIC]:[TRACKS.spelling,...BASIC];
-  const tracks=m==='duel'?[TRACKS.duel]:groupFor(m)==='high'?HIGH:basic;
+  const tracks=m==='duel'?[TRACKS.duel]:m==='infinite'?INFINITE:groupFor(m)==='high'?HIGH:basic;
   const used=new Set();
   return tracks.filter(t=>{const u=abs(t);if(used.has(u)||missing.has(u))return false;used.add(u);return true});
  }
@@ -78,6 +87,10 @@
    if(selected&&!missing.has(abs(selected)))return selected;
   }
   if(!advance&&currentTrack&&list.some(t=>abs(t)===abs(currentTrack)))return currentTrack;
+  if(!advance&&m==='infinite'&&!missing.has(abs(INFINITE[0]))){
+   played.add(abs(INFINITE[0]));
+   return INFINITE[0];
+  }
   let options=list.filter(t=>abs(t)!==lastTrackUrl&&!played.has(abs(t)));
   if(!options.length){played.clear();options=list.filter(t=>abs(t)!==lastTrackUrl)}
   if(!options.length)options=list;
@@ -117,10 +130,18 @@
   updating=true;
   try{
    const m=mode(),group=groupFor(m),changed=group!==currentGroup;
+   const modeChanged=m!==lastMode;
    if(changed){played.clear();currentGroup=group}
+   lastMode=m;
+   // On entering the home or infinite mode, begin its designated BGM.
+   // Subsequent tracks still shuffle with the existing playlist.
+   if(modeChanged&&!next&&(m==='home'||m==='infinite')){
+    currentTrack=null;
+    if(m==='home')manualPick=true;
+   }
    const tracks=playlist(m);
    const allowed=currentTrack&&tracks.some(t=>abs(t)===abs(currentTrack));
-   if(next||!allowed||changed&&!allowed){
+   if(next||!allowed){
     const track=pick(m,!!next);
     if(track){
      currentTrack=track;lastTrackUrl=abs(track);
@@ -162,7 +183,7 @@
   }
   select.value=homeChoice;
   const note=document.createElement('small');
-  note.textContent='기존 곡과 신규 곡이 모드별 재생목록에서 번갈아 나와. 재생이 끝나면 다음 곡으로 넘어가.';
+  note.textContent='메인 홈은 Full Tilt Parade, 무한모드는 Transit at Midnight부터 시작해. 이후에는 기존 곡과 섞여 자동 재생돼.';
   div.append(title,select,note);host.append(div);
   select.addEventListener('change',()=>{
    homeChoice=select.value;
