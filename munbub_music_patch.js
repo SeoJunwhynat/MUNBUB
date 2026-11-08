@@ -270,5 +270,32 @@
  $('bgmVolume')?.addEventListener('input',update);
  const loop=setInterval(()=>{installPicker();watchDuel();watchRanked();update()},1800);
  window.addEventListener('pagehide',()=>{clearInterval(loop);duelObserver?.disconnect();rankObserver?.disconnect()},{once:true});
+
+ // Render generates this manifest from actual MP3 files during build.
+ async function loadPublishedBgm(){
+  if(typeof fetch!=='function')return;
+  try{
+   const r=await fetch('/assets/bgm/catalog.json',{cache:'no-store'});
+   if(!r.ok)return;
+   const data=await r.json();
+   if(!Array.isArray(data?.tracks))return;
+   const files=data.tracks.filter(x=>typeof x==='string'&&/^assets\/bgm\/[A-Za-z0-9_-]+\.mp3$/.test(x));
+   if(!files.length)return;
+   PUBLISHED_BGM.clear();
+   for(const file of files)PUBLISHED_BGM.add(file);
+   // Restore the requested homepage theme when the original MP3 is installed.
+   if(available(HOME[0])&&homeChoice==='new'){
+    let userPicked=false;
+    try{userPicked=!!localStorage.getItem(KEY)}catch(_){}
+    if(!userPicked){homeChoice='parade';manualPick=true;}
+   }
+   if(currentTrack&&!available(currentTrack))currentTrack=null;
+   installPicker();
+   const note=document.querySelector('#view-settings .mb-home-bgm-picker small');
+   if(note)note.textContent='서버에 등록된 곡만 재생해. Full Tilt Parade와 Transit at Midnight도 음원이 등록되면 자동 활성화돼.';
+   update();
+  }catch(_){}
+ }
  update();
+ loadPublishedBgm();
 })();
