@@ -284,16 +284,17 @@
    PUBLISHED_BGM.clear();
    for(const file of files)PUBLISHED_BGM.add(file);
    // Restore the requested homepage theme when the original MP3 is installed.
+   let restoreHomeTheme=false;
    if(available(HOME[0])&&homeChoice==='new'){
     let userPicked=false;
     try{userPicked=!!localStorage.getItem(KEY)}catch(_){}
-    if(!userPicked){homeChoice='parade';manualPick=true;}
+    if(!userPicked){homeChoice='parade';manualPick=true;restoreHomeTheme=true;}
    }
    if(currentTrack&&!available(currentTrack))currentTrack=null;
    installPicker();
    const note=document.querySelector('#view-settings .mb-home-bgm-picker small');
    if(note)note.textContent='서버에 등록된 곡만 재생해. Full Tilt Parade와 Transit at Midnight도 음원이 등록되면 자동 활성화돼.';
-   update();
+   update(restoreHomeTheme&&mode()==='home');
   }catch(_){}
  }
  update();
