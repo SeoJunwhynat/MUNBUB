@@ -7,7 +7,7 @@ import {chatQuery} from '../lib/mb-storage.js';
 import handleChatModes from './chat-modes.js';
 
 const MAX_CHARS=180;
-const lastPost=new Map();
+// No fixed gap between ordinary messages. Database-enforced sliding-window caps prevent flooding.
 const respond=(res,code,body)=>res.status(code).json(body);
 const publicMessage=row=>({
  id:String(row.id),name:String(row.name||''),text:String(row.text||''),
@@ -63,22 +63,18 @@ export default async function handler(req,res){
  const message=body.text.normalize('NFC').replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim();
  if([...message].length<1||[...message].length>MAX_CHARS||Buffer.byteLength(message,'utf8')>900)
   return respond(res,400,{error:'메시지는 1~180자로 작성해 줘.'});
- const now=Date.now();
- if(lastPost.get(user.id)>now-4000)
-  return respond(res,429,{error:'다음 메시지는 4초 뒤에 보낼 수 있어.'});
  try{
   const rows=await chatQuery([
    'INSERT INTO mb_global_chat(user_id,display_name,body)',
    'SELECT $1,$2,$3',
-   'WHERE NOT EXISTS(',
-   'SELECT 1 FROM mb_global_chat WHERE user_id=$1',
-   "AND created_at>NOW()-INTERVAL '4 seconds')",
+   'WHERE (SELECT COUNT(*) FROM mb_global_chat WHERE user_id=$1',
+   "AND created_at>NOW()-INTERVAL '10 seconds')<8",
+   'AND (SELECT COUNT(*) FROM mb_global_chat WHERE user_id=$1',
+   "AND created_at>NOW()-INTERVAL '60 seconds')<30",
    'RETURNING id::text AS id,display_name AS name,body AS text,',
    '(EXTRACT(EPOCH FROM created_at)*1000)::bigint AS at'
   ].join(' '),[user.id,user.name,message]);
-  if(!rows.length)return respond(res,429,{error:'4초 뒤 다음 메시지를 보내 줘.'});
-  lastPost.set(user.id,now);
-  if(lastPost.size>5000)for(const [key,t] of lastPost)if(t<now-60000)lastPost.delete(key);
+  if(!rows.length)return respond(res,429,{error:'메시지를 빠르게 많이 보냈어. 잠깐 쉬었다가 다시 보내 줘.'});
   if(Math.random()<.05)chatQuery("DELETE FROM mb_global_chat WHERE created_at<NOW()-INTERVAL '7 days'").catch(()=>{});
   return respond(res,201,{ok:true,message:publicMessage({...rows[0],mine:true})});
  }catch(e){

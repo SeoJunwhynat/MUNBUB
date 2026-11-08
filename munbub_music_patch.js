@@ -123,12 +123,14 @@
  }
  const groupFor=m=>m==='duel'?'duel':['hardcore','infinite','ranked'].includes(m)?'high':'basic';
  const abs=t=>new URL(t[2],document.baseURI).href;
+ // Backrooms themes are available in Home's manual picker, never the automatic rotation.
+ const BACKROOMS_MENU_TRACKS=new Set(['vhs','dreamcore']);
  const available=t=>!!t&&PUBLISHED_BGM.has(t[2])&&!missing.has(abs(t));
  function playlist(m){
   const basic=m==='home'?[HOME.find(t=>t[0]===homeChoice)||HOME[0],...BASIC]:m==='idiom'?[TRACKS.idiom,...BASIC]:m==='timed'?[HOME.find(x=>x[0]==='old-timed'),...BASIC]:[TRACKS.spelling,...BASIC];
   const tracks=m==='duel'?[TRACKS.duel]:m==='infinite'?INFINITE:groupFor(m)==='high'?HIGH:basic;
   const used=new Set();
-  return tracks.filter(t=>{if(!available(t))return false;const u=abs(t);if(used.has(u))return false;used.add(u);return true});
+  return tracks.filter(t=>{if(!available(t))return false;if(BACKROOMS_MENU_TRACKS.has(t[0])&&!(m==='home'&&t[0]===homeChoice))return false;const u=abs(t);if(used.has(u))return false;used.add(u);return true});
  }
  function pick(m,advance=false){
   const list=playlist(m);

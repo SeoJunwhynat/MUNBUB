@@ -108,11 +108,13 @@ export default async function handleChatModes(req,res,user){
   if(body.action==='send_broadcast'){
    const message=clean(body.text);
    if(!message)return output(res,400,{error:'1~180자 이내로 작성해 줘.'});
-   if(throttled(user.id,'all',25000))return output(res,429,{error:'모두에게 알림은 25초 간격으로 전송할 수 있어.'});
+   if(throttled(user.id,'all',3000))return output(res,429,{error:'모두에게 알림은 3초 간격으로 전송할 수 있어.'});
    const rows=await chatQuery([
      'INSERT INTO mb_chat_broadcast(user_id,display_name,body)',
      'SELECT $1,$2,$3 WHERE NOT EXISTS(',
-     "SELECT 1 FROM mb_chat_broadcast WHERE user_id=$1 AND created_at>NOW()-INTERVAL '25 seconds')",
+     "SELECT 1 FROM mb_chat_broadcast WHERE user_id=$1 AND created_at>NOW()-INTERVAL '3 seconds')",
+     'AND (SELECT COUNT(*) FROM mb_chat_broadcast WHERE user_id=$1',
+     "AND created_at>NOW()-INTERVAL '60 seconds')<6",
      'RETURNING id::text AS id,display_name AS name,body AS text,',
      '(EXTRACT(EPOCH FROM created_at)*1000)::bigint AS at'
    ].join(' '),[user.id,user.name,message]);
@@ -144,17 +146,19 @@ export default async function handleChatModes(req,res,user){
    }
    const message=clean(body.text);
    if(!message)return output(res,400,{error:'개인 메시지는 1~180자로 작성해 줘.'});
-   if(throttled(user.id,'dm',4000))return output(res,429,{error:'개인 메시지는 4초 간격으로 전송할 수 있어.'});
+   // Private messages have no fixed wait; a short burst quota prevents flooding.
    const rows=await chatQuery([
     'INSERT INTO mb_private_chat(sender_id,receiver_id,sender_name,receiver_name,body)',
     'SELECT $1,$2,$3,$4,$5 WHERE NOT EXISTS(',
     'SELECT 1 FROM mb_chat_blocks WHERE (owner_id=$1 AND target_id=$2) OR (owner_id=$2 AND target_id=$1))',
-    'AND NOT EXISTS(SELECT 1 FROM mb_private_chat',
-    "WHERE sender_id=$1 AND created_at>NOW()-INTERVAL '4 seconds')",
+    'AND (SELECT COUNT(*) FROM mb_private_chat WHERE sender_id=$1',
+    "AND created_at>NOW()-INTERVAL '10 seconds')<8",
+    'AND (SELECT COUNT(*) FROM mb_private_chat WHERE sender_id=$1',
+    "AND created_at>NOW()-INTERVAL '60 seconds')<30",
     'RETURNING id::text AS id,sender_name AS name,body AS text,',
     '(EXTRACT(EPOCH FROM created_at)*1000)::bigint AS at'
    ].join(' '),[user.id,peer,user.name,target.name,message]);
-   if(!rows.length)return output(res,409,{error:'상대방이 차단했거나 전송 간격이 짧아.'});
+   if(!rows.length)return output(res,409,{error:'상대방이 차단했거나 메시지를 너무 빠르게 많이 보냈어.'});
    return output(res,201,{ok:true,message:record({...rows[0],mine:true})});
   }
   return output(res,400,{error:'지원되지 않는 요청이야.'});

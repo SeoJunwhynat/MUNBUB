@@ -59,7 +59,7 @@
   const say=text=>{status.textContent=text};
   const authorize=ok=>{
    logged=ok;input.disabled=!ok||mode==='dm'&&!peer;send.disabled=input.disabled;
-   input.placeholder=!ok?'맛춘범 계정 로그인 필요':mode==='dm'&&!peer?'대화할 이용자를 선택해 줘':mode==='all'?'모두에게 상단 알림 보내기 (25초 간격)':'메시지 입력 · 최대 180자';
+   input.placeholder=!ok?'맛춘범 계정 로그인 필요':mode==='dm'&&!peer?'대화할 이용자를 선택해 줘':mode==='all'?'모두에게 상단 알림 보내기 (3초 간격)':'메시지 입력 · 최대 180자';
   };
   async function fetchChat(options=null,query=''){
    const url='/api/chat'+(query?'?'+query:'');
