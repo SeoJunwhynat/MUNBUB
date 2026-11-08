@@ -63,11 +63,31 @@
  HIGH.push(...ADDED_BGM.filter(t=>['vhs','dreamcore','neon1','neon2','triumph','mischief'].includes(t[0])));
  INFINITE.push(...ADDED_BGM.filter(t=>['neon1','neon2','mischief','eastfantasy','triumph'].includes(t[0])));
  // MB_20261108_AUDIO_END
+ // Only published MP3s (or files reconstructed by npm run check) are playable.
+ // Keep the unavailable user-requested tracks in the catalog for later upload,
+ // but never attempt a known 404 or offer it as a selectable option.
+ const PUBLISHED_BGM=new Set([
+  'assets/bgm/duel-new.mp3',
+  'assets/bgm/hardcore-new.mp3',
+  'assets/bgm/home-new.mp3',
+  'assets/bgm/idiom-new.mp3',
+  'assets/bgm/idiom.mp3',
+  'assets/bgm/infinite.mp3',
+  'assets/bgm/main.mp3',
+  'assets/bgm/neon_loop_1.mp3',
+  'assets/bgm/spelling-new.mp3',
+  'assets/bgm/spelling.mp3',
+  'assets/bgm/timed.mp3',
+  'assets/bgm/Behind_the_Organ_Pipes.mp3',
+  'assets/bgm/Beneath_the_Painted_Arch.mp3',
+  'assets/bgm/The_Final_Sugar_Rush.mp3',
+  'assets/bgm/Evening_Rain_On_Paper.mp3'
+ ]);
  const KEY='matchunbeom_home_bgm_choice_v2';
- let homeChoice='parade',duelObserver=null,rankObserver=null,updating=false,lastLabel='',lastVolume=-1;
+ let homeChoice=PUBLISHED_BGM.has(HOME[0][2])?'parade':'new',duelObserver=null,rankObserver=null,updating=false,lastLabel='',lastVolume=-1;
  let currentTrack=null,currentGroup='',lastMode='',lastTrackUrl='',manualPick=true;
  const missing=new Set(),played=new Set();
- try{const v=localStorage.getItem(KEY);if(HOME.some(q=>q[0]===v))homeChoice=v}catch(_){}
+ try{const v=localStorage.getItem(KEY);if(HOME.some(q=>q[0]===v&&PUBLISHED_BGM.has(q[2])))homeChoice=v}catch(_){}
  const absolute=p=>new URL(p,document.baseURI).href;
  function mode(){
   if($('mb-duel-dialog')?.open)return 'duel';
@@ -91,11 +111,12 @@
  }
  const groupFor=m=>m==='duel'?'duel':['hardcore','infinite','ranked'].includes(m)?'high':'basic';
  const abs=t=>new URL(t[2],document.baseURI).href;
+ const available=t=>!!t&&PUBLISHED_BGM.has(t[2])&&!missing.has(abs(t));
  function playlist(m){
   const basic=m==='home'?[HOME.find(t=>t[0]===homeChoice)||HOME[0],...BASIC]:m==='idiom'?[TRACKS.idiom,...BASIC]:m==='timed'?[HOME.find(x=>x[0]==='old-timed'),...BASIC]:[TRACKS.spelling,...BASIC];
   const tracks=m==='duel'?[TRACKS.duel]:m==='infinite'?INFINITE:groupFor(m)==='high'?HIGH:basic;
   const used=new Set();
-  return tracks.filter(t=>{const u=abs(t);if(used.has(u)||missing.has(u))return false;used.add(u);return true});
+  return tracks.filter(t=>{if(!available(t))return false;const u=abs(t);if(used.has(u))return false;used.add(u);return true});
  }
  function pick(m,advance=false){
   const list=playlist(m);
@@ -103,10 +124,10 @@
   if(manualPick&&m==='home'){
    manualPick=false;
    const selected=HOME.find(t=>t[0]===homeChoice);
-   if(selected&&!missing.has(abs(selected)))return selected;
+   if(available(selected))return selected;
   }
   if(!advance&&currentTrack&&list.some(t=>abs(t)===abs(currentTrack)))return currentTrack;
-  if(!advance&&m==='infinite'&&!missing.has(abs(INFINITE[0]))){
+  if(!advance&&m==='infinite'&&available(INFINITE[0])){
    played.add(abs(INFINITE[0]));
    return INFINITE[0];
   }
@@ -191,18 +212,25 @@
   const host=document.querySelector('#view-settings .bgm-settings');
   if(!host)return;
   let select=$('mb-home-bgm-choice');
-  if(select){if(select.value!==homeChoice)select.value=homeChoice;return}
+  if(select){
+   for(const opt of select.options){const t=HOME.find(x=>x[0]===opt.value);opt.disabled=!available(t);}
+   if(select.value!==homeChoice)select.value=homeChoice;
+   return;
+  }
   const div=document.createElement('div');div.className='mb-home-bgm-picker';
   const title=document.createElement('label');
   title.htmlFor='mb-home-bgm-choice';title.textContent='🏠 홈 화면 배경음악';
   select=document.createElement('select');
   select.id='mb-home-bgm-choice';select.setAttribute('aria-label','홈 화면 배경음악 선택');
   for(const [id,name] of HOME){
-   const option=document.createElement('option');option.value=id;option.textContent=name;select.append(option);
+   const option=document.createElement('option');option.value=id;
+   const candidate=HOME.find(t=>t[0]===id);
+   option.disabled=!available(candidate);
+   option.textContent=name+(option.disabled?' (음원 미등록)':'');select.append(option);
   }
   select.value=homeChoice;
   const note=document.createElement('small');
-  note.textContent='메인 홈은 Full Tilt Parade, 무한모드는 Transit at Midnight부터 시작해. 이후에는 기존 곡과 섞여 자동 재생돼.';
+  note.textContent='서버에 실제 업로드된 음악만 선택할 수 있어. 원본이 없는 Full Tilt Parade와 Transit at Midnight는 음원 업로드 후 활성화돼.';
   div.append(title,select,note);host.append(div);
   select.addEventListener('change',()=>{
    homeChoice=select.value;
