@@ -37,6 +37,23 @@ export default async function handleChatModes(req,res,user){
  if(!user)return output(res,401,{error:'먼저 로그인해 줘.'});
  if(req.method==='GET'){
   try{
+   if(req.query.mode==='dm_notifications'){
+    // Recipient-only, server-authenticated. Never return other users' inboxes.
+    const since=/^[0-9]{1,18}$/.test(String(req.query.since||''))?String(req.query.since):'0';
+    const rows=await chatQuery([
+      'SELECT m.id::text AS id,m.sender_id AS sender_id,m.sender_name AS name,',
+      'm.body AS text,(EXTRACT(EPOCH FROM m.created_at)*1000)::bigint AS at',
+      'FROM mb_private_chat m',
+      'WHERE m.receiver_id=$1 AND m.id>$2::bigint',
+      "AND m.created_at>NOW()-INTERVAL '7 days'",
+      'AND NOT EXISTS (SELECT 1 FROM mb_chat_blocks b',
+      'WHERE b.owner_id=$1 AND b.target_id=m.sender_id)',
+      'ORDER BY m.id DESC LIMIT 20'
+    ].join(' '),[user.id,since]);
+    return output(res,200,{ok:true,me:user.id,messages:rows.reverse().map(x=>({
+      ...record(x),senderId:String(x.sender_id)
+    }))});
+   }
    if(req.query.mode==='users'){
     const q=String(req.query.q||'').normalize('NFC').trim().toLocaleLowerCase('ko-KR').slice(0,30);
     // Only public nickname and account id; never return password or profile objects.
