@@ -1,0 +1,80 @@
+[
+  {
+    "filename": "Full_Tilt_Parade.mp3",
+    "bytes": 4344543,
+    "sha256": "f54b32dcf5fb97479f67f5d631911686a49364d0e861a453d03c1f9443a40ef3",
+    "source_name": "Full_Tilt_Parade.mp3"
+  },
+  {
+    "filename": "Transit_at_Midnight.mp3",
+    "bytes": 4322600,
+    "sha256": "680a33cd8ad08735b535a43f64291e5f6d6c9b515988b50e47e6e96554d9d881",
+    "source_name": "Transit_at_Midnight.mp3"
+  },
+  {
+    "filename": "playful_mischief.mp3",
+    "bytes": 2231332,
+    "sha256": "2e52d77a4686abe5f35d25928ef65a8cc82bd3e587cbae613687dd6230c30caa",
+    "source_name": "Create a playful, mischievous instrumental soundtr.mp3"
+  },
+  {
+    "filename": "east_asian_fantasy.mp3",
+    "bytes": 2101927,
+    "sha256": "0bd1826a1e2f4982cbaf2a71fb3fc78e32719f5fcc30b2cf78a53ce8fdf82b2e",
+    "source_name": "Create a lively East Asian fantasy instrumental so.mp3"
+  },
+  {
+    "filename": "triumphant_orchestra.mp3",
+    "bytes": 1840134,
+    "sha256": "ec6b5c9512e281b50e179edb69ab697a4303db711fdf8694cae4d6b22b93e830",
+    "source_name": "Create a triumphant and playful instrumental orche.mp3"
+  },
+  {
+    "filename": "retro_vhs_horror.mp3",
+    "bytes": 3385318,
+    "sha256": "11d0c4a04e2dcdca7c7c705282345f6f10a40fa68be1d4d6a68cb16d7709fb23",
+    "source_name": "Create an atmospheric retro VHS analog horror menu.mp3"
+  },
+  {
+    "filename": "dreamcore_ambient.mp3",
+    "bytes": 2780834,
+    "sha256": "2cabbf1c4575d966467c4f2156376cf787627a377d85b8c85c6af0d07f7112c1",
+    "source_name": "Compose a hauntingly beautiful dreamcore ambient s.mp3"
+  },
+  {
+    "filename": "late_night_study_1.mp3",
+    "bytes": 2297580,
+    "sha256": "a9f9c66aeddf88dafca4ddc51c63854805c0047bbfce09cbeb504f1f4af8db60",
+    "source_name": "Late Night Study Session.mp3"
+  },
+  {
+    "filename": "late_night_study_2.mp3",
+    "bytes": 3195612,
+    "sha256": "abb37e44b47b6004638535c92f7ee0c1f561c9f0336303a0e58061f89b3a637f",
+    "source_name": "Late Night Study Session (1).mp3"
+  },
+  {
+    "filename": "magical_bookshelf_1.mp3",
+    "bytes": 2125781,
+    "sha256": "8f6ec8782cdecc8ac0f6764c69e3e40a70dfbadc11fdc4bad2acac0c1207e8ce",
+    "source_name": "Magical Bookshelf.mp3"
+  },
+  {
+    "filename": "magical_bookshelf_2.mp3",
+    "bytes": 2134757,
+    "sha256": "f339f1c9da5ec1e10e2f17e99622164866ab393b1859070993fb8ad457ed8c86",
+    "source_name": "Magical Bookshelf (1).mp3"
+  },
+  {
+    "filename": "neon_loop_1.mp3",
+    "bytes": 2170857,
+    "sha256": "c118d8e5066df850043e574c26827b9095dc5dd1bbb22a4f0ae8cfed651c6df8",
+    "source_name": "ネオン・ループ.mp3"
+  },
+  {
+    "filename": "neon_loop_2.mp3",
+    "bytes": 2101209,
+    "sha256": "257dccb79fae933dac0b5809d83b24b15001057dc5920219c9111ce3980c0bf7",
+    "source_name": "ネオン・ループ (1).mp3"
+  }
+]
