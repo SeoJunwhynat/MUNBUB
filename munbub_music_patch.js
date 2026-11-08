@@ -4,9 +4,9 @@
  */
 (()=>{
  'use strict';
- if(window.__mbBgm2026v4)return;
+ if(window.__mbBgm2026v5)return;
  if(typeof bgmPlayer==='undefined'||!bgmPlayer)return;
- window.__mbBgm2026v4=true;
+ window.__mbBgm2026v5=true;
  const audio=bgmPlayer,$=id=>document.getElementById(id);
  const HOME=[
   ['new','새 메인 배경음악','assets/bgm/home-new.mp3'],
@@ -18,7 +18,9 @@
   ['pixel','Pixel Confetti Rush','assets/bgm/spelling-new.mp3'],
   ['harbor','Harbor View Drive','assets/bgm/idiom-new.mp3'],
   ['hard','하드코어 BGM','assets/bgm/hardcore-new.mp3'],
-  ['duel','1대1 대결 BGM','assets/bgm/duel-new.mp3']
+  ['duel','1대1 대결 BGM','assets/bgm/duel-new.mp3'],
+  ['sugar','The Final Sugar Rush','assets/bgm/The_Final_Sugar_Rush.mp3'],
+  ['rain','Evening Rain On Paper','assets/bgm/Evening_Rain_On_Paper.mp3']
  ];
  const TRACKS={
   spelling:['spelling','Pixel Confetti Rush','assets/bgm/spelling-new.mp3'],
@@ -26,25 +28,61 @@
   hardcore:['hardcore','하드코어 BGM','assets/bgm/hardcore-new.mp3'],
   duel:['duel','1대1 대결 BGM','assets/bgm/duel-new.mp3']
  };
+
+ const HIGH=[
+  ['hard','하드코어 BGM','assets/bgm/hardcore-new.mp3'],
+  ['inf','무한모드 BGM','assets/bgm/infinite.mp3'],
+  ['timed','시간제한 BGM','assets/bgm/timed.mp3'],
+  ['organ','Behind the Organ Pipes','assets/bgm/Behind_the_Organ_Pipes.mp3'],
+  ['arch','Beneath the Painted Arch','assets/bgm/Beneath_the_Painted_Arch.mp3']
+ ];
+ const BASIC=[
+  ...HOME.filter(x=>!['hard','duel','old-infinite'].includes(x[0]))
+ ];
  const KEY='matchunbeom_home_bgm_choice_v1';
- let homeChoice='new',duelObserver=null,updating=false,lastLabel='',lastVolume=-1;
+ let homeChoice='new',duelObserver=null,rankObserver=null,updating=false,lastLabel='',lastVolume=-1;
+ let currentTrack=null,currentGroup='',lastTrackUrl='',manualPick=false;
+ const missing=new Set(),played=new Set();
  try{const v=localStorage.getItem(KEY);if(HOME.some(q=>q[0]===v))homeChoice=v}catch(_){}
  const absolute=p=>new URL(p,document.baseURI).href;
  function mode(){
   if($('mb-duel-dialog')?.open)return 'duel';
+  if($('mb-ranked-dialog')?.open)return 'ranked';
   const view=typeof section!=='undefined'?section:'home';
   const active=typeof store!=='undefined'?store.active:null;
-  const route=window.__mbSelectedMenu?.();
+  const route=typeof window.__mbSelectedMenu==='function'?window.__mbSelectedMenu():null;
   if(view==='home'||view==='settings')return 'home';
-  if((route==='hard'||active?.cfg?.hard)&&view!=='home')return 'hardcore';
+  if(route==='hard'||route==='hardcore'||active?.cfg?.hard)return 'hardcore';
+  const rule=String(active?.cfg?.mode||active?.cfg?.challenge||'').toLowerCase();
+  if(route==='infinite'||view==='infinite'||rule==='infinite'||active?.cfg?.infinite)return 'infinite';
+  if(route==='ranked'||route==='ranking')return 'ranked';
   const category=view==='setup'?($('categorySelect')?.value||active?.cfg?.category):active?.cfg?.category;
   if(category==='idiom'||view==='idiom'||(route==='idiom'&&view!=='quiz'))return 'idiom';
-  if(['quiz','setup','result','spelling','application','infinite','timed','idiom','mistakes'].includes(view))return 'spelling';
-  return 'home';
+  if(view==='timed'||route==='timed'||rule==='timed60')return 'timed';
+  return ['quiz','setup','result','spelling','application','mistakes'].includes(view)?'spelling':'home';
  }
- function desired(){
-  const m=mode();
-  return m==='home'?HOME.find(t=>t[0]===homeChoice)||HOME[0]:TRACKS[m]||TRACKS.spelling;
+ const groupFor=m=>m==='duel'?'duel':['hardcore','infinite','ranked'].includes(m)?'high':'basic';
+ const abs=t=>new URL(t[2],document.baseURI).href;
+ function playlist(m){
+  const basic=m==='home'?[HOME.find(t=>t[0]===homeChoice)||HOME[0],...BASIC]:m==='idiom'?[TRACKS.idiom,...BASIC]:m==='timed'?[HOME.find(x=>x[0]==='old-timed'),...BASIC]:[TRACKS.spelling,...BASIC];
+  const tracks=m==='duel'?[TRACKS.duel]:groupFor(m)==='high'?HIGH:basic;
+  const used=new Set();
+  return tracks.filter(t=>{const u=abs(t);if(used.has(u)||missing.has(u))return false;used.add(u);return true});
+ }
+ function pick(m,advance=false){
+  const list=playlist(m);
+  if(!list.length)return null;
+  if(manualPick&&m==='home'){
+   manualPick=false;
+   const selected=HOME.find(t=>t[0]===homeChoice);
+   if(selected&&!missing.has(abs(selected)))return selected;
+  }
+  if(!advance&&currentTrack&&list.some(t=>abs(t)===abs(currentTrack)))return currentTrack;
+  let options=list.filter(t=>abs(t)!==lastTrackUrl&&!played.has(abs(t)));
+  if(!options.length){played.clear();options=list.filter(t=>abs(t)!==lastTrackUrl)}
+  if(!options.length)options=list;
+  const item=options[Math.floor(Math.random()*options.length)];
+  played.add(abs(item));return item;
  }
  function enabled(){return typeof bgmEnabled!=='undefined'&&!!bgmEnabled}
  function volume(){return typeof bgmVolume!=='undefined'&&Number.isFinite(bgmVolume)?Math.max(0,Math.min(1,bgmVolume)):.35}
@@ -74,32 +112,37 @@
    const task=audio.play();if(task?.catch)task.catch(()=>{});
   }
  }
- function update(){
+ function update(next=false){
   if(updating)return;
   updating=true;
   try{
-   const track=desired(),target=absolute(track[2]);
-   syncUI(track);
-   // Preserve sound level exactly as chosen by the user. Never triple it.
+   const m=mode(),group=groupFor(m),changed=group!==currentGroup;
+   if(changed){played.clear();currentGroup=group}
+   const tracks=playlist(m);
+   const allowed=currentTrack&&tracks.some(t=>abs(t)===abs(currentTrack));
+   if(next||!allowed||changed&&!allowed){
+    const track=pick(m,!!next);
+    if(track){
+     currentTrack=track;lastTrackUrl=abs(track);
+     if(audio.src!==lastTrackUrl){audio.src=lastTrackUrl;audio.load()}
+    }
+   }
+   syncUI(currentTrack||tracks[0]||HOME[0]);
    const v=volume();
    if(lastVolume!==v||audio.volume!==v){audio.volume=v;lastVolume=v}
-   if(!audio.loop)audio.loop=true;
-   // Switching modes with the same actual URL NEVER calls load(), resets the
-   // playback position, or creates another Audio instance.
-   if(audio.src!==target){
-    audio.src=target;
-    audio.load();
-   }
-   if(!enabled()||document.hidden){
-    if(!audio.paused)audio.pause();
-   }else play();
+   if(audio.loop)audio.loop=false;
+   if(!enabled()||document.hidden){if(!audio.paused)audio.pause()}else play();
   }finally{updating=false}
  }
- // If native loop is unsupported and playback reaches the end, replay once.
- audio.loop=true;
- audio.addEventListener('ended',()=>{
-  if(!enabled()||document.hidden)return;
-  if(audio.ended){audio.currentTime=0;play()}
+ // Advance to a different song when the current one finishes.
+ audio.loop=false;
+ audio.addEventListener('ended',()=>{if(enabled())update(true)});
+ // Skip assets that have not been uploaded yet, preserving old BGM.
+ audio.addEventListener('error',()=>{
+  if(!currentTrack)return;
+  missing.add(abs(currentTrack));
+  currentTrack=null;
+  if(playlist(mode()).length)queueMicrotask(()=>update(true));
  });
  // Replace the legacy entrypoint so buttons, slider and navigation use ONE
  // playback policy. Do not wrap its old implementation.
@@ -119,12 +162,13 @@
   }
   select.value=homeChoice;
   const note=document.createElement('small');
-  note.textContent='같은 곡을 사용하는 모드끼리는 재생 위치가 유지돼. 모든 곡은 자동 반복돼.';
+  note.textContent='기존 곡과 신규 곡이 모드별 재생목록에서 번갈아 나와. 재생이 끝나면 다음 곡으로 넘어가.';
   div.append(title,select,note);host.append(div);
   select.addEventListener('change',()=>{
    homeChoice=select.value;
+   manualPick=true;
    try{localStorage.setItem(KEY,homeChoice)}catch(_){}
-   update();
+   if(mode()==='home')update(true);else update();
   });
  }
  function watchDuel(){
@@ -132,6 +176,12 @@
   if(!el||duelObserver)return;
   duelObserver=new MutationObserver(update);
   duelObserver.observe(el,{attributes:true,attributeFilter:['open']});
+ }
+ function watchRanked(){
+  const el=$('mb-ranked-dialog');
+  if(!el||rankObserver)return;
+  rankObserver=new MutationObserver(update);
+  rankObserver.observe(el,{attributes:true,attributeFilter:['open']});
  }
  const style=document.createElement('style');
  style.id='mb-music-controller-v4';
@@ -142,14 +192,14 @@
   '#view-settings .mb-home-bgm-picker small{font-size:12px;line-height:1.5}'
  ].join('\n');
  document.head.append(style);
- installPicker();watchDuel();
+ installPicker();watchDuel();watchRanked();
  // One-shot pointer event can unlock browser audio; don't restart on every click.
  const gesture=()=>{if(enabled())queueMicrotask(update)};
  document.addEventListener('pointerdown',gesture,{once:true,passive:true});
  document.addEventListener('keydown',gesture,{once:true,passive:true});
  document.addEventListener('visibilitychange',update);
  $('bgmVolume')?.addEventListener('input',update);
- const loop=setInterval(()=>{installPicker();watchDuel();update()},1800);
- window.addEventListener('pagehide',()=>{clearInterval(loop);duelObserver?.disconnect()},{once:true});
+ const loop=setInterval(()=>{installPicker();watchDuel();watchRanked();update()},1800);
+ window.addEventListener('pagehide',()=>{clearInterval(loop);duelObserver?.disconnect();rankObserver?.disconnect()},{once:true});
  update();
 })();
