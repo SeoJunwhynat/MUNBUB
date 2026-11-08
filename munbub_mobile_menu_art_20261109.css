@@ -1,0 +1,126 @@
+/* Mobile additional-modes drawer: full-size artwork and readable, touch-safe rows. */
+@media (max-width:700px) {
+ #mobileDrawer:not([hidden]),.mobile-drawer:not([hidden]){
+  box-sizing:border-box!important;
+  max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 12px)!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))!important;
+ }
+ #mobileDrawer button[data-route],
+ .mobile-drawer button[data-route]{
+  box-sizing:border-box!important;
+  flex-shrink:0!important;max-width:100%!important;min-width:0!important;
+  touch-action:manipulation!important;
+ }
+ /* Preserve buttons that already own images (particularly ranked mode). */
+ #mobileDrawer button.mb-mobile-existing-art,
+ .mobile-drawer button.mb-mobile-existing-art{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  width:100%!important;min-height:54px!important;height:auto!important;
+  padding:3px!important;overflow:visible!important;visibility:visible!important;
+  opacity:1!important;transform:none;
+ }
+ #mobileDrawer button.mb-mobile-existing-art img,
+ .mobile-drawer button.mb-mobile-existing-art img,
+ #mobileDrawer button.mb-ranked-nav .mb-ranked-art,
+ .mobile-drawer button.mb-ranked-nav .mb-ranked-art{
+  display:block!important;visibility:visible!important;opacity:1!important;
+  width:100%!important;max-width:100%!important;height:auto!important;
+  max-height:94px!important;object-fit:contain!important;
+  margin:0 auto!important;filter:none!important;pointer-events:none!important;
+ }
+ /* For standard modes, artwork is a thumbnail plus a legible original-mode title. */
+ #mobileDrawer button.mb-mobile-route-card,
+ .mobile-drawer button.mb-mobile-route-card{
+  display:flex!important;flex-direction:row!important;
+  align-items:center!important;justify-content:flex-start!important;
+  gap:12px!important;width:100%!important;min-height:64px!important;
+  height:auto!important;max-height:none!important;
+  margin:5px 0!important;padding:7px 12px!important;
+  border:3px double #d1a47b!important;border-radius:12px!important;
+  background:linear-gradient(165deg,#4d3442,#362630)!important;
+  box-shadow:0 3px 0 #241920!important;
+  color:#ffedcc!important;font-size:0!important;text-indent:0!important;
+  line-height:1.35!important;overflow:visible!important;
+  text-shadow:none!important;opacity:1!important;
+ }
+ #mobileDrawer button.mb-mobile-route-card > :not(.mb-mobile-mode-thumb):not(.mb-mobile-mode-label),
+ .mobile-drawer button.mb-mobile-route-card > :not(.mb-mobile-mode-thumb):not(.mb-mobile-mode-label){
+  display:none!important;
+ }
+ #mobileDrawer button .mb-mobile-mode-thumb,
+ .mobile-drawer button .mb-mobile-mode-thumb{
+  display:block!important;flex:0 0 clamp(72px,23vw,98px)!important;
+  width:clamp(72px,23vw,98px)!important;
+  max-width:98px!important;height:49px!important;max-height:49px!important;
+  border:2px solid #aa8068!important;border-radius:7px!important;
+  object-fit:cover!important;object-position:center!important;
+  margin:0!important;opacity:1!important;filter:none!important;
+  pointer-events:none!important;
+ }
+ #mobileDrawer button .mb-mobile-mode-label,
+ .mobile-drawer button .mb-mobile-mode-label{
+  display:block!important;flex:1 1 auto!important;min-width:0!important;
+  font:900 clamp(15px,4vw,19px)/1.35 system-ui,'Malgun Gothic',sans-serif!important;
+  text-align:left!important;color:#ffead0!important;
+  letter-spacing:0!important;white-space:normal!important;overflow-wrap:anywhere!important;
+  visibility:visible!important;opacity:1!important;text-shadow:1px 1px #23171e!important;
+ }
+ /* Exact artwork for timed/hardcore/ranked modes; fall back to text if load fails. */
+ #mobileDrawer button.mb-mobile-mode-banner,
+ .mobile-drawer button.mb-mobile-mode-banner{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box!important;width:100%!important;
+  min-width:0!important;min-height:56px!important;max-height:none!important;
+  height:auto!important;aspect-ratio:auto!important;
+  padding:4px 2px!important;margin:5px 0!important;border:0!important;
+  border-radius:8px!important;background:none!important;
+  background-image:none!important;box-shadow:none!important;
+  color:transparent!important;font-size:0!important;line-height:0!important;
+  overflow:visible!important;opacity:1!important;
+ }
+ #mobileDrawer button .mb-mobile-mode-art,
+ .mobile-drawer button .mb-mobile-mode-art{
+  display:block!important;visibility:visible!important;
+  width:100%!important;max-width:100%!important;
+  height:auto!important;max-height:98px!important;
+  aspect-ratio:3/1!important;object-fit:contain!important;
+  opacity:1!important;filter:none!important;
+  pointer-events:none!important;
+ }
+ #mobileDrawer button.mb-mobile-mode-banner .mb-mobile-mode-label,
+ .mobile-drawer button.mb-mobile-mode-banner .mb-mobile-mode-label{
+  display:none!important;
+ }
+ #mobileDrawer button.mb-mobile-mode-banner.mb-mobile-art-missing,
+ .mobile-drawer button.mb-mobile-mode-banner.mb-mobile-art-missing{
+  min-height:58px!important;background:#50333d!important;
+  border:3px double #e0b385!important;
+ }
+ #mobileDrawer button.mb-mobile-mode-banner.mb-mobile-art-missing .mb-mobile-mode-label,
+ .mobile-drawer button.mb-mobile-mode-banner.mb-mobile-art-missing .mb-mobile-mode-label{
+  display:block!important;text-align:center!important;
+ }
+ #mobileDrawer button[data-route]:focus-visible,
+ .mobile-drawer button[data-route]:focus-visible{
+  outline:3px solid #ffe4b8!important;outline-offset:3px!important;
+ }
+ #mobileDrawer button[data-route].active,
+ .mobile-drawer button[data-route].active{
+  filter:brightness(.88)!important;
+  outline:2px solid #f6c990!important;outline-offset:-1px!important;
+ }
+}
+@media(max-width:360px){
+ #mobileDrawer button.mb-mobile-route-card,
+ .mobile-drawer button.mb-mobile-route-card{
+  min-height:59px!important;gap:8px!important;padding:6px 8px!important;
+ }
+ #mobileDrawer button .mb-mobile-mode-thumb,
+ .mobile-drawer button .mb-mobile-mode-thumb{
+  width:68px!important;max-width:68px!important;
+  flex-basis:68px!important;height:43px!important;
+ }
+}
