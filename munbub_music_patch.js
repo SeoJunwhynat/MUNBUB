@@ -58,6 +58,18 @@
   ['neon1','Neon Loop','assets/bgm/neon_loop_1.mp3'],
   ['neon2','Neon Loop · Alternate','assets/bgm/neon_loop_2.mp3']
  ];
+ // Five user-supplied tracks: share across every non-Backrooms mode.
+ const SEASONAL_BGM=[
+  ['peppermint','Peppermint Pursuit','assets/bgm/Peppermint_Pursuit.mp3'],
+  ['hearth','Gathered by the Hearth','assets/bgm/Gathered_by_the_Hearth.mp3'],
+  ['seasons','The Quiet Between Seasons','assets/bgm/The_Quiet_Between_Seasons.mp3'],
+  ['warmnight','따스한 이 밤에','assets/bgm/Warm_Winter_Night.mp3'],
+  ['pumpkin','Moonlight Pumpkin Sprint','assets/bgm/Moonlight_Pumpkin_Sprint.mp3']
+ ];
+ HOME.push(...SEASONAL_BGM);
+ BASIC.push(...SEASONAL_BGM);
+ HIGH.push(...SEASONAL_BGM);
+ INFINITE.push(...SEASONAL_BGM);
  HOME.push(...ADDED_BGM);
  BASIC.push(...ADDED_BGM.filter(t=>!['vhs','dreamcore','neon1','neon2'].includes(t[0])));
  HIGH.push(...ADDED_BGM.filter(t=>['vhs','dreamcore','neon1','neon2','triumph','mischief'].includes(t[0])));
@@ -128,7 +140,7 @@
  const available=t=>!!t&&PUBLISHED_BGM.has(t[2])&&!missing.has(abs(t));
  function playlist(m){
   const basic=m==='home'?[HOME.find(t=>t[0]===homeChoice)||HOME[0],...BASIC]:m==='idiom'?[TRACKS.idiom,...BASIC]:m==='timed'?[HOME.find(x=>x[0]==='old-timed'),...BASIC]:[TRACKS.spelling,...BASIC];
-  const tracks=m==='duel'?[TRACKS.duel]:m==='infinite'?INFINITE:groupFor(m)==='high'?HIGH:basic;
+  const tracks=m==='duel'?[TRACKS.duel,...SEASONAL_BGM]:m==='infinite'?INFINITE:groupFor(m)==='high'?HIGH:basic;
   const used=new Set();
   return tracks.filter(t=>{if(!available(t))return false;if(BACKROOMS_MENU_TRACKS.has(t[0])&&!(m==='home'&&t[0]===homeChoice))return false;const u=abs(t);if(used.has(u))return false;used.add(u);return true});
  }
@@ -141,6 +153,10 @@
    if(available(selected))return selected;
   }
   if(!advance&&currentTrack&&list.some(t=>abs(t)===abs(currentTrack)))return currentTrack;
+  if(!advance&&m==='duel'){
+   const theme=available(TRACKS.duel)?TRACKS.duel:null;
+   if(theme){played.add(abs(theme));return theme;}
+  }
   if(!advance&&m==='infinite'){
    // A missing newly requested track must not delay the first question.
    const theme=available(INFINITE[0])?INFINITE[0]:INFINITE.find(t=>t[2]==='assets/bgm/infinite.mp3'&&available(t));
@@ -228,7 +244,11 @@
   if(!host)return;
   let select=$('mb-home-bgm-choice');
   if(select){
-   for(const opt of select.options){const t=HOME.find(x=>x[0]===opt.value);opt.disabled=!available(t);}
+   for(const opt of select.options){
+    const t=HOME.find(x=>x[0]===opt.value);
+    opt.disabled=!available(t);
+    if(t)opt.textContent=t[1]+(opt.disabled?' (음원 미등록)':'');
+   }
    if(select.value!==homeChoice)select.value=homeChoice;
    return;
   }
@@ -307,7 +327,7 @@
    if(currentTrack&&!available(currentTrack))currentTrack=null;
    installPicker();
    const note=document.querySelector('#view-settings .mb-home-bgm-picker small');
-   if(note)note.textContent='서버에 등록된 곡만 재생해. Full Tilt Parade와 Transit at Midnight를 포함한 추가 음원들도 사용할 수 있어.';
+   if(note)note.textContent='홈·일반 게임 모드는 등록된 음악을 함께 섞어 재생해. 백룸 전용 음악은 자동 재생목록에서 제외돼.';
    update(restoreHomeTheme&&mode()==='home');
   }catch(_){}
  }
