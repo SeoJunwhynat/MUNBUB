@@ -50,7 +50,7 @@ function player(){
 
 test('default homepage song is new Full Tilt Parade',()=>{
  const p=player();
- assert.match(p.audio.src,/Full_Tilt_Parade\\.mp3$/);
+ assert.match(p.audio.src,/Full_Tilt_Parade\.mp3$/);
  assert.equal(p.audio.volume,.28);
  assert.equal(p.audio.loop,false);
 });
@@ -58,7 +58,7 @@ test('default homepage song is new Full Tilt Parade',()=>{
 test('regular infinite mode begins Transit at Midnight',()=>{
  const p=player();
  p.go('quiz','infinite',{infinite:true});
- assert.match(p.audio.src,/Transit_at_Midnight\\.mp3$/);
+ assert.match(p.audio.src,/Transit_at_Midnight\.mp3$/);
 });
 
 test('ranked infinite plays Transit, other ranked variants do not force it',()=>{
@@ -66,21 +66,21 @@ test('ranked infinite plays Transit, other ranked variants do not force it',()=>
  p.rank.open=true;
  p.rank.dataset.mbRankedMode='infinite';
  p.window.syncBgm();
- assert.match(p.audio.src,/Transit_at_Midnight\\.mp3$/);
+ assert.match(p.audio.src,/Transit_at_Midnight\.mp3$/);
  p.rank.dataset.mbRankedMode='hardcore';
  p.window.syncBgm();
- assert.doesNotMatch(p.audio.src,/Transit_at_Midnight\\.mp3$/);
+ assert.doesNotMatch(p.audio.src,/Transit_at_Midnight\.mp3$/);
 });
 
 test('existing music remains in shuffled playlists after the first song',()=>{
  const p=player();
- assert.match(p.audio.src,/Full_Tilt_Parade\\.mp3$/);
+ assert.match(p.audio.src,/Full_Tilt_Parade\.mp3$/);
  p.end();
- assert.doesNotMatch(p.audio.src,/Full_Tilt_Parade\\.mp3$/);
+ assert.doesNotMatch(p.audio.src,/Full_Tilt_Parade\.mp3$/);
  p.go('quiz','infinite',{infinite:true});
- assert.match(p.audio.src,/Transit_at_Midnight\\.mp3$/);
+ assert.match(p.audio.src,/Transit_at_Midnight\.mp3$/);
  p.end();
- assert.doesNotMatch(p.audio.src,/Transit_at_Midnight\\.mp3$/);
+ assert.doesNotMatch(p.audio.src,/Transit_at_Midnight\.mp3$/);
  assert.equal(p.audio.loop,false);
 });
 
