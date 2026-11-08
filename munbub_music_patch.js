@@ -127,9 +127,10 @@
    if(available(selected))return selected;
   }
   if(!advance&&currentTrack&&list.some(t=>abs(t)===abs(currentTrack)))return currentTrack;
-  if(!advance&&m==='infinite'&&available(INFINITE[0])){
-   played.add(abs(INFINITE[0]));
-   return INFINITE[0];
+  if(!advance&&m==='infinite'){
+   // A missing newly requested track must not delay the first question.
+   const theme=available(INFINITE[0])?INFINITE[0]:INFINITE.find(t=>t[2]==='assets/bgm/infinite.mp3'&&available(t));
+   if(theme){played.add(abs(theme));return theme;}
   }
   let options=list.filter(t=>abs(t)!==lastTrackUrl&&!played.has(abs(t)));
   if(!options.length){played.clear();options=list.filter(t=>abs(t)!==lastTrackUrl)}
@@ -175,7 +176,7 @@
    lastMode=m;
    // On entering the home or infinite mode, begin its designated BGM.
    // Subsequent tracks still shuffle with the existing playlist.
-   if(modeChanged&&!next&&(m==='home'||m==='infinite')){
+   if(modeChanged&&!next){
     currentTrack=null;
     if(m==='home')manualPick=true;
    }
