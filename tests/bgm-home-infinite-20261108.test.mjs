@@ -48,25 +48,25 @@ function player(){
  };
 }
 
-test('default homepage song is new Full Tilt Parade',()=>{
+test('homepage starts with an installed theme while Full Tilt Parade is missing',()=>{
  const p=player();
- assert.match(p.audio.src,/Full_Tilt_Parade\.mp3$/);
+ assert.match(p.audio.src,/home-new\.mp3$/);
  assert.equal(p.audio.volume,.28);
  assert.equal(p.audio.loop,false);
 });
 
-test('regular infinite mode begins Transit at Midnight',()=>{
+test('infinite mode uses an installed fallback while Transit at Midnight is missing',()=>{
  const p=player();
  p.go('quiz','infinite',{infinite:true});
- assert.match(p.audio.src,/Transit_at_Midnight\.mp3$/);
+ assert.match(p.audio.src,/infinite\.mp3$/);
 });
 
-test('ranked infinite plays Transit, other ranked variants do not force it',()=>{
+test('ranked infinite uses the available theme; other ranked variants change mode',()=>{
  const p=player();
  p.rank.open=true;
  p.rank.dataset.mbRankedMode='infinite';
  p.window.syncBgm();
- assert.match(p.audio.src,/Transit_at_Midnight\.mp3$/);
+ assert.match(p.audio.src,/infinite\.mp3$/);
  p.rank.dataset.mbRankedMode='hardcore';
  p.window.syncBgm();
  assert.doesNotMatch(p.audio.src,/Transit_at_Midnight\.mp3$/);
@@ -74,11 +74,11 @@ test('ranked infinite plays Transit, other ranked variants do not force it',()=>
 
 test('existing music remains in shuffled playlists after the first song',()=>{
  const p=player();
- assert.match(p.audio.src,/Full_Tilt_Parade\.mp3$/);
+ assert.match(p.audio.src,/home-new\.mp3$/);
  p.end();
  assert.doesNotMatch(p.audio.src,/Full_Tilt_Parade\.mp3$/);
  p.go('quiz','infinite',{infinite:true});
- assert.match(p.audio.src,/Transit_at_Midnight\.mp3$/);
+ assert.match(p.audio.src,/infinite\.mp3$/);
  p.end();
  assert.doesNotMatch(p.audio.src,/Transit_at_Midnight\.mp3$/);
  assert.equal(p.audio.loop,false);
@@ -90,4 +90,12 @@ test('one audio element only; unchanged mode does not reload music',()=>{
  p.window.syncBgm();p.window.syncBgm();
  assert.equal(p.audio.loads,loads);
  assert.equal(p.audio.volume,.28);
+});
+
+test('music catalog filters missing MP3s before playback and disables unloaded choices',()=>{
+ assert.match(code,/const PUBLISHED_BGM=new Set/);
+ assert.match(code,/if\(!available\(t\)\)return false/);
+ assert.match(code,/option\.disabled=!available\(candidate\)/);
+ assert.match(code,/음원 미등록/);
+ assert.ok(!code.includes("'assets/bgm/Full_Tilt_Parade.mp3'\n") || code.includes("PUBLISHED_BGM"));
 });
