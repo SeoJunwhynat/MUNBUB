@@ -6,6 +6,7 @@
 import { createServer } from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
+import { createGzip } from 'node:zlib';
 import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import backroomsRelay from './backrooms/server.js';
@@ -25,6 +26,20 @@ const mime = {
 const hiddenPrefixes=['/api/','/lib/','/tests/','/.','/node_modules/'];
 const prohibitedFiles = new Set(['package.json','package-lock.json','render.yaml','vercel.json','server.js','hard_answer_hashes.json','idiom_final_100.json']);
 function json(res,code,value){res.writeHead(code,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
+function sendPublicFile(req,res,filename,size,type,cache,extra={}){
+  // Large HTML and JS previously transferred uncompressed (2.7MB home / 0.9MB Backrooms).
+  // Compress on demand; leave binaries and clients without gzip support unchanged.
+  const extension=extname(filename).toLowerCase();
+  const compressible=['.html','.js','.mjs','.css','.json','.svg'].includes(extension)&&size>=8192;
+  const gzip=compressible&&/\bgzip\b/i.test(String(req.headers['accept-encoding']||''));
+  const headers={'Content-Type':type,'Cache-Control':cache,'X-Content-Type-Options':'nosniff','Vary':'Accept-Encoding',...extra};
+  if(gzip)headers['Content-Encoding']='gzip';
+  else headers['Content-Length']=size;
+  res.writeHead(200,headers);
+  if(req.method==='HEAD')return res.end();
+  const input=createReadStream(filename).on('error',()=>res.destroy());
+  return gzip?input.pipe(createGzip()).on('error',()=>res.destroy()).pipe(res):input.pipe(res);
+}
 function adapt(res){
   res.status=function(code){res.statusCode=code;return res;};
   res.json=function(value){if(!res.headersSent)res.setHeader('Content-Type','application/json; charset=utf-8');res.end(JSON.stringify(value));return res;};
@@ -55,9 +70,7 @@ async function handle(req,res){
   if(pathname==='/backrooms'||pathname==='/backrooms/'){
     if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'GET only'});
     const filename=resolve(ROOT,'backrooms/index.html');const f=await stat(filename);
-    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Content-Length':f.size,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'same-origin'});
-    if(req.method==='HEAD')return res.end();
-    return createReadStream(filename).pipe(res);
+    return sendPublicFile(req,res,filename,f.size,'text/html; charset=utf-8','no-store',{'Referrer-Policy':'same-origin'});
   }
   if(pathname.startsWith('/backrooms/api/')){
     if(req.method!=='GET'&&req.method!=='POST'&&req.method!=='OPTIONS')return json(res,405,{error:'허용되지 않은 방식이야.'});
@@ -112,10 +125,7 @@ async function handle(req,res){
     const assetType=assetExt==='.glb'?'model/gltf-binary':
       assetExt==='.mjs'?'text/javascript; charset=utf-8':mime[assetExt];
     if(!assetType)return json(res,404,{error:'Not found'});
-    res.writeHead(200,{'Content-Type':assetType,'Content-Length':asset.size,
-      'Cache-Control':'public, max-age=300','X-Content-Type-Options':'nosniff'});
-    if(req.method==='HEAD')return res.end();
-    return createReadStream(filePath).on('error',()=>res.destroy()).pipe(res);
+    return sendPublicFile(req,res,filePath,asset.size,assetType,'public, max-age=300');
   }
   if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'GET only'});
   if(pathname==='/'||pathname==='')pathname='/index.html';
@@ -127,9 +137,7 @@ async function handle(req,res){
   try{file=await stat(path)}catch{return json(res,404,{error:'Not found'})}
   if(!file.isFile())return json(res,404,{error:'Not found'});
   const cache=['.html','.js','.mjs','.css'].includes(ext)?'no-cache, max-age=0, must-revalidate':'public, max-age=300';
-  res.writeHead(200,{'Content-Type':mime[ext],'Content-Length':file.size,'Cache-Control':cache,'X-Content-Type-Options':'nosniff'});
-  if(req.method==='HEAD')return res.end();
-  createReadStream(path).on('error',()=>res.destroy()).pipe(res);
+  return sendPublicFile(req,res,path,file.size,mime[ext],cache);
 }
 export function createAppServer(){return createServer((req,res)=>{handle(req,res).catch(e=>{console.error('Unexpected error',e.message);if(!res.headersSent)json(res,500,{error:'Unexpected error'});else res.destroy();});});}
-if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)){const port=Number(process.env.PORT)||3000;const server=createAppServer();server.listen(port,'0.0.0.0',()=>console.log(`Matchunbeom Render adapter listening on ${port}`));}
+if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)){const port=Number(process.env.PORT)||3000;const server=createAppServer();server.keepAliveTimeout=65000;server.headersTimeout=66000;server.listen(port,'0.0.0.0',()=>console.log(`Matchunbeom Render adapter listening on ${port}`));}
