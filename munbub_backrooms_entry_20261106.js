@@ -19,3 +19,6 @@
  document.head.append(style);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();
+
+/* Load subject switcher from a script actually included by index.html. */
+(()=>{if(document.getElementById('mb-subject-panel-loader'))return;const s=document.createElement('script');s.id='mb-subject-panel-loader';s.src='./munbub_subject_entry.js';document.head.appendChild(s)})();
