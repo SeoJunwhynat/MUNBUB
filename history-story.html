@@ -23,15 +23,23 @@
 <div class="history-rule"><b>기록 원칙</b><p id="historyRule">플레이어의 선택은 실제 역사를 바꾸지 않습니다.</p></div>
 </aside>
 <main class="story-main">
-<div class="chapter-heading"><div><span id="chapterEra" class="eyebrow">PROLOGUE · TIME ARCHIVE</span><h1 id="chapterTitle">시간의 기록자</h1><p id="chapterSubtitle">역사를 기억하는 사람의 첫 번째 여행</p></div><div class="chapter-controls"><button id="pauseButton" type="button">☰ 메뉴</button><button id="restartButton" type="button">↻ 챕터 초기화</button></div></div>
+<div class="story-quickbar" aria-label="스토리 진행 바로가기">
+ <div class="quickbar-title"><span>✦ STORY PROGRESS</span><b id="storyStepCounter">EPISODE 01 / 05</b></div>
+ <div class="quickbar-steps" id="storyQuestRail"><span>① 시대 도착</span><span>② 자료 조사</span><span>③ 인물 대화</span><span>④ 연표 복원</span><span>⑤ 기록 완성</span></div>
+ <div class="quickbar-meter"><span id="storyQuestMeter"></span></div>
+ </div>
+ <div class="chapter-heading"><div><span id="chapterEra" class="eyebrow">PROLOGUE · TIME ARCHIVE</span><h1 id="chapterTitle">시간의 기록자</h1><p id="chapterSubtitle">역사를 기억하는 사람의 첫 번째 여행</p></div><div class="chapter-controls"><button id="pauseButton" type="button">☰ 메뉴</button><button id="restartButton" type="button">↻ 챕터 초기화</button></div></div>
 <section class="game-screen" id="gameScreen" aria-label="역사 스토리 탐험 게임">
 <canvas id="storyCanvas" width="960" height="560" tabindex="0" aria-label="역사 시대를 걷고 인물과 대화하는 탐험 화면"></canvas>
 <div class="game-top"><span id="mapLabel">시간의 기록 보관소</span><span id="stageProgress">단서 0 / 4</span></div>
 <div class="game-bottom"><span id="nearLabel">WASD · 방향키 이동 / E 또는 Space 대화·조사</span><span class="act-indicator">📍 <b id="objectiveShort">시대 선택</b></span></div>
 <div id="sceneTransition" class="transition hidden" aria-hidden="true"></div></section>
+<div class="story-prompt-strip"><span class="pulse-dot"></span><div><strong id="storyPromptTitle">현재 목표</strong><p id="storyPromptText">단서를 조사하고 인물과 대화해 보세요.</p></div><button type="button" id="storyPromptAction">📖 진행 도움말</button></div>
 <div class="game-tools">
 <div id="touchPad" class="touch-pad" aria-label="모바일 이동 패드"><button type="button" data-move="up" aria-label="위">▲</button><button type="button" data-move="left" aria-label="왼쪽">◀</button><button type="button" data-move="down" aria-label="아래">▼</button><button type="button" data-move="right" aria-label="오른쪽">▶</button></div>
-<div class="game-tools-right"><button type="button" class="primary" id="actionButton">🔎 조사·대화 <kbd>E</kbd></button><button type="button" id="backZone">← 이전 지역</button><button type="button" id="forwardZone">다음 지역 →</button><button type="button" id="openJournal">📖 수집 기록</button></div></div>
+<div class="game-tools-right"><button type="button" class="primary" id="actionButton">🔎 조사·대화 <kbd>E</kbd></button><button type="button" id="backZone">← 이전 지역</button><button type="button" id="forwardZone">다음 지역 →</button><button type="button" id="openJournal">📖 수집 기록</button><button type="button" id="mobileChapters">🗺️ 시대 선택</button></div></div>
+<div class="story-status-cards" aria-label="스토리 상태">
+<div><span>현재 에피소드</span><strong id="hudEra">1945</strong></div><div><span>수집한 사료</span><strong id="hudClues">0 / 4</strong></div><div><span>인물의 증언</span><strong id="hudPeople">0 / 2</strong></div><div><span>연표 복원</span><strong id="hudTimeline">진행 전</strong></div></div>
 <div class="walkthrough"><div class="walkthrough-step"><b>01</b> 인물과 대화</div><div class="walkthrough-step"><b>02</b> 사료 4개 확보</div><div class="walkthrough-step"><b>03</b> 사건 연표 추리</div><div class="walkthrough-step"><b>04</b> 역사적 의미 확인</div></div>
 <div class="mission-cards"><article class="mission-card"><div><span class="eyebrow">현재 임무</span><h3 id="missionTitle">과거의 기록을 찾아라</h3><p id="missionDescription">중앙 로비에서 여행할 시대를 고르세요.</p></div><span class="mission-icon">✦</span></article><article class="mission-card min-card"><span class="eyebrow">기록자의 이해도</span><b id="insightNumber">0</b><span class="subtle">자료를 읽고 근거 있는 선택을 할수록 올라갑니다</span></article></div>
 </main>

@@ -6,12 +6,15 @@ if(!data||!Array.isArray(data.chapters)||!data.chapters.length){document.body.in
 const $=id=>document.getElementById(id),canvas=$('storyCanvas'),ctx=canvas.getContext('2d'),W=960,H=560;
 if(!ctx){$('chapterSubtitle').textContent='게임 화면을 지원하는 브라우저가 필요해요.';return}
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),html=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),short=(s,n)=>String(s).length>n?String(s).slice(0,n-1)+'…':String(s);
-const characters={'기록관':'史','신문 배달 청년 도윤':'🧢','견습 기자 미란':'📰','학생 기록자 은하':'🎒'};
+const characters={'기록관':'史','신문 배달 청년 도윤':'🧢','견습 기자 미란':'📰','학생 기록자 은하':'🎒','피란 기록자 수진':'🧳','우편 담당자 준호':'📮','기록실 연구원 하람':'📖','견습 기술자 민재':'🔧','산업 기록 편집자 유나':'🗞️','노동 기록 조사원 서연':'📚'};
 const storageKey='mb_history_story_2026_v1',fresh=()=>({current:'ep1945',unlocked:['ep1945'],completed:[],chapters:{},sound:false});
 let save;
 try{save={...fresh(),...JSON.parse(localStorage.getItem(storageKey)||'{}')}}catch{save=fresh()}
 if(!Array.isArray(save.unlocked))save.unlocked=['ep1945'];if(!save.unlocked.includes('ep1945'))save.unlocked.unshift('ep1945');
 if(!Array.isArray(save.completed))save.completed=[];
+// 이전 3장판의 기존 저장 데이터를 보존하면서 새 1950 장을 소급 개방한다.
+if((save.completed.includes('ep1948')||save.unlocked.includes('ep1960'))&&!save.unlocked.includes('ep1950'))save.unlocked.push('ep1950');
+if(save.completed.includes('ep1960')&&!save.unlocked.includes('ep1970'))save.unlocked.push('ep1970');
 if(!save.chapters||typeof save.chapters!=='object')save.chapters={};
 let chapter=null,chapterState=null,zone=0,actor={x:476,y:474},held=new Set(),autoTarget=null,modal=null,frameAt=0,dialogLine=0,selection=[],jtab='clue',notifyTimer=0,attempts=0,lastNearest=null,finishedChapter=false;
 function persist(){try{localStorage.setItem(storageKey,JSON.stringify(save))}catch{}}
@@ -66,6 +69,17 @@ function updateUI(){
  $('insightNumber').textContent=chapterState.insight+' pt';
  $('cluePercent').textContent=Math.round(currentCollected().length/4*100)+'%';
  $('clueMeter').style.width=Math.round(currentCollected().length/4*100)+'%';
+ const step=Math.min(5,1+(currentCollected().length>=2?1:0)+(currentSpoken().length>=2?1:0)+(timelineDone()?1:0)+(quizDone()?1:0));
+ const rail=$('storyQuestRail');
+ if(rail)rail.querySelectorAll('span').forEach((el,i)=>{el.classList.toggle('done',i<step);el.classList.toggle('active',i===Math.min(4,step-1))});
+ if($('storyStepCounter'))$('storyStepCounter').textContent='EPISODE '+String(data.chapters.indexOf(chapter)+1).padStart(2,'0')+' / '+String(data.chapters.length).padStart(2,'0');
+ if($('storyQuestMeter'))$('storyQuestMeter').style.width=Math.round((step-1)/4*100)+'%';
+ if($('hudEra'))$('hudEra').textContent=chapter.year;
+ if($('hudClues'))$('hudClues').textContent=currentCollected().length+' / 4';
+ if($('hudPeople'))$('hudPeople').textContent=currentSpoken().length+' / 2';
+ if($('hudTimeline'))$('hudTimeline').textContent=timelineDone()?'복원 완료':'미완료';
+ if($('storyPromptTitle'))$('storyPromptTitle').textContent=chapter.title+' · 다음 임무';
+ if($('storyPromptText'))$('storyPromptText').textContent=currentObjective();
  $('backZone').disabled=zone===0;
  $('forwardZone').disabled=zone===chapter.zones.length-1;
  $('finalChallenge').disabled=!allRequired();
@@ -255,7 +269,7 @@ function drawBox(x,y,w,h,c,outline){
  drawFill(x,y,w,h,c);if(outline){ctx.strokeStyle=outline;ctx.lineWidth=2;ctx.strokeRect(x,y,w,h)}
 }
 function scenePalette(){
- const palettes={ep1945:{sky:'#454256',rear:'#403e4f',build:'#514858',wall:'#756469',street:'#353746',detail:'#d6b289'},ep1948:{sky:'#384e64',rear:'#405569',build:'#566478',wall:'#788391',street:'#344352',detail:'#ebcfad'},ep1960:{sky:'#464661',rear:'#49445a',build:'#625b73',wall:'#8f7f92',street:'#3e4359',detail:'#cfb9b0'}};
+ const palettes={ep1950:{sky:'#253848',rear:'#324350',build:'#3d4d5a',wall:'#687888',street:'#2b3a44',detail:'#b8c5c3'},ep1970:{sky:'#4a3d3a',rear:'#574c46',build:'#685750',wall:'#99826f',street:'#3b3533',detail:'#dec090'},ep1945:{sky:'#454256',rear:'#403e4f',build:'#514858',wall:'#756469',street:'#353746',detail:'#d6b289'},ep1948:{sky:'#384e64',rear:'#405569',build:'#566478',wall:'#788391',street:'#344352',detail:'#ebcfad'},ep1960:{sky:'#464661',rear:'#49445a',build:'#625b73',wall:'#8f7f92',street:'#3e4359',detail:'#cfb9b0'}};
  return palettes[chapter.id]||palettes.ep1945;
 }
 function drawBackground(){
@@ -277,6 +291,8 @@ function drawBackground(){
   for(let i=0;i<5;i++){drawBox(157+i*135,215,99,90,'#443e4c','#aa927d');for(let k=0;k<3;k++)drawFill(166+i*135,225+k*22,82,12,'#c2ab8a')}
  }
  if(location.kind==='school'){drawBox(123,138,710,195,'#67657c',p.detail);drawBox(135,148,686,45,'#b5b2b7',p.detail);drawText(479,178,'학교 앞 거리',25,'#3a3a4e')}
+ if(location.kind==='archive'&&chapter.id==='ep1950'){drawBox(340,194,280,45,'#566277','#9eb8c3');drawText(480,223,'정전의 기록 · 1953',19,'#f8d9b9')}
+ if(location.kind==='city'&&chapter.id==='ep1970'){drawBox(690,75,35,150,'#504b48','#9d9185');drawBox(800,95,27,125,'#504b48','#9d9185');drawText(480,215,'경제 성장과 노동의 기록',18,'#f8debb')}
  if(location.kind==='city'){drawBox(220,145,520,177,'#74778a',p.detail);drawText(480,185,'시민의 기록',24,'#ffe4bc')}
  drawFill(0,343,W,67,'#67606b');drawFill(0,407,W,153,p.street);
  for(let x=0;x<W;x+=95)drawFill(x+10,423,59,4,'#b0a09a');
@@ -420,6 +436,8 @@ $('dialogueExtra').addEventListener('click',ev=>{
 $('storyOverlay').addEventListener('click',ev=>{
  if(ev.target===$('storyOverlay')&&modal?.type==='lines')closeDialog();
 });
+$('storyPromptAction').addEventListener('click',()=>{if(allRequired())openFinal();else showLines([{speaker:'기록관',text:'첫 구역에서 기록 2개를 수집하고 등장인물 1명과 대화하면 다음 구역으로 갈 수 있어. 두 구역에서 총 기록 4개와 인물 대화 2개를 모으면 사건 연표와 확인 문제가 열려.'}],{title:'스토리 진행 도움말',tag:'HOW TO PLAY'})});
+$('mobileChapters').addEventListener('click',()=>{const el=$('chapterList');if(el){el.scrollIntoView({behavior:'smooth',block:'start'});setNote('🔎 잠금이 풀린 시대를 선택할 수 있어.')}});
 $('muteToggle').addEventListener('click',()=>{
  save.sound=!save.sound;persist();
  $('muteToggle').textContent=save.sound?'🔊 효과음 켜짐':'🔇 효과음 꺼짐';
