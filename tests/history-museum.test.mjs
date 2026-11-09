@@ -22,7 +22,7 @@ test('museum main scene connects all 8 era galleries to every source and record'
    addEventListener(){},insertAdjacentHTML(){},querySelectorAll(){return[]},setAttribute(){}};
  };
  const elems=new Map();
- const drawing={getContext(){return {}}};
+ const drawing={getContext(){return {}},addEventListener(){},focus(){}};
  const doc={
   activeElement:{tagName:'BODY'},
   getElementById(id){if(!elems.has(id))elems.set(id,id==='museum'?drawing:fake());return elems.get(id)},
