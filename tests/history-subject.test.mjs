@@ -41,9 +41,12 @@ test('history UI initializes with original exam question engine',()=>{
   assert.match(root.innerHTML,/한국사|기말/);
 });
 
-test('history museum prototype is explicit about offline-only status',()=>{
+test('history museum has real galleries, study archive, quiz, and dedicated multiplayer entry',()=>{
  const html=load('history-museum.html');
- assert.match(html,/1인용 시범 구현/);
- assert.match(html,/Render를 통한 공개 로비/);
+ assert.match(html,/역사 박물관|시간의 기록/);
+ assert.match(html,/history-museum-app\.js/);
+ assert.match(html,/history-museum\.css/);
  assert.match(html,/history-study\.html/);
+ assert.match(html,/멀티플레이 접수처/);
+ assert.doesNotMatch(html,/1인용 시범 구현/);
 });

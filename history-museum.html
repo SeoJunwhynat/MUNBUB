@@ -1,54 +1,31 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>시간의 기록 — 역사 박물관 시범 전시</title>
-<style>
-:root{color-scheme:dark;--bg:#10111a;--ink:#f4e9d7;--gold:#f5c788;--panel:#26202b}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 40% 0,#3d3447,transparent 48%),var(--bg);color:var(--ink);font-family:system-ui,"Noto Sans KR","Malgun Gothic",sans-serif}a{color:#f6ca8e}header{max-width:1200px;margin:auto;padding:18px 16px;display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap}h1{font-size:clamp(23px,3vw,35px);margin:0}h2{font-size:21px;margin:7px 0 11px}p{line-height:1.7}small,.muted{color:#c5b4bb}.tag{display:inline-block;background:#413343;border:1px solid #93725e;border-radius:25px;padding:5px 10px;color:#f5c788;font-size:12px;font-weight:800}nav{display:flex;flex-wrap:wrap;gap:8px}nav a,.action{display:inline-block;border-radius:11px;border:1px solid #8a6879;padding:9px 12px;background:#352b39;color:#f6ead7;text-decoration:none;font-size:14px;font-weight:750}.layout{max-width:1200px;padding:0 16px 36px;margin:auto;display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,.85fr);gap:14px}.hall{border:1px solid #8d6e60;border-radius:18px;overflow:hidden;position:relative;background:#1b1923;box-shadow:0 18px 65px #0007}.hall canvas{display:block;width:100%;height:auto;aspect-ratio:15/10;touch-action:none}#hint{position:absolute;left:12px;bottom:12px;max-width:calc(100% - 24px);background:#17131bda;border:1px solid #8a7b7d;padding:8px 12px;border-radius:10px;font-size:12px}aside{background:linear-gradient(165deg,#312738,#221e2b);border:1px solid #736070;border-radius:18px;padding:20px;min-height:280px}.label{font-size:12px;color:var(--gold);letter-spacing:.11em;font-weight:850}.control{display:grid;grid-template-columns:repeat(3,50px);gap:5px;justify-content:center;padding:12px 0}.control button{font:inherit;background:#544252;color:#fff;border:1px solid #bd988c;border-radius:11px;height:45px;min-height:45px;touch-action:none;user-select:none}.control button:active{background:#86636c}.control button[data-dir=up]{grid-column:2}.control button[data-dir=left]{grid-column:1;grid-row:2}.control button[data-dir=down]{grid-column:2;grid-row:2}.control button[data-dir=right]{grid-column:3;grid-row:2}.action{cursor:pointer;width:100%;background:#705249;border-color:#d3a479}.action:disabled{opacity:.45;cursor:not-allowed}.room-status{font-size:12px;background:#211d27;padding:10px;border-radius:9px;border:1px dashed #6f5966}.legend{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0}.legend span{border:1px solid #7c6975;border-radius:7px;padding:4px 8px;font-size:11px}.item{padding:10px 0;border-bottom:1px solid #514752}.item b{color:#f5c788}@media(max-width:850px){.layout{grid-template-columns:1fr}.hall canvas{aspect-ratio:15/10}aside{min-height:0}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
-</style></head>
-<body><header><div><span class="tag">맛춘범 역사 · 체험 모드 / 시범 전시</span><h1>🏛️ 시간의 기록 — 역사 박물관</h1></div><nav><a href="/">맛춘범 홈</a><a href="/history-study.html">📚 역사 학습관</a></nav></header>
-<div class="layout"><div><section class="hall"><canvas id="museum" width="900" height="600" aria-label="역사 박물관 탐험 화면">한국사 전시관</canvas><div id="hint" role="status">WASD / 방향키로 이동 · 전시물 앞에서 E 또는 조사 버튼</div></section><div class="control" aria-label="모바일 이동 조작"><button data-dir="up" aria-label="위">▲</button><button data-dir="left" aria-label="왼쪽">◀</button><button data-dir="down" aria-label="아래">▼</button><button data-dir="right" aria-label="오른쪽">▶</button></div><button class="action" id="interact">🔎 가까운 전시물 조사</button></div>
-<aside><div class="label">EXHIBITION / 역사 이해</div><h2 id="exhibit-title">전시관 입장</h2><p id="exhibit-text">시대별 전시대를 돌아다니며 역사적 사건을 살펴보세요. 교과서 캡처를 바탕으로 작성한 독자적인 해설을 표시합니다.</p><div class="legend"><span>1945 해방</span><span>1948 정부</span><span>1950 전쟁</span><span>1960 민주화</span><span>1987 직선제</span><span>1997 외환위기</span></div><div class="item"><b>📜 빠른 학습</b><p>사료를 자세히 읽거나 문제를 풀려면 역사 학습관으로 이동하세요.</p><a class="action" href="/history-study.html" style="text-align:center">사료·연표 학습 열기</a></div><p class="room-status"><b>멀티플레이 현황:</b> 이 화면은 이동·전시 조사만 가능한 <b>1인용 시범 구현</b>입니다. Render를 통한 공개 로비·방 생성·협동 스토리는 아직 연결하지 않았습니다.</p></aside></div>
-<script src="/history-study-data.js"></script><script src="/history-deep-sources.js"></script>
-<script>
-(()=>{'use strict';
-const canvas=document.getElementById('museum'),ctx=canvas.getContext('2d');
-const title=document.getElementById('exhibit-title'),text=document.getElementById('exhibit-text'),hint=document.getElementById('hint');
-const sources=window.MB_HISTORY_DEEP_SOURCES||[],byId=id=>sources.find(s=>s.id===id);
-const stands=[
-{x:158,y:155,id:'s1945a',short:'1945 광복'},
-{x:445,y:155,id:'s1948c',short:'1948 헌법'},
-{x:734,y:155,id:'s1953a',short:'1953 정전'},
-{x:158,y:445,id:'s1960a',short:'1960 혁명'},
-{x:445,y:445,id:'s1987a',short:'1987 민주화'},
-{x:734,y:445,id:'s1997a',short:'1997 경제'}
-];
-let p={x:449,y:292},keys=new Set(),last=performance.now(),touch=null;
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function roundRect(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.stroke()}}
-function draw(){
-ctx.clearRect(0,0,900,600);ctx.fillStyle='#221d25';ctx.fillRect(0,0,900,600);
-for(let x=0;x<900;x+=48)for(let y=0;y<600;y+=48){ctx.strokeStyle=(x+y)%96?'#3e3036':'#504047';ctx.lineWidth=1;ctx.strokeRect(x,y,48,48)}
-ctx.fillStyle='#5b4a4d';ctx.fillRect(0,0,900,33);ctx.fillRect(0,567,900,33);ctx.fillRect(0,0,33,600);ctx.fillRect(867,0,33,600);
-roundRect(335,25,230,72,12,'#4a3849','#bb9676');ctx.font='bold 22px sans-serif';ctx.fillStyle='#ffdba8';ctx.textAlign='center';ctx.fillText('시간의 기록',450,67);
-for(let i=0;i<stands.length;i++){let s=stands[i],d=Math.hypot(p.x-s.x,p.y-s.y);
-ctx.fillStyle='#0004';ctx.beginPath();ctx.ellipse(s.x,s.y+48,92,16,0,0,Math.PI*2);ctx.fill();
-roundRect(s.x-100,s.y-49,200,78,10,d<115?'#755249':'#4e4145',d<115?'#ffe1ae':'#b18d79');
-roundRect(s.x-75,s.y-35,150,44,8,'#332933','#bd9a7b');
-ctx.fillStyle='#f2cc9a';ctx.font='bold 17px sans-serif';ctx.fillText(s.short,s.x,s.y-8);
-ctx.font='12px sans-serif';ctx.fillStyle='#d8c9b8';ctx.fillText(i+1+'번 전시',s.x,s.y+22);
-}
-ctx.fillStyle='#0008';ctx.beginPath();ctx.ellipse(p.x,p.y+22,16,7,0,0,Math.PI*2);ctx.fill();
-ctx.fillStyle='#edcb91';ctx.beginPath();ctx.arc(p.x,p.y-12,13,0,Math.PI*2);ctx.fill();roundRect(p.x-12,p.y,24,27,7,'#6a8eae','#dae5e6');
-ctx.textAlign='left';ctx.fillStyle='#fff3db';ctx.font='12px sans-serif';ctx.fillText('기록자',p.x+18,p.y);
-}
-function nearest(){let found=null,min=115;for(const s of stands){let d=Math.hypot(p.x-s.x,p.y-s.y);if(d<min){min=d;found=s}}return found}
-function interact(){let stand=nearest();if(!stand){hint.textContent='전시대 가까이 이동하면 기록을 조사할 수 있어요.';return}let s=byId(stand.id);if(!s)return;title.textContent=s.title;text.textContent=s.summary+'  · 배경: '+s.context+'  · 판별 단서: '+s.signals.join(', ');hint.textContent=s.title+' 전시 확인! 더 자세한 분석은 역사 학습관에서 확인하세요.'}
-function move(dx,dy,dt){const dist=Math.hypot(dx,dy);if(!dist)return;let scale=clamp(dt,0,.045)*190/dist;p.x=clamp(p.x+dx*scale,45,855);p.y=clamp(p.y+dy*scale,94,535)}
-function frame(now){let dt=(now-last)/1000;last=now;let dx=Number(keys.has('ArrowRight')||keys.has('d'))-Number(keys.has('ArrowLeft')||keys.has('a')),dy=Number(keys.has('ArrowDown')||keys.has('s'))-Number(keys.has('ArrowUp')||keys.has('w'));move(dx,dy,dt);draw();requestAnimationFrame(frame)}
-document.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','e','E'].includes(e.key))e.preventDefault();if(e.key==='e'||e.key==='E'||e.key===' ')interact();keys.add(e.key.toLowerCase().startsWith('arrow')?e.key:e.key.toLowerCase())});
-document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase().startsWith('arrow')?e.key:e.key.toLowerCase()));
-for(const b of document.querySelectorAll('[data-dir]')){const code={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'}[b.dataset.dir];b.addEventListener('pointerdown',e=>{e.preventDefault();keys.add(code);b.setPointerCapture(e.pointerId)});b.addEventListener('pointerup',()=>keys.delete(code));b.addEventListener('pointercancel',()=>keys.delete(code));b.addEventListener('lostpointercapture',()=>keys.delete(code))}
-canvas.addEventListener('click',e=>{const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*900/r.width,y=(e.clientY-r.top)*600/r.height;let s=stands.find(v=>Math.hypot(v.x-x,v.y-y)<92);if(s){p.x=clamp(s.x,45,855);p.y=clamp(s.y+90,94,535);interact()}});
-document.getElementById('interact').addEventListener('click',interact);
-draw();requestAnimationFrame(frame);
-})();
-</script></body></html>
+<meta name="theme-color" content="#12141c"><title>시간의 기록 — 맛춘범 한국사 박물관</title>
+<link rel="stylesheet" href="/history-museum.css"></head>
+<body>
+<header class="topbar"><div class="brand"><span>🏛️</span><div><small>맛춘범 · 한국사 2</small><strong>시간의 기록 <em>HISTORY MUSEUM</em></strong></div></div>
+<nav class="toplinks"><a href="/">맛춘범 홈</a><a href="/history-study.html">역사 학습관</a><a href="/history-final-exam.html" id="examLink">실전 문제</a></nav></header>
+<main class="layout">
+<section class="explore">
+<div class="headline"><div><span class="eyebrow">EXPLORE THE PAST</span><h1 id="sceneName">시간의 기록 · 중앙 로비</h1><p id="sceneCaption">이동하면서 사료를 조사하고 역사 기록을 수집하세요.</p></div><div class="progress"><span id="overallProgress">0 / 0 전시 조사</span><div class="meter"><span id="progressMeter"></span></div></div></div>
+<div class="stage" id="stage"><canvas id="museum" width="960" height="600" tabindex="0" role="img" aria-label="한국사 박물관 자유 이동 화면"></canvas>
+<div class="stageTop"><span id="roomTag">CENTRAL ATRIUM</span><span id="nearby">전시대에 가까이 이동하세요</span></div>
+<div class="stageBottom"><span>WASD / 방향키 이동 · E / Space 조사</span><button type="button" id="expand" title="전체 화면 전환">⛶</button></div></div>
+<div class="gamebar">
+<div class="dpad" aria-label="모바일 이동 버튼"><button type="button" data-move="up" aria-label="위로 이동">▲</button><button type="button" data-move="left" aria-label="왼쪽으로 이동">◀</button><button type="button" data-move="down" aria-label="아래로 이동">▼</button><button type="button" data-move="right" aria-label="오른쪽으로 이동">▶</button></div>
+<div class="actions"><button type="button" class="primary" id="interact">🔎 조사하기 <kbd>E</kbd></button><button type="button" id="returnHome">🏛️ 중앙 로비</button><button type="button" id="prevWing">← 이전 구역</button><button type="button" id="nextWing">다음 구역 →</button></div></div>
+<div class="hallNav"><div class="navTitle"><b>전시실 빠른 이동</b><small>박물관 내부에서만 자유 이동</small></div><div id="hallButtons" class="hallButtons"></div></div>
+</section>
+<aside class="sidebar">
+<div class="tabs" role="tablist" aria-label="박물관 정보 메뉴"><button type="button" class="active" data-tab="exhibit" role="tab" aria-selected="true">전시 해설</button><button type="button" data-tab="archive" role="tab" aria-selected="false">기록 보관소</button><button type="button" data-tab="game" role="tab" aria-selected="false">멀티 로비</button></div>
+<div id="tabExhibit" class="tabpanel"><div id="exhibitView" class="exhibitView"><div class="cover"><div class="seal">史</div><span class="eyebrow">CURATOR'S NOTE</span><h2>시간 속 기록을 찾으세요</h2><p>전시대를 조사하면 사건의 배경·연도·핵심 사료·관련 문제까지 확인할 수 있어요.</p></div></div><div class="sideActions"><button type="button" id="readQuiz">📝 전시 관련 문제 풀기</button><button type="button" id="saveRecord">📌 기록 저장</button></div></div>
+<div id="tabArchive" class="tabpanel hidden"><div class="archiveIntro"><h2>📚 기록 보관소</h2><p>수집한 사료와 한국사 연표를 살펴볼 수 있어요. 기존 학습관의 기록 탭도 그대로 유지돼요.</p><div class="statMini" id="archiveStats"></div></div><div class="archiveFilters"><input type="search" id="archiveSearch" placeholder="사건·연도·인물 검색" aria-label="기록 검색"><select id="archiveUnit" aria-label="단원 필터"><option value="all">전체 시대</option></select><label><input type="checkbox" id="onlySaved"> 조사한 기록만</label></div><div id="archiveList" class="archiveList"></div></div>
+<div id="tabGame" class="tabpanel hidden"><h2>🌐 역사 멀티플레이 접수처</h2><p class="small">기존 국어 대전과 별도로 운영되는 역사 전용 퀴즈방이야. 2~4명이 참가해 문제를 동시에 풀 수 있어.</p><div id="accountNote" class="notice">로그인 상태 확인 중…</div>
+<div id="multiplayer"><div class="createForm"><label for="roomName">방 이름</label><input id="roomName" maxlength="26" value="시간의 기록 탐험방"><button id="createRoom" class="primary" type="button">+ 역사 퀴즈방 만들기</button></div><div class="joinForm"><input id="roomCode" maxlength="8" placeholder="8자리 방 코드" aria-label="입장할 방 코드"><button id="joinRoom" type="button">코드로 입장</button></div><div class="roomsTitle"><b>열린 역사방</b><button id="refreshRooms" type="button">새로고침</button></div><div id="roomList" class="roomList"></div></div>
+<div id="activeRoom" class="hidden"><div class="roomHead"><h3 id="activeRoomTitle">방 이름</h3><span id="activeRoomCode"></span></div><p id="onlineHint" class="small"></p><div id="playerList" class="playerList"></div><div id="roundView"></div><div class="roomControls"><button id="readyRoom" type="button">준비하기</button><button id="startRoom" type="button" class="primary">게임 시작</button><button id="nextRound" type="button" class="primary">다음 문제</button><button id="leaveRoom" type="button">나가기</button></div></div><p id="networkMessage" role="status" class="small"></p></div>
+</aside></main>
+<div class="bottomFooter"><div id="achievementLine">🏅 업적을 수집하고 시대별 전시를 완성해 보세요.</div><button id="showAchievements">업적관 보기</button><a href="/history-study.html">📅 연표·사료 탭으로 이동</a></div>
+<div class="overlay hidden" id="quizOverlay" role="dialog" aria-modal="true" aria-labelledby="quizTitle"><div class="modal" id="quizBox"><div class="modalTop"><span class="eyebrow">HISTORY CHALLENGE</span><button id="closeQuiz" aria-label="닫기">✕</button></div><h2 id="quizTitle">전시 확인 문제</h2><p id="quizPrompt"></p><div id="quizChoices" class="quizChoices"></div><div id="quizFeedback" role="status"></div><button id="nextQuiz" type="button" class="primary hidden">돌아가기</button></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="/history-study-data.js"></script><script src="/history-deep-sources.js"></script><script src="/history-museum-app.js" defer></script>
+</body></html>
