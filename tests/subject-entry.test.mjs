@@ -54,7 +54,7 @@ test('Render root is pixel launcher, original index remains intact, and each his
   const text=await main.text();
   assert.match(text,/맛춘범 \| 과목 선택/);
   assert.match(text,/historyModesDialog/);
-  const legacy=await fetch(base+'/index.html',{method:'HEAD'});
+  const legacy=await fetch(base+'/index.html',{method:'HEAD',headers:{'Accept-Encoding':'identity'}});
   assert.equal(legacy.status,200);
   assert.ok(Number(legacy.headers.get('content-length'))>2000000,'Original Korean app HTML was preserved');
   for(const url of ['/subject-select.html','/history-story.html','/history-museum.html','/history-study.html']){
