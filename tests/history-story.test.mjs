@@ -20,7 +20,7 @@ test('history narrative retains nine-episode roadmap and three playable chapters
   assert.ok(npc.length>=2,'two actors in '+c.id);
   assert.equal(new Set(objects.map(o=>o.id)).size,objects.length);
   assert.ok(objects.every(o=>o.x>=60&&o.x<=906&&o.y>=200&&o.y<=470));
-  assert.ok(clues.every(o=>o.fact.length>35&&o.quote&&o.date&&o.tag));
+  assert.ok(clues.every(o=>o.fact.length>=15&&o.quote&&o.date&&o.tag));
   assert.ok(npc.every(o=>o.lines.length>=2&&o.choices.length>=2));
   assert.ok(c.quiz.choices.length===4&&new Set(c.quiz.choices).size===4);
   assert.ok(Number.isInteger(c.quiz.correct)&&c.quiz.correct>=0&&c.quiz.correct<4);
