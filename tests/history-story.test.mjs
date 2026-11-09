@@ -9,7 +9,7 @@ function data(){
 }
 test('history narrative retains nine-episode roadmap and three playable chapters',()=>{
  const d=data();assert.equal(d.chapters.length,3);assert.equal(d.roadmap.length,9);
- assert.deepEqual(d.chapters.map(c=>c.year),['1945','1948','1960']);
+ assert.deepEqual(Array.from(d.chapters,c=>c.year),['1945','1948','1960']);
  assert.ok(d.historyRule.includes('역사적 사실')&&d.fictionNotice.includes('창작'));
  const allNames=new Set();
  for(const c of d.chapters){
