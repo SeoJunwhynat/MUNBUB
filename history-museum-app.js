@@ -5,9 +5,9 @@ const data=window.HISTORY_FINAL_DB||{},facts=Array.isArray(data.items)?data.item
 const C=document.getElementById('museum'),ctx=C.getContext('2d'),W=960,H=600;
 if(!ctx){document.getElementById('sceneCaption').textContent='Canvas를 지원하는 브라우저가 필요해요.';return}
 const $=id=>document.getElementById(id),allUnit=Object.keys(units),order=['A','B','C','D','E','F','G','H'];
-const labels={lobby:'중앙 로비',A:'광복과 정부 수립',B:'전쟁과 분단',C:'민주화의 길',D:'산업화와 경제',E:'문화와 일상',F:'6월 항쟁 이후',G:'현대 사회·경제',H:'남북 관계와 평화',archive:'기록 보관소',exam:'역사 시험장',online:'멀티 접수처',achieve:'업적 전시관'};
-const icons={lobby:'🏛️',A:'🌅',B:'🕊️',C:'✊',D:'🏗️',E:'🎞️',F:'🗳️',G:'💹',H:'🤝',archive:'📚',exam:'📝',online:'🌐',achieve:'🏅'};
-const color={lobby:'#d2aa74',A:'#d3b08a',B:'#a7b6c6',C:'#bd8b89',D:'#9aaf99',E:'#aa9ac8',F:'#90bdb7',G:'#c6ad8b',H:'#96aebf',archive:'#c0a8d0',exam:'#e0a879',online:'#92baac',achieve:'#e0bd76'};
+const labels={lobby:'중앙 로비',A:'광복과 정부 수립',B:'전쟁과 분단',C:'민주화의 길',D:'산업화와 경제',E:'문화와 일상',F:'6월 항쟁 이후',G:'현대 사회·경제',H:'남북 관계와 평화',archive:'기록 보관소',exam:'역사 시험장',online:'멀티 접수처',achieve:'업적 전시관',story:'시간의 기록자 스토리'};
+const icons={lobby:'🏛️',A:'🌅',B:'🕊️',C:'✊',D:'🏗️',E:'🎞️',F:'🗳️',G:'💹',H:'🤝',archive:'📚',exam:'📝',online:'🌐',achieve:'🏅',story:'📜'};
+const color={lobby:'#d2aa74',A:'#d3b08a',B:'#a7b6c6',C:'#bd8b89',D:'#9aaf99',E:'#aa9ac8',F:'#90bdb7',G:'#c6ad8b',H:'#96aebf',archive:'#c0a8d0',exam:'#e0a879',online:'#92baac',achieve:'#e0bd76',story:'#e7b885'};
 const sourceMap=new Map(src.map(s=>[s.id,s])),factMap=new Map(facts.map(f=>[f.id,f]));
 const itemsByUnit={};order.forEach(u=>itemsByUnit[u]=[]);
 src.forEach(s=>{if(itemsByUnit[s.u])itemsByUnit[s.u].push({key:'source:'+s.id,type:'source',unit:s.u,date:s.date,title:s.title,source:s,fact:factMap.get(s.eventId)})});
@@ -27,7 +27,7 @@ function toast(s){const el=$('toast');el.textContent=s;el.classList.add('visible
 function saveStats(){persist();$('overallProgress').textContent=progress.visited.size+' / '+total+' 전시 조사';$('progressMeter').style.width=(total?progress.visited.size/total*100:0)+'%';$('achievementLine').textContent='🏅 관람 '+progress.visited.size+'개 · 저장 '+progress.saved.size+'개 · 정답 '+progress.solved.size+'개 · 방문한 시대관 '+progress.halls.size+'/8'}
 function changeTab(next){tab=next;document.querySelectorAll('[data-tab]').forEach(el=>{el.classList.toggle('active',el.dataset.tab===next);el.setAttribute('aria-selected',String(el.dataset.tab===next))});$('tabExhibit').classList.toggle('hidden',next!=='exhibit');$('tabArchive').classList.toggle('hidden',next!=='archive');$('tabGame').classList.toggle('hidden',next!=='game');if(next==='archive')renderArchive();if(next==='game'){checkAccount();listRooms();ensurePolling()}}
 function renderHalls(){
- $('hallButtons').innerHTML=['lobby',...order,'archive','exam','online','achieve'].map(id=>'<button type="button" data-hall="'+id+'" class="'+(scene===id?'active':'')+'">'+icons[id]+' '+labels[id]+'<small>'+(order.includes(id)?progress.visited.size&&itemsByUnit[id].filter(x=>progress.visited.has(x.key)).length+'/'+count(id)+' 기록':id==='lobby'?'중앙 입구':'이동하기')+'</small></button>').join('');
+ $('hallButtons').innerHTML=['lobby','story',...order,'archive','exam','online','achieve'].map(id=>'<button type="button" data-hall="'+id+'" class="'+(scene===id?'active':'')+'">'+icons[id]+' '+labels[id]+'<small>'+(order.includes(id)?progress.visited.size&&itemsByUnit[id].filter(x=>progress.visited.has(x.key)).length+'/'+count(id)+' 기록':id==='lobby'?'중앙 입구':'이동하기')+'</small></button>').join('');
 }
 function go(next,step=0){
  if(!labels[next])return;scene=next;page=clamp(step,0,pageCount(next)-1);pos={x:480,y:530};held.clear();
@@ -42,10 +42,11 @@ function go(next,step=0){
 }
 function lobbyObjects(){
  const nodes=order.map((id,i)=>({type:'portal',to:id,title:labels[id],icon:icons[id],x:[135,365,595,825][i%4],y:i<4?195:365}));
- nodes.push({type:'portal',to:'archive',title:'기록 보관소',icon:'📚',x:180,y:495});
- nodes.push({type:'portal',to:'exam',title:'역사 시험장',icon:'📝',x:390,y:495});
- nodes.push({type:'portal',to:'online',title:'멀티 접수처',icon:'🌐',x:590,y:495});
- nodes.push({type:'portal',to:'achieve',title:'업적관',icon:'🏅',x:785,y:495});
+ nodes.push({type:'portal',to:'archive',title:'기록 보관소',icon:'📚',x:115,y:495});
+ nodes.push({type:'portal',to:'exam',title:'역사 시험장',icon:'📝',x:297,y:495});
+ nodes.push({type:'portal',to:'story',title:'스토리 모드',icon:'📜',x:480,y:495});
+ nodes.push({type:'portal',to:'online',title:'멀티 접수처',icon:'🌐',x:663,y:495});
+ nodes.push({type:'portal',to:'achieve',title:'업적관',icon:'🏅',x:845,y:495});
  return nodes;
 }
 function objects(){
@@ -63,7 +64,7 @@ function nearest(){
 }
 function interact(obj=nearest()){
  if(!obj){toast('전시대·문 가까이 이동해서 E 또는 조사 버튼을 눌러 줘.');return}
- if(obj.type==='portal'){go(obj.to);return}
+ if(obj.type==='portal'){if(obj.to==='story'){window.location.assign('/history-story.html');return}go(obj.to);return}
  if(obj.type==='exhibit'){openItem(obj.item);return}
  if(obj.action==='archive'){changeTab('archive')}
  if(obj.action==='saved'){$('onlySaved').checked=true;changeTab('archive')}
@@ -259,7 +260,7 @@ $('expand').addEventListener('click',async()=>{
  const stage=$('stage');
  try{if(document.fullscreenElement)await document.exitFullscreen();else await stage.requestFullscreen()}catch{toast('이 브라우저는 전체 화면을 지원하지 않아.')}
 });
-$('hallButtons').addEventListener('click',ev=>{const b=ev.target.closest('[data-hall]');if(b)go(b.dataset.hall)});
+$('hallButtons').addEventListener('click',ev=>{const b=ev.target.closest('[data-hall]');if(b){if(b.dataset.hall==='story')window.location.assign('/history-story.html');else go(b.dataset.hall)}});
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>changeTab(b.dataset.tab)));
 $('readQuiz').addEventListener('click',()=>focusItem?openQuiz(focusItem):toast('전시 기록을 먼저 조사해 줘.'));
 $('saveRecord').addEventListener('click',()=>{if(!focusItem)return;progress.saved.has(focusItem.key)?progress.saved.delete(focusItem.key):progress.saved.add(focusItem.key);saveStats();renderExhibit()});

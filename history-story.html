@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#121720">
+<title>시간의 기록자 | 맛춘범 역사 스토리 게임</title><link rel="stylesheet" href="/history-story.css"></head>
+<body>
+<header class="story-header"><a class="story-brand" href="/history-museum.html"><span class="brand-sigil">史</span><span><small>MATCHUNBEOM · STORY ADVENTURE</small><b>시간의 기록자</b></span></a>
+<nav aria-label="사이트 이동"><a href="/history-museum.html">🏛️ 박물관 로비</a><a href="/history-study.html">📚 역사 학습관</a><button id="muteToggle" type="button" title="효과음 끄기">🔊 효과음</button></nav></header>
+<div class="shell">
+<aside class="chapters-panel">
+<div class="aside-title"><span class="eyebrow">EPISODE ARCHIVE</span><h2>시대의 문</h2><p>역사의 결말은 변하지 않지만, 기록자의 이해는 깊어집니다.</p></div>
+<div id="chapterList" class="chapter-list" aria-label="에피소드 선택"></div>
+<section class="coop-panel" aria-label="스토리 협동 탐험 로비">
+<div class="coop-heading"><div><span class="eyebrow">CO-OP STORY MODE</span><h3>🤝 함께 기록하기</h3></div><span class="coop-max">최대 4인</span></div>
+<p id="coopAccount" class="coop-account">로그인 상태 확인 중…</p>
+<div id="coopLobby"><label for="coopName">협동방 이름</label><input id="coopName" type="text" maxlength="26" value="시간의 기록자 협동방">
+<button type="button" id="coopCreate" class="primary coop-full">+ 탐험방 만들기</button>
+<div class="coop-join"><input id="coopCode" type="text" maxlength="8" placeholder="8자리 방 코드" aria-label="협동방 코드"><button type="button" id="coopJoin">입장</button></div>
+<button id="coopBrowse" type="button" class="coop-full">열린 방 새로고침</button><div id="coopList"></div></div>
+<div id="coopSession" class="hidden"><p id="coopRoomCode" class="coop-code"></p><p id="coopPhase" class="coop-account"></p>
+<div id="coopPlayers" class="coop-players"></div><div class="coop-session-actions">
+<button type="button" id="coopReady">준비하기</button><button type="button" id="coopStart" class="primary">탐험 시작</button><button type="button" id="coopAdvance" class="primary">다음 시대 진행</button><button type="button" id="coopCopy">코드 복사</button><button type="button" id="coopLeave">방 나가기</button></div></div>
+<p id="coopInfo" role="status" class="coop-account"></p>
+</section>
+<div class="history-rule"><b>기록 원칙</b><p id="historyRule">플레이어의 선택은 실제 역사를 바꾸지 않습니다.</p></div>
+</aside>
+<main class="story-main">
+<div class="chapter-heading"><div><span id="chapterEra" class="eyebrow">PROLOGUE · TIME ARCHIVE</span><h1 id="chapterTitle">시간의 기록자</h1><p id="chapterSubtitle">역사를 기억하는 사람의 첫 번째 여행</p></div><div class="chapter-controls"><button id="pauseButton" type="button">☰ 메뉴</button><button id="restartButton" type="button">↻ 챕터 초기화</button></div></div>
+<section class="game-screen" id="gameScreen" aria-label="역사 스토리 탐험 게임">
+<canvas id="storyCanvas" width="960" height="560" tabindex="0" aria-label="역사 시대를 걷고 인물과 대화하는 탐험 화면"></canvas>
+<div class="game-top"><span id="mapLabel">시간의 기록 보관소</span><span id="stageProgress">단서 0 / 4</span></div>
+<div class="game-bottom"><span id="nearLabel">WASD · 방향키 이동 / E 또는 Space 대화·조사</span><span class="act-indicator">📍 <b id="objectiveShort">시대 선택</b></span></div>
+<div id="sceneTransition" class="transition hidden" aria-hidden="true"></div></section>
+<div class="game-tools">
+<div id="touchPad" class="touch-pad" aria-label="모바일 이동 패드"><button type="button" data-move="up" aria-label="위">▲</button><button type="button" data-move="left" aria-label="왼쪽">◀</button><button type="button" data-move="down" aria-label="아래">▼</button><button type="button" data-move="right" aria-label="오른쪽">▶</button></div>
+<div class="game-tools-right"><button type="button" class="primary" id="actionButton">🔎 조사·대화 <kbd>E</kbd></button><button type="button" id="backZone">← 이전 지역</button><button type="button" id="forwardZone">다음 지역 →</button><button type="button" id="openJournal">📖 수집 기록</button></div></div>
+<div class="walkthrough"><div class="walkthrough-step"><b>01</b> 인물과 대화</div><div class="walkthrough-step"><b>02</b> 사료 4개 확보</div><div class="walkthrough-step"><b>03</b> 사건 연표 추리</div><div class="walkthrough-step"><b>04</b> 역사적 의미 확인</div></div>
+<div class="mission-cards"><article class="mission-card"><div><span class="eyebrow">현재 임무</span><h3 id="missionTitle">과거의 기록을 찾아라</h3><p id="missionDescription">중앙 로비에서 여행할 시대를 고르세요.</p></div><span class="mission-icon">✦</span></article><article class="mission-card min-card"><span class="eyebrow">기록자의 이해도</span><b id="insightNumber">0</b><span class="subtle">자료를 읽고 근거 있는 선택을 할수록 올라갑니다</span></article></div>
+</main>
+<aside class="journal-panel" id="journalPanel"><div class="aside-title"><span class="eyebrow">INVESTIGATION JOURNAL</span><h2>기록 수첩</h2><p>신문·사료·인물의 증언을 종합하세요.</p></div>
+<div class="journal-tabs" role="tablist"><button data-jtab="clue" class="active" aria-selected="true">수집 단서</button><button data-jtab="timeline" aria-selected="false">사건 연표</button><button data-jtab="people" aria-selected="false">인물 기록</button></div>
+<div id="journalBody" class="journal-body" aria-live="polite"><p>아직 수집한 자료가 없습니다.</p></div>
+<div class="journal-footer"><div class="journal-progress"><span>현재 장 수집률</span><b id="cluePercent">0%</b></div><div class="meter"><div id="clueMeter"></div></div><button type="button" id="finalChallenge" class="primary" disabled>🔐 최종 기록 복원</button></div>
+</aside>
+</div>
+<footer class="story-footer"><p>※ 시대 배경과 사건은 역사적 사실에 기초합니다. 등장인물·대사·일부 소품은 학습용 창작입니다. 실제 역사 결과는 플레이어 선택으로 변경되지 않습니다.</p><a href="/history-museum.html">박물관으로 돌아가기</a></footer>
+<div class="overlay hidden" id="storyOverlay" role="dialog" aria-modal="true" aria-labelledby="overlayTitle"><section class="dialog-card">
+<div class="dialog-head"><div><span class="eyebrow" id="overlayTag">STORY</span><h2 id="overlayTitle">기록의 시작</h2></div><button id="dialogClose" type="button" aria-label="닫기">×</button></div>
+<div class="character-line"><span class="portrait" id="portrait">史</span><div><b id="speaker">기록관</b><p id="dialogueText" aria-live="polite"></p></div></div>
+<div id="dialogueExtra"></div><div class="dialog-actions"><button id="dialogBack" type="button">뒤로</button><button id="dialogNext" type="button" class="primary">계속 ›</button></div>
+</section></div>
+<div id="notification" class="notification" role="status" aria-live="polite"></div>
+<script src="/history-story-data.js"></script><script src="/history-story-app.js" defer></script><script src="/history-story-coop.js" defer></script>
+</body></html>
