@@ -34,3 +34,65 @@
 @media(max-width:1050px){.story-status-cards{grid-template-columns:repeat(2,1fr)}.quickbar-steps span{font-size:10px}}
 @media(max-width:650px){.quickbar-steps{grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}.quickbar-steps span{font-size:9px;padding:6px 2px;line-height:1.35}.story-quickbar{padding:9px 8px}.story-prompt-strip{flex-wrap:wrap;padding:9px}.story-prompt-strip button{margin-left:19px}.story-status-cards{grid-template-columns:repeat(2,1fr)}.story-status-cards div{padding:8px 9px}.game-tools-right button{min-height:42px}}
 @media(prefers-reduced-motion:reduce){.quickbar-meter span{transition:none}}
+
+
+/* PIXEL STUDY THEME v3 — aligned with the supplied subject-selection artwork.
+   Overrides visual language only; narrative engine, multiplayer and storage unchanged. */
+:root{--bg:#21131e;--surface:#35212e;--surface2:#492c39;--surface3:#613c48;--line:#8a5361;--line2:#d2a06e;--text:#fff0d4;--muted:#e1bcb8;--gold:#ffcf87;--gold2:#f3ae75;--ok:#abdcb6;--danger:#ffada2}
+body{background-color:#1c101a;background-image:radial-gradient(#482936 1px,transparent 1px),linear-gradient(#2a1827,#1b101c);background-size:18px 18px,100% 100%}
+.story-header{background:linear-gradient(90deg,#2c1a28,#361d29);border-bottom:3px solid #b47b5e;box-shadow:0 5px 0 #1b0e1a;backdrop-filter:none}
+.story-brand .brand-sigil{background:#5e3240;color:#ffdda3;border:3px solid #d0a16d;border-radius:2px;box-shadow:inset 0 0 0 4px #3b2030,3px 3px #1e101e}
+.story-brand b{font-family:'NanumMyeongjo','Noto Serif CJK KR',serif;color:#ffe2b1;text-shadow:2px 2px #3b2031}
+.story-header nav a,.story-header nav button{background:#562f3f;border:2px solid #a96d65;border-radius:2px;color:#ffe7bf;box-shadow:2px 3px 0 #21111c}
+.story-header nav a:hover,.story-header nav button:hover{background:#704054}
+.chapters-panel,.journal-panel{background:linear-gradient(160deg,#4c3040,#2e1d2a);border:3px solid #9c6a5b;border-radius:3px;box-shadow:0 0 0 3px #241423,inset 0 0 0 3px #3b2230;min-height:0}
+.aside-title{background:linear-gradient(#613849,#442a38);border-bottom:3px solid #b47d65}
+.aside-title h2,.chapter-heading h1{font-family:'NanumMyeongjo','Noto Serif CJK KR',serif;color:#ffe4b9;text-shadow:2px 3px 0 #33202b}
+.chapter-item{border-radius:2px!important;background:#442a37!important;border:2px solid #81565e!important;box-shadow:2px 3px 0 #27151f;margin-bottom:6px}
+.chapter-item.current{background:linear-gradient(110deg,#815045,#513143)!important;border-color:#ffd18d!important;box-shadow:inset 4px 0 0 #ffd18d,3px 3px #27151f}
+.chapter-item:not(.unavailable):hover{border-color:#ffe2a7!important;background:#764452!important}
+.chapter-item.unavailable{opacity:.54}
+.chapter-item .year,.chapter-item .chapter-status{color:#ffd29c}
+.story-main{min-width:0}
+.chapter-heading{border-bottom:3px solid #b58068;background:linear-gradient(90deg,#4e2b3b,#352131);padding:15px 18px!important;margin:0 0 14px;border-radius:3px;box-shadow:0 4px 0 #22111c}
+.chapter-controls button{border-radius:2px;background:#603a49;border:2px solid #ae8268;box-shadow:2px 3px #2b1927}
+.story-quickbar{background:linear-gradient(130deg,#563140,#352537);border:3px solid #ad795f;border-radius:3px;box-shadow:3px 5px #1d121e,inset 0 0 0 3px #432837}
+.quickbar-title{color:#f8d2b0}.quickbar-title b{color:#ffdb9d}
+.quickbar-steps span{background:#382431;border:2px solid #7a4e5b;border-radius:2px;color:#e5c6c1}
+.quickbar-steps span.done{background:#435146;border-color:#93bd9f;color:#deffe1}
+.quickbar-steps span.active{background:#7f5143;border-color:#ffcb80;color:#fff0d4}
+.quickbar-meter{background:#241621;border:1px solid #9a6e63;border-radius:0}.quickbar-meter span{background:linear-gradient(90deg,#ca805c,#ffdf99)}
+.game-screen{background:#2b2732;border:5px solid #bc8a68!important;border-radius:2px!important;box-shadow:0 0 0 3px #321d2d,0 0 0 6px #5d3645,6px 9px #160d19!important;overflow:hidden}
+.game-screen canvas{image-rendering:pixelated}
+.game-top span,.game-bottom span{background:#2c1a29e8!important;border:2px solid #ac8466!important;color:#ffe2bd!important;border-radius:2px!important;box-shadow:2px 2px #20101c}
+.story-prompt-strip{background:linear-gradient(105deg,#623e46,#3c2534);border:3px solid #c1926d;border-radius:2px;box-shadow:3px 3px #281522}
+.story-prompt-strip strong{color:#ffe2b0}.story-prompt-strip p{color:#f3d1bf}
+.story-prompt-strip button,.game-tools-right button{border-radius:2px!important;border:2px solid #b27a68!important;box-shadow:2px 3px #301826;background:#5a3745;color:#fff0d0}
+.game-tools-right .primary,.primary,.story-prompt-strip button{background:linear-gradient(#ffe4b1,#e3ac75)!important;color:#432830!important;border-color:#cb9064!important;box-shadow:2px 3px #6b4140}
+.game-tools-right .primary:hover,.primary:hover{filter:brightness(1.08)}
+.touch-pad button{border:2px solid #c08a6d!important;border-radius:2px!important;background:#604051!important;box-shadow:2px 2px #291725}
+.story-status-cards div,.mission-card{background:linear-gradient(120deg,#503240,#382532)!important;border:2px solid #90676b!important;border-radius:3px!important;box-shadow:2px 3px #291922}
+.story-status-cards strong{color:#ffe1a7}
+.walkthrough{border-color:#855464!important}
+.walkthrough-step{border-radius:2px!important}
+.journal-tabs button{border-radius:2px!important}
+.journal-tabs button.active{color:#ffe2a4!important;background:#654051!important}
+.journal-body,.journal-footer{background:#342231}
+.journal-footer .meter{background:#281722;border:1px solid #8c6562}
+.journal-footer .meter>div{background:#f1b978}
+.coop-panel{background:linear-gradient(150deg,#4d3040,#30202f);border-top:3px solid #946357}
+.coop-heading h3{color:#ffe0af}
+.coop-panel input{background:#2a1c29;border:2px solid #8e6770;border-radius:2px}
+.coop-person,.coop-room{background:#452d3c;border:2px solid #8b5b66;border-radius:2px}
+.coop-code{border-radius:2px;border-color:#dfb47e}
+.overlay{background:#140b17dd}
+.dialog-card{background:linear-gradient(135deg,#653c4b,#342431);border:4px solid #d4a274;border-radius:3px;box-shadow:0 0 0 5px #281725,8px 10px #0d0811,inset 0 0 0 3px #8a5960}
+.dialog-head{border-bottom:2px solid #ac7a66}
+.dialog-head h2{font-family:'NanumMyeongjo','Noto Serif CJK KR',serif;color:#ffdfaf}
+.portrait{background:#5a3544;border:3px solid #c18e6f;border-radius:2px;color:#ffe0ac;image-rendering:pixelated}
+.dialog-choices button,.sequence-list button,.dialog-actions button{border-radius:2px!important;background:#583442!important;border:2px solid #ac796c!important;box-shadow:2px 3px #291723}
+.dialog-actions .primary{background:linear-gradient(#ffe2af,#eab27b)!important}
+.story-footer{border-top:2px solid #875a53;color:#d7b2b7}
+@media(max-width:940px){.shell{gap:10px;padding:10px}.chapter-heading{padding:11px 12px!important}.story-quickbar{padding:9px}}
+@media(max-width:700px){.story-header{padding:9px 11px}.story-brand .brand-sigil{width:39px;height:39px}.chapter-heading h1{font-size:25px}.game-screen{border-width:3px!important}.story-prompt-strip{border-width:2px}.quickbar-steps span{border-width:1px}.story-status-cards div{padding:8px 9px!important}.game-tools-right button{min-height:44px}}
+@media(prefers-reduced-motion:reduce){.story-quickbar,.chapter-item{transition:none!important}}
