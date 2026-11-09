@@ -57,3 +57,7 @@
  mobileArt.defer=true;document.head.append(mobileArt);
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();
+
+
+/* Add history subject navigation without replacing existing Backrooms UI. */
+(()=>{if(document.getElementById('mb-subject-panel-loader'))return;const s=document.createElement('script');s.id='mb-subject-panel-loader';s.src='/munbub_subject_entry.js';document.head.appendChild(s)})();
