@@ -138,6 +138,3 @@
  }
 
 })();
-
-/* Load the independent history subject navigation panel. */
-(()=>{if(document.getElementById('mb-subject-panel-loader'))return;const s=document.createElement('script');s.id='mb-subject-panel-loader';s.src='./munbub_subject_entry.js';document.head.appendChild(s)})();
