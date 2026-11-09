@@ -44,6 +44,65 @@ for(var pos=0;pos<group.length-3;pos+=2){
  var ev=facts.find(function(f){return f.id===s.eventId})||facts[0];
  add("deep-"+s.id,ev,"source","advanced",s.quiz.question,s.quiz.choices,s.quiz.answer,s.quiz.explanation,s.quiz.wrongNotes||{});
 });
+
+/* 중간고사형 기말 응용 문제: ㄱ~ㅁ, A/B 사이, 사료·자료·지도·월 순서 */
+var deepSources=Array.isArray(window.MB_HISTORY_DEEP_SOURCES)?window.MB_HISTORY_DEEP_SOURCES:[];
+function dateSpan(e){var t=String(e.date).split("-"),yr=Number(t[0]),mo=Number(t[1]||0),day=Number(t[2]||0);return {from:yr*10000+(mo||1)*100+(day||1),to:yr*10000+(mo||12)*100+(day||31)}}
+function certainlyBefore(a,b){return dateSpan(a).to<dateSpan(b).from}
+function dateString(e){return e.date.replace(/-/g,". ")}
+function safeTitle(e){return !/(18|19|20)\d{2}/.test(e.title)}
+function uniq(xs){return Array.from(new Set(xs))}
+function choicesOrder(symbols,answer){var out=[answer];for(var i=0;i<symbols.length&&out.length<4;i++)for(var j=i+1;j<symbols.length&&out.length<4;j++){var copy=symbols.slice(),tmp=copy[i];copy[i]=copy[j];copy[j]=tmp;var candidate=copy.join(" → ");if(!out.includes(candidate))out.push(candidate)}return out}
+var glyphs=["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ"];
+var allUnits=Object.keys(units).map(function(u){return {u:u,items:facts.filter(function(f){return f.u===u})}});
+allUnits.push({u:"all",items:facts});
+allUnits.forEach(function(group){
+ var sorted=group.items.filter(safeTitle).slice().sort(function(a,b){return dateSpan(a).from-dateSpan(b).from});
+ for(var i=0;i<sorted.length-4;i+=3){
+  var seq=[];for(var j=i;j<sorted.length&&seq.length<5;j++){if(!seq.length||certainlyBefore(seq[seq.length-1],sorted[j]))seq.push(sorted[j])}
+  if(seq.length!==5)continue;
+  var mix=[seq[2],seq[0],seq[4],seq[1],seq[3]];
+  var answer=seq.map(function(x){return glyphs[mix.indexOf(x)]}).join(" → ");
+  add("mid-order-"+group.u+"-"+i,seq[0],"timeline","advanced","다음 ㄱ~ㅁ 사건의 발생 순서로 옳은 것은?\n\n"+mix.map(function(x,k){return glyphs[k]+". "+x.title}).join("\n"),choicesOrder(glyphs,answer),answer,"정확한 시기: "+seq.map(function(x){return dateString(x)+" "+x.title}).join(" → "));
+ }
+ for(var i=0;i<sorted.length-4;i+=3){
+  var a=sorted[i],b=sorted[Math.min(i+5,sorted.length-1)];
+  if(!certainlyBefore(a,b))continue;
+  var inside=sorted.filter(function(x){return certainlyBefore(a,x)&&certainlyBefore(x,b)});
+  var outside=sorted.filter(function(x){return x!==a&&x!==b&&!(certainlyBefore(a,x)&&certainlyBefore(x,b))});
+  if(inside.length===0||outside.length<3)continue;
+  var correct=inside[Math.floor(inside.length/2)],wrong=outside.slice(0,3),notes={};
+  wrong.forEach(function(x){notes[x.title]=dateString(x)+"에 일어나 두 사건 사이가 아닙니다."});
+  add("mid-between-"+group.u+"-"+i,correct,"between","top","다음 A와 B 사이에 발생한 사건은?\n\nA. "+a.title+"\n        ↓\nB. "+b.title,[correct.title].concat(wrong.map(function(x){return x.title})),correct.title,dateString(a)+" "+a.title+" → "+dateString(correct)+" "+correct.title+" → "+dateString(b)+" "+b.title,notes);
+ }
+});
+var sameYear={};
+facts.filter(safeTitle).forEach(function(x){if(/^\d{4}-\d{2}/.test(x.date))(sameYear[x.date.slice(0,4)]||=[]).push(x)});
+Object.keys(sameYear).forEach(function(yr){
+ var seq=[];sameYear[yr].sort(function(a,b){return dateSpan(a).from-dateSpan(b).from}).forEach(function(x){if(!seq.length||certainlyBefore(seq[seq.length-1],x))seq.push(x)});
+ if(seq.length<3)return;seq=seq.slice(0,4);
+ var mixed=seq.length===4?[seq[2],seq[0],seq[3],seq[1]]:[seq[1],seq[2],seq[0]];
+ var symbols=glyphs.slice(0,seq.length),answer=seq.map(function(x){return symbols[mixed.indexOf(x)]}).join(" → ");
+ var allSameUnit=seq.every(function(x){return x.u===seq[0].u});
+ add("mid-month-"+yr,allSameUnit?seq[0]:{u:"all",date:seq[0].date,title:"연·월 종합"},"month","top","같은 해에 일어난 다음 사건의 정확한 월·일 순서는?\n\n"+mixed.map(function(x,k){return symbols[k]+". "+x.title}).join("\n"),choicesOrder(symbols,answer),answer,"정확한 날짜: "+seq.map(function(x){return dateString(x)+" "+x.title}).join(" → "));
+});
+deepSources.forEach(function(s){
+ var f=facts.find(function(x){return x.id===s.eventId});if(!f)return;
+ var candidates=facts.filter(function(x){return x.u===f.u&&x.id!==f.id}).concat(facts.filter(function(x){return x.u!==f.u}));
+ var wrong=uniq(candidates.map(function(x){return x.title}).filter(function(x){return x!==f.title})).slice(0,3);
+ if(wrong.length===3){
+  var context=(s.context+"\n"+s.summary).split(f.title).join("【사건명】").split(s.title).join("【사건명】");
+  var notes={};wrong.forEach(function(x){var ev=facts.find(function(t){return t.title===x});notes[x]=ev?ev.detail:"관련 사건이 아닙니다."});
+  add("mid-source-"+s.id,f,"source","advanced","[학습용 재구성 사료, 원문 아님]\n"+context+"\n\n이 자료와 직접 관련된 사건은?",[f.title].concat(wrong),f.title,dateString(f)+" "+f.title+"\n판별 단서: "+s.signals.join(", ")+"\n"+(s.trap||""),notes);
+  if(/신문|시위|지도|포고령|경제 지표|헌법|기록|증언/.test(s.kind)){
+   add("mid-visual-"+s.id,f,"visual","advanced","[자료 설명형 — 원본 사진·그래프 아님]\n자료 종류: "+s.kind+"\n"+context+"\n\n이 자료에서 추론할 수 있는 사건은?",[f.title].concat(wrong),f.title,dateString(f)+" "+f.title+"\n"+s.compare,notes);
+  }
+ }
+ if(s.quiz)add("mid-deep-"+s.id,f,"source","top","[사료 심화]\n"+s.quiz.question,s.quiz.choices,s.quiz.answer,s.quiz.explanation||s.summary+"\n"+s.compare);
+});
+var mapFact=facts.find(function(x){return x.id===2});
+if(mapFact)add("mid-map-38",mapFact,"map","advanced","[학습용 지도 모식도 — 실제 지도 아님]\n북쪽: 소련군 진주\n━━━━━━━━ 38도선 ━━━━━━━━\n남쪽: 미군 진주\n\n이 자료의 역사적 상황을 나타내는 사건은?",["38도선 분할 점령","정전 협정","남북 기본 합의서","7·4 남북 공동 성명"],"38도선 분할 점령","1945년 분할 점령은 1953년 정전 협정 이후 군사분계선과 다릅니다.");
+
 var people=[
 ["여운형","광복 전 건국 동맹을 결성했고 광복 직후 건국 준비 위원회 활동을 이끌었다."],
 ["김구","임시 정부의 주요 지도자였으며 광복 후 통일 정부를 위한 남북 협상에 참여했다."],
@@ -60,6 +119,13 @@ var people=[
 ["박종철","1987년 경찰 조사를 받다 사망했으며 사건 진상 은폐 시도가 밝혀져 민주화 운동의 계기가 되었다."],
 ["노무현","참여정부를 이끌며 참여 민주주의와 지역 균형 발전을 주요 과제로 추진했다."]
 ];
+
+/* 인물·기관 추론은 기존 인물 설명을 선지와 함께 제공 */
+people.forEach(function(p,i){
+ var others=people.filter(function(x){return x[0]!==p[0]}).slice(0,3);
+ add("mid-person-"+i,{u:"all",date:"1945",title:p[0]},"people","advanced","다음 활동과 관련된 역사적 인물은?\n\n"+p[1],[p[0]].concat(others.map(function(x){return x[0]})),p[0],p[0]+" — "+p[1]);
+});
+
 function setTab(tab){if(state.timer)clearInterval(state.timer);state.timer=null;state.tab=tab;tabs.querySelectorAll("[data-tab]").forEach(function(b){b.classList.toggle("active",b.dataset.tab===tab)});draw();window.scrollTo(0,0)}
 function home(){
 root.innerHTML='<div class="hero"><div class="eyebrow">2022 개정 · 한국사 2 · 기말 대비</div><h1>광복 이후 대한민국의 발전과 현대사</h1><p>기존 중간고사 학습기는 유지하고, 기말고사를 위한 핵심 사건·연도·개념·사료형·연표 문제와 오답 복습을 별도 구성했습니다.</p><div class="stats"><div class="stat"><b>8</b><span>주제</span></div><div class="stat"><b>'+facts.length+'</b><span>핵심 개념</span></div><div class="stat"><b>'+all.length+'</b><span>문제 후보</span></div><div class="stat"><b>'+wrong.size+'</b><span>누적 오답</span></div></div><div class="actions"><button class="btn main" data-go="quiz">기말 문제 풀기</button><button class="btn" data-go="concept">개념 정리</button><a href="/" class="btn" style="text-decoration:none">중간고사 이어서</a></div></div>'+
@@ -69,10 +135,10 @@ root.innerHTML='<div class="hero"><div class="eyebrow">2022 개정 · 한국사 
 function setup(){
 root.innerHTML=section("기말 실전 문제풀이","문항 수·난이도·유형을 선택해 연습할 수 있습니다. 정답 선택 후 모든 선지의 이유를 확인하세요.")+
 '<div class="card"><div class="controls">'+unitSelect()+
-'<label class="field">난이도<select id="level"><option value="all">전체</option><option value="basic">기본</option><option value="advanced">심화</option></select></label>'+
-'<label class="field">문제 유형<select id="type"><option value="all">전체</option><option value="event">사건 추론</option><option value="year">연도 판단</option><option value="keyword">핵심어</option><option value="meaning">역사적 의미</option><option value="source">사료형</option><option value="order">연표 배열</option></select></label>'+
-'<label class="field">문항 수<select id="count"><option value="10">10문제</option><option value="20" selected>20문제</option><option value="30">30문제</option><option value="50">50문제</option><option value="10000">선택 범위 전체</option></select></label></div>'+
-'<div class="actions"><button class="btn main" id="start">문제 시작</button><button class="btn" data-go="wrong">오답 노트 ('+wrong.size+')</button></div><p class="small">문항은 검토된 개념 데이터를 바탕으로 여러 형태로 자동 구성됩니다. 선지 배열은 매번 바뀝니다.</p></div>';
+'<label class="field">난이도<select id="level"><option value="all">전체</option><option value="basic">기본</option><option value="advanced">심화</option><option value="top">최상</option></select></label>'+
+'<label class="field">문제 유형<select id="type"><option value="all">전체</option><option value="event">사건 추론</option><option value="year">연도 판단</option><option value="keyword">핵심어</option><option value="meaning">역사적 의미</option><option value="source">사료형</option><option value="order">연표 배열(기존)</option><option value="context">개념·배경·영향</option><option value="people">인물·기관 특징</option><option value="visual">사진·도표 자료 설명</option><option value="map">지도 해석</option><option value="timeline">ㄱ~ㅁ 연표 추론</option><option value="between">A·B 사이 사건</option><option value="month">연·월·일 집중</option><option value="worksheet">학습지 빈칸</option></select></label>'+
+'<label class="field">문항 수<select id="count"><option value="10">10문제</option><option value="20" selected>20문제</option><option value="30">30문제</option><option value="40">40문제</option><option value="50">50문제</option><option value="80">80문제</option><option value="100">100문제</option><option value="10000">선택 범위 전체</option></select></label></div>'+
+'<div class="actions"><button class="btn main" id="start">문제 시작</button><button class="btn" data-go="wrong">오답 노트 ('+wrong.size+')</button></div><p class="small">중간고사 방식의 문제 유형을 기말 범위에 적용했습니다. 연표의 날짜는 정답을 선택한 뒤 해설에서 공개합니다. 사진·지도 유형은 실제 원본 대신 학습용 자료 설명을 표시합니다.</p><div class="actions" style="margin-top:12px;flex-wrap:wrap"><button class="btn" data-quick="source">📜 사료 심화</button><button class="btn" data-quick="visual">🖼️ 사진·도표</button><button class="btn" data-quick="map">🗺️ 지도</button><button class="btn" data-quick="timeline">⏳ ㄱ~ㅁ 연표</button><button class="btn" data-quick="between">↔ A·B 사이</button><button class="btn" data-quick="month">📅 월 순서</button><button class="btn" data-quick="people">👤 인물·기관</button><button class="btn" data-quick="context">🧠 개념·배경</button><button class="btn" data-quick="worksheet">✏️ 학습지 빈칸</button><button class="btn" data-quick="top">🔥 최상 난도</button></div></div>';
 }
 function begin(review,list){
 var unit=document.getElementById("unit")?document.getElementById("unit").value:state.unit;
@@ -155,6 +221,7 @@ tabs.addEventListener("click",function(e){var b=e.target.closest("[data-tab]");i
 root.addEventListener("click",function(e){
  var go=e.target.closest("[data-go]");if(go){setTab(go.dataset.go);return}
  var u=e.target.closest("[data-unitgo]");if(u){state.unit=u.dataset.unitgo;setTab("quiz");return}
+ var quick=e.target.closest("[data-quick]");if(quick){document.getElementById("type").value=quick.dataset.quick==="top"?"all":quick.dataset.quick;document.getElementById("level").value=quick.dataset.quick==="top"?"top":"all";begin(false);return}
  if(e.target.id==="start"){begin(false);return}
  var c=e.target.closest("[data-choice]");if(c){choose(Number(c.dataset.choice));return}
  if(e.target.id==="next"){state.index++;state.chosen=-1;question();return}
