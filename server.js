@@ -128,7 +128,8 @@ async function handle(req,res){
     return sendPublicFile(req,res,filePath,asset.size,assetType,'public, max-age=300');
   }
   if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'GET only'});
-  if(pathname==='/'||pathname==='')pathname='/index.html';
+  // The standalone pixel subject launcher is the site entrance; /index.html remains the original complete Korean quiz game.
+  if(pathname==='/'||pathname==='')pathname='/subject-select.html';
   const rel=pathname.replace(/^\/+/,''),ext=extname(rel).toLowerCase();
   if(hiddenPrefixes.some(p=>pathname.startsWith(p))||rel.split('/').some(s=>s.startsWith('.'))||prohibitedFiles.has(rel)||!mime[ext])return json(res,404,{error:'Not found'});
   const path=resolve(ROOT,rel);
