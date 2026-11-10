@@ -28,11 +28,21 @@ for (const {file,parts,bytes,sha256} of tracks) {
   console.log(`BGM OK: ${file} (${data.length} bytes, SHA256 verified)`);
 }
 
+// Apply only successfully verified uploaded music ZIPs. Existing files are overwritten on purpose.
+const {installHistoryPacks}=await import('./install-history-music-packs.mjs');
+await installHistoryPacks(root);
+
 // Publish only files present at build time, never placeholders or missing MP3s.
 // Updating the repo assets automatically enables new songs on the next Render build.
 const bgmDir=join(root,'assets','bgm');
 const files=(await readdir(bgmDir,{withFileTypes:true}))
   .filter(e=>e.isFile()&&/^[A-Za-z0-9_-]+\.mp3$/i.test(e.name))
   .map(e=>'assets/bgm/'+e.name).sort();
-await writeFile(join(bgmDir,'catalog.json'),JSON.stringify({tracks:files},null,2)+'\n');
+// Hashes invalidate the browser's old music cache when audio bytes are overwritten.
+const hashes={};
+for(const file of files){
+ const contents=await readFile(join(root,file));
+ hashes[file]=createHash('sha256').update(contents).digest('hex').slice(0,16);
+}
+await writeFile(join(bgmDir,'catalog.json'),JSON.stringify({tracks:files,hashes},null,2)+'\n');
 console.log('BGM catalog OK: '+files.length+' installed MP3 tracks');
