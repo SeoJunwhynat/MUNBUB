@@ -32,6 +32,7 @@ function accept(next){
  const prev=room,started=next.phase==='playing'&&(!prev||prev.phase!=='playing'),fresh=prev&&prev.progress&&!prev.progress.cut&&next.progress?.cut;
  room=next;code=next.code;
  if(started){
+  locallyStartedCut=false;
   if(!soloBackup)soloBackup=snapshot()?.progress||null;
   window.MB_V7?.resetForRoom?.();
   const me=next.players.find(x=>x.id===next.me);
@@ -109,6 +110,12 @@ async function move(){
  finally{moveBusy=false}
 }
 function onScene(scene){sendPos='';if(active())move()}
+function pressReady(){return !active()||room?.levers?.ready===true}
+function lever(leverId){
+ if(!active()){window.MB_V7?.notify?.('싱글 플레이에서는 레버 없이 인쇄 작업을 진행할 수 있습니다.');return}
+ const s=snapshot();if(!s||s.scene!=='print')return;
+ send('switch',{lever:leverId,scene:s.scene,x:s.x});
+}
 function onProgress(next){
  if(!active()||!next)return;
  if(next.cut&&!room?.progress?.cut)locallyStartedCut=true;
@@ -182,6 +189,6 @@ function wire(){
   if(e.code==='Enter'&&active()&&!e.target.closest?.('input,textarea,button')){$('v7OnlinePanel').open=true;$('v7ChatInput').focus();e.preventDefault();}
  });
 }
-window.MB_V7_NET={active,onScene,onProgress,drawPlayers,room:()=>room};
+window.MB_V7_NET={active,onScene,onProgress,lever,pressReady,drawPlayers,room:()=>room};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire,{once:true});else wire();
 })();
