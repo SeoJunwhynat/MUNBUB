@@ -62,19 +62,48 @@ test('online co-op is authenticated, has actual signed rooms and multiplayer pos
  assert.match(server,/Math\.abs\(x-actor\.x\)/);
  assert.match(load('server.js'),/'history-side'/);
 });
-test('Render serves new historic side-scroller public files while preserving original homework and museum',async()=>{
+test('Core Render returns 404 for preserved history pages and assets',async()=>{
+ const previous=process.env.MB_SERVICE_ROLE;
+ delete process.env.MB_SERVICE_ROLE;
  const server=createAppServer();
- await new Promise((resolve,reject)=>server.once('error',reject).listen(0,'127.0.0.1',resolve));
- const root='http://127.0.0.1:'+server.address().port;
  try{
-  for(const path of ['/history-story-v7.html','/history-v7-online.js','/history-v7-controls.js','/history-v7-controls.css','/history-study.html','/history-museum.html']){
+  await new Promise((resolve,reject)=>server.once('error',reject).listen(0,'127.0.0.1',resolve));
+  const root='http://127.0.0.1:'+server.address().port;
+  for(const path of ['/history-story-v7.html','/history-v7-online.js','/history-v7-controls.js',
+   '/history-v7-controls.css','/history-study.html','/history-museum.html',
+   '/api/history-side','/assets/history-exam/images/s000.png']){
+   for(const method of ['GET','HEAD']){
+    const r=await fetch(root+path,{method,redirect:'manual'});
+    assert.equal(r.status,404,'core must block '+method+' '+path);
+   }
+  }
+ }finally{
+  if(server.listening)await new Promise(resolve=>server.close(resolve));
+  if(previous===undefined)delete process.env.MB_SERVICE_ROLE;
+  else process.env.MB_SERVICE_ROLE=previous;
+ }
+});
+
+test('Study mode serves the preserved historic side-scroller, lessons and museum',async()=>{
+ const previous=process.env.MB_SERVICE_ROLE;
+ process.env.MB_SERVICE_ROLE='study';
+ const server=createAppServer();
+ try{
+  await new Promise((resolve,reject)=>server.once('error',reject).listen(0,'127.0.0.1',resolve));
+  const root='http://127.0.0.1:'+server.address().port;
+  for(const path of ['/history-story-v7.html','/history-v7-online.js','/history-v7-controls.js',
+   '/history-v7-controls.css','/history-study.html','/history-museum.html']){
    const r=await fetch(root+path);
-   assert.equal(r.status,200,'missing '+path);
+   assert.equal(r.status,200,'study mode must serve '+path);
    const bytes=await r.arrayBuffer();
    assert.ok(bytes.byteLength>500,'empty '+path);
   }
   const html=await (await fetch(root+'/history-story-v7.html')).text();
   assert.ok(html.includes('data:image/webp;base64,'));
   assert.ok(html.includes('2D')||html.includes('횡스크롤'));
- }finally{await new Promise(r=>server.close(r))}
+ }finally{
+  if(server.listening)await new Promise(resolve=>server.close(resolve));
+  if(previous===undefined)delete process.env.MB_SERVICE_ROLE;
+  else process.env.MB_SERVICE_ROLE=previous;
+ }
 });
