@@ -37,7 +37,7 @@ function record(){
  '<a href="https://contents.history.go.kr/front/hm/view.do?levelId=hm_144_0150" target="_blank" rel="noopener">국사편찬위원회 사료 확인</a>'+
  '<h3>1947년 7월 19일 오후 1시경 · 여운형 암살 '+(p.memorial?'✅':'🔒')+'</h3>'+
  '<p>서울 혜화동에서 발생한 사건입니다. 후속 자료와 1946년 좌우합작 자료를 비교해 보세요.</p>'+
- '<a href="https://db.history.go.kr/contemp/level.do?levelId=frus_003r_0010_0870" target="_blank" rel="noopener">국사편찬위원회 당시 보고 확인</a>';
+ '<a href="https://db.history.go.kr/contemp/level.do?levelId=frus_003r_0010_0870" target="_blank" rel="noopener">국사편찬위원회 당시 보고 확인</a>'+ (window.MB_V7_STORY?.journal?.()||'');
 }
 function map(){
  const now=player();
