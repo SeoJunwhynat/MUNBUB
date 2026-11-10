@@ -13,6 +13,45 @@ import backroomsRelay from './backrooms/server.js';
 import { session, sameOrigin } from './lib/mb-server.js';
 import {activeCount,pingPresence,forgetPresence} from './lib/mb-presence.js';
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)));
+
+// Public media CDN is independent of the Node API. Never redirect anything
+// unless the *verified* remote media manifest responds successfully.
+// Until Pages is enabled, original files continue to work on this server.
+const MEDIA_CDN_ORIGIN=String(process.env.MB_MEDIA_CDN_ORIGIN||'https://seojunwhynat.github.io/MUNBUB').replace(/\/+$/,'');
+let mediaCdnHealthy=false;
+let mediaCdnCheckedAt=0;
+let mediaCdnChecking=null;
+function isPublicMedia(pathname){
+ return /^\/assets\/bgm\/(?:catalog\.json|[A-Za-z0-9_-]+\.mp3)$/i.test(pathname) ||
+  /^\/assets\/history-exam\/(?:catalog\.json|images\/s\d{3}\.png)$/i.test(pathname) ||
+  /^\/ui-assets\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.(?:png|webp|gif|jpg|jpeg|svg)$/i.test(pathname) ||
+  /^\/backrooms\/assets\/(?:monsters\/[A-Za-z0-9_.-]+\.glb|jumpscare\/[A-Za-z0-9_.-]+\.gif|sfx\/[A-Za-z0-9_.-]+\.(?:mp3|wav|ogg))$/i.test(pathname);
+}
+async function checkMediaCdn(){
+ if(mediaCdnChecking)return mediaCdnChecking;
+ mediaCdnCheckedAt=Date.now();
+ mediaCdnChecking=(async()=>{
+  try{
+   const response=await fetch(MEDIA_CDN_ORIGIN+'/media-health.json',{signal:AbortSignal.timeout(3000),headers:{'Accept':'application/json'}});
+   if(!response.ok)throw Error('CDN status '+response.status);
+   const data=await response.json();
+   mediaCdnHealthy=data?.status==='ok'&&data?.mediaHost===true&&data?.musicCount>=49&&data?.historyImages===186;
+  }catch{mediaCdnHealthy=false}
+  finally{mediaCdnChecking=null}
+  return mediaCdnHealthy;
+ })();
+ return mediaCdnChecking;
+}
+function redirectPublicMedia(req,res,pathname,url){
+ if(!['GET','HEAD'].includes(req.method)||!isPublicMedia(pathname))return false;
+ if(Date.now()-mediaCdnCheckedAt>60_000&&!mediaCdnChecking)void checkMediaCdn();
+ if(!mediaCdnHealthy)return false;
+ const target=MEDIA_CDN_ORIGIN+url.pathname+url.search;
+ res.writeHead(307,{'Location':target,'Cache-Control':'public, max-age=60','X-Content-Type-Options':'nosniff'});
+ res.end();
+ return true;
+}
+
 const handlers = new Map();
 const apiRoutes = new Set(['account','history-museum','history-story','history-side','history-ranked','duel','health','leaderboard','public-arena','public-rooms','ranked','score','chat']);
 const mime = {
@@ -63,6 +102,7 @@ async function handle(req,res){
   try{pathname=decodeURIComponent(url.pathname)}catch{return json(res,400,{error:'Bad URL encoding'})}
   if(pathname.includes('\\')||pathname.includes('\0')||pathname.split('/').includes('..'))return json(res,404,{error:'Not found'});
   if(pathname==='/healthz')return json(res,200,{status:'up'});
+  if(redirectPublicMedia(req,res,pathname,url))return;
   if(pathname==='/moved'){
     const page='<!doctype html><html lang="ko"><meta charset="utf-8"><meta http-equiv="refresh" content="2;url=/"><title>이전되었습니다</title><body>맛춘범은 Render로 이전되었습니다. <a href="/">홈으로 이동</a></body></html>';
     res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});return res.end(page);
