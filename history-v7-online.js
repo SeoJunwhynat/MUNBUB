@@ -7,7 +7,7 @@ const $=id=>document.getElementById(id),api='/api/history-side';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',">":'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const FLAGS=['manuscript','paper','document','printed','delivered','cut','memorial'];
 let account=null,room=null,code='',busy=false,moveBusy=false,pollBusy=false,requestSerial=0;
-let hadPlaying=false,soloBackup=null,sendPos='',progressQueue=[],progressBusy=false,lastRoomPhase='',oldCut=false;
+let hadPlaying=false,soloBackup=null,sendPos='',progressQueue=[],progressBusy=false,lastRoomPhase='',oldCut=false,locallyStartedCut=false;
 const smooth=new Map(),pending=new Set();
 function status(t){const el=$('v7Status');if(el)el.textContent=t||''}
 function short(t){const el=$('v7ShortStatus');if(el)el.textContent=t||'싱글플레이'}
@@ -39,7 +39,7 @@ function accept(next){
  }
  if(next.phase==='playing'&&next.progress){
   window.MB_V7?.mergeProgress?.(next.progress);
-  if(fresh){window.MB_V7?.cutscene?.();status('모든 플레이어에게 1947년 역사 시네마틱이 전달되었습니다.')}
+  if(fresh){if(!locallyStartedCut)window.MB_V7?.cutscene?.();locallyStartedCut=false;status('모든 플레이어에게 1947년 역사 시네마틱이 전달되었습니다.')}
  }
  drawPanel();
 }
@@ -111,6 +111,7 @@ async function move(){
 function onScene(scene){sendPos='';if(active())move()}
 function onProgress(next){
  if(!active()||!next)return;
+ if(next.cut&&!room?.progress?.cut)locallyStartedCut=true;
  for(const flag of FLAGS){
   if(next[flag]&&!room?.progress?.[flag]&&!pending.has(flag)){
    const s=snapshot();
@@ -170,7 +171,7 @@ function wire(){
   input.value='';send('chat',{message});
  });
  $('v7Lobby').insertAdjacentHTML('beforeend','<div class="v7-net-controls"><label style="font-size:12px"><input type="checkbox" id="v7Private"> 비공개방</label><label style="font-size:12px">인원 <select id="v7Capacity" style="background:#251b2d;color:#ffeed4;border:1px solid #9b7373;padding:6px"><option value="4">4인</option><option value="3">3인</option><option value="2">2인</option></select></label></div>');
- const copy=document.createElement('button');copy.textContent='방 코드 복사';copy.onclick=()=>{const url=location.origin+location.pathname+'?join='+code;navigator.clipboard?.writeText(url).then(()=>status('초대 링크를 복사했습니다.')).catch(()=>status('방 코드: '+code))};
+ const copy=document.createElement('button');copy.textContent='방 코드 복사';copy.onclick=()=>{const url=location.origin+location.pathname+'?join='+code;navigator.clipboard?.writeText?navigator.clipboard.writeText(url).then(()=>status('초대 링크를 복사했습니다.')).catch(()=>status('방 코드: '+code)):status('방 코드: '+code)};
  $('v7Session').append(copy);
  const side=$('v7OnlinePanel');
  if(side&&innerWidth<700)side.open=false;
