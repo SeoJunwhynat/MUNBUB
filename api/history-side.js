@@ -53,7 +53,7 @@ function progressValid(room,actor,flag){
  if(!site||room.progress[flag])return false;
  if(site.requires.some(x=>!room.progress[x]))return false;
  if(actor.scene!==site.scene)return false;
- return Math.abs(actor.x-site.x)<=130;
+ return Math.abs(actor.x-site.x)<=130||(flag==='cut'&&Math.abs(actor.x-1940)<=130);
 }
 async function mutate(code,me,body){
  for(let i=0;i<15;i++){
