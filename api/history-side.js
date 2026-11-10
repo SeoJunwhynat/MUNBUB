@@ -93,6 +93,13 @@ async function mutate(code,me,body){
   }else if(action==='progress'){
    if(next.phase!=='playing')return error(409,'게임 시작 후에만 기록할 수 있습니다.');
    const flag=String(body.flag||'');
+   const atScene=String(body.scene||''),atX=Number(body.x);
+   if(VALID_SCENES.has(atScene)&&Number.isFinite(atX)&&atX>=4&&atX<=2160){
+    const seconds=Math.max(0,Math.min(5,(now-(actor.lastAt||now))/1000));
+    if(atScene!==actor.scene||Math.abs(atX-actor.x)<Math.max(130,seconds*350+25)){
+     actor.scene=atScene;actor.x=atX;actor.lastAt=now;
+    }
+   }
    if(!FLAGS.includes(flag))return error(400,'지원하지 않는 공동 기록입니다.');
    if(next.progress[flag])return {status:200,state:view(next,me.id)};
    if(!progressValid(next,actor,flag))return error(409,'공동 기록 위치와 선행 퀘스트를 확인해 주세요.');
