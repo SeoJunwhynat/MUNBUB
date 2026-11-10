@@ -106,6 +106,39 @@ export const EXPECTED_MUSIC_PACKS={
   ]
 };
 
+/* Four previously missing history songs + Flowers Beneath the Wall.
+   User-provided '(1)' upload suffixes are identical to earlier sources, so register
+   under the original canonical names instead of duplicating the same recordings. */
+export const HISTORY_NEW_5_PACKS={
+  "history_music_register_5_20261110.zip": [
+    [
+      "Afternoon_in_a_Seoul_Teahouse.mp3",
+      4269310,
+      "c399d7bfad7c7496ad478b4a4a8f499e251e83105f47e544fcc4aa13ed0d2cbd"
+    ],
+    [
+      "Questions_in_the_Gallery.mp3",
+      2932050,
+      "cc213fd8600d597743ce3a13e8cb73dcb7f8bfda673d7c661c7a50cfed94cab8"
+    ],
+    [
+      "The_Clockmaker_s_Ledger.mp3",
+      2413572,
+      "fe3e5202dd9a3f9f8fee54a5211fe66cf18bdae9ec944156740d01eb3f390bc8"
+    ],
+    [
+      "Last_Page_Turned.mp3",
+      4292507,
+      "d7cb14bcd04c99ce7943a1e5f4061d6398ce03bacdc930140ba061a5a01d1ab2"
+    ],
+    [
+      "Flowers_Beneath_the_Wall.mp3",
+      3730143,
+      "e6ea6694f86c7654df633aaa78c4f901097be80d7c671713fd1e644d8db0c1f2"
+    ]
+  ]
+};
+
 export function parseStoredZip(bytes){
  const entries=new Map();
  let at=0;
