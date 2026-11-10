@@ -2,5 +2,17 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": [
     "icn1"
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "https://matchunbeom-mark2.onrender.com/",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "destination": "https://matchunbeom-mark2.onrender.com/:path*",
+      "permanent": false
+    }
   ]
 }
