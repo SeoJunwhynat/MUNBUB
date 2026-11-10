@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext,Script} from 'node:vm';
 const load=f=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
-function script(){
+function createStoryHarness(){
  const storage=new Map(),dialogues=[],notes=[];
  const window={
   MB_V7:{
@@ -35,7 +35,7 @@ test('historical side-scroller narrative preserves walkable environments and lay
  assert.match(h,/dialog:openModal,closeDialog:closeModal/);
  assert.equal((h.match(/data:image\/webp;base64/g)||[]).length,4);
  assert.ok(h.includes("!['market','news','home','school','plaza'].includes(s.id)"));
- const {script}=script();
+ const {script}=createStoryHarness();
  for(const [scene,labels] of Object.entries({
   street:['견습 기자 미란','거리의 전달책'],
   print:['인쇄공 태식','편집용 교정지'],
@@ -52,7 +52,7 @@ test('historical side-scroller narrative preserves walkable environments and lay
  }
 });
 test('first reporting choice is replayable if dialog is closed, then affects downstream dialogue without rewriting history',()=>{
- const {script,dialogues,storage}=script();const arr=[];
+ const {script,dialogues,storage}=createStoryHarness();const arr=[];
  script.populate('street',(x,y,label,kind,fn)=>arr.push({label,fn}));
  const miran=arr.find(o=>o.label==='견습 기자 미란');
  miran.fn();assert.match(dialogues.at(-1).title,/1946/);
@@ -69,7 +69,7 @@ test('first reporting choice is replayable if dialog is closed, then affects dow
  assert.match(game,/1947\. 7\. 19/);
 });
 test('newspaper layout choice and final historical memory diverge locally while main task is playable',()=>{
- const {script,dialogues}=script();
+ const {script,dialogues}=createStoryHarness();
  let continued=0;
  assert.equal(script.beforePrint(()=>continued++),true);
  assert.equal(continued,0);
