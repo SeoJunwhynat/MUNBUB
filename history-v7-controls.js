@@ -67,6 +67,7 @@ function emit(e,code){
  Object.defineProperty(ev,'historyV7Synthetic',{value:true});document.dispatchEvent(ev);
 }
 function capture(e){
+ if(window.MB_HISTORY_3D?.isActive?.())return;
  if(e.historyV7Synthetic)return;
  if(rebind&&e.type==='keydown'){
   e.preventDefault();e.stopImmediatePropagation();
