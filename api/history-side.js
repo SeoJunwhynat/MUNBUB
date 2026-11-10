@@ -43,7 +43,7 @@ function view(room,me){
   code:room.code,name:room.name,visibility:room.visibility,phase:room.phase,hostId:room.hostId,me,
   capacity:room.capacity||MAX_PLAYERS,chapter:room.chapter,progress:room.progress,
   players:room.players.map(x=>({id:x.id,name:x.name,scene:x.scene,x:x.x,y:x.y,facing:x.facing,ready:x.ready,lastAt:x.lastAt})),
-  chat:(room.chat||[]).slice(-40),cinematic:room.cinematic||null,
+  chat:(room.chat||[]).slice(-40),cinematic:room.cinematic||null,levers:room.levers||{left:null,right:null,ready:false},
   canStart:room.phase==='lobby'&&room.players.length>=2&&room.players.every(x=>x.ready),
   joined:!!p,revision:room.revision
  };
@@ -79,7 +79,7 @@ async function mutate(code,me,body){
    if(next.hostId!==me.id)return error(403,'방장만 시작할 수 있습니다.');
    if(next.phase!=='lobby'||next.players.length<2||!next.players.every(x=>x.ready))
     return error(409,'2명 이상 모두 준비해야 시작할 수 있습니다.');
-   next.phase='playing';next.chapter='1946';next.progress=blank();next.cinematic=null;
+   next.phase='playing';next.chapter='1946';next.progress=blank();next.cinematic=null;next.levers={left:null,right:null,ready:false};
    next.players.forEach((x,i)=>{x.ready=false;x.scene='street';x.x=90+i*22;x.y=280;x.facing=1;x.lastAt=now});
   }else if(action==='move'){
    if(next.phase!=='playing')return error(409,'게임 시작 후 이동할 수 있습니다.');
@@ -90,6 +90,17 @@ async function mutate(code,me,body){
    if(scene===actor.scene&&Math.abs(x-actor.x)>Math.max(35,time*350+25))
     return error(409,'이동 좌표를 다시 동기화해 주세요.');
    actor.scene=scene;actor.x=Math.round(x*10)/10;actor.y=Math.round(y*10)/10;actor.facing=facing;actor.lastAt=now;
+  }else if(action==='switch'){
+   if(next.phase!=='playing')return error(409,'먼저 협동 탐험을 시작해 주세요.');
+   const lever=String(body.lever||''),scene=String(body.scene||''),x=Number(body.x),site={left:460,right:1170}[lever];
+   if(!site||scene!=='print'||!Number.isFinite(x)||Math.abs(x-site)>80)
+    return error(409,'인쇄소 레버 가까이 이동해서 조작해 주세요.');
+   actor.scene='print';actor.x=x;actor.lastAt=now;
+   const l=next.levers||{left:null,right:null,ready:false};
+   l[lever]={id:me.id,at:now};
+   l.ready=!!(l.left&&l.right&&Math.abs(l.left.at-l.right.at)<=25000&&
+     (l.left.id!==l.right.id||next.players.length===1));
+   next.levers=l;
   }else if(action==='progress'){
    if(next.phase!=='playing')return error(409,'게임 시작 후에만 기록할 수 있습니다.');
    const flag=String(body.flag||'');
@@ -153,7 +164,7 @@ export default async function handler(req,res){
    for(let i=0;i<8;i++){
     const now=Date.now(),r={code:generate(),name:name(body.name),visibility:body.private===true?'private':'public',
      phase:'lobby',chapter:'1946',hostId:me.id,capacity:Math.min(4,Math.max(2,Number(body.capacity)||4)),createdAt:now,
-     expiresAt:now+LIFETIME,revision:0,players:[player(me)],progress:blank(),chat:[],cinematic:null};
+     expiresAt:now+LIFETIME,revision:0,players:[player(me)],progress:blank(),chat:[],cinematic:null,levers:{left:null,right:null,ready:false}};
     if(await insert(r))return res.status(200).json({state:view(r,me.id)});
    }
    return res.status(503).json({error:'방 코드 생성에 실패했습니다.'});
