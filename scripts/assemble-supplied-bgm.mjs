@@ -29,8 +29,10 @@ for (const {file,parts,bytes,sha256} of tracks) {
 }
 
 // Apply only successfully verified uploaded music ZIPs. Existing files are overwritten on purpose.
-const {installHistoryPacks}=await import('./install-history-music-packs.mjs');
+const {installHistoryPacks,HISTORY_NEW_5_PACKS}=await import('./install-history-music-packs.mjs');
 await installHistoryPacks(root);
+const newFive=await installHistoryPacks(root,console,HISTORY_NEW_5_PACKS);
+console.log('BGM five-track registration: '+newFive.installed+' installed, '+newFive.awaiting+' awaiting archive upload');
 
 // Publish only files present at build time, never placeholders or missing MP3s.
 // Updating the repo assets automatically enables new songs on the next Render build.
