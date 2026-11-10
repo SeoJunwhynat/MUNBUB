@@ -42,8 +42,6 @@ const RECOMMENDED=[
  ['The_Final_Sugar_Rush.mp3','The Final Sugar Rush','퀴즈'],
  ['Full_Tilt_Parade.mp3','Full Tilt Parade','메인'],
  ['Transit_at_Midnight.mp3','Transit at Midnight','무한'],
- ['magical_bookshelf_1.mp3','Magical Bookshelf','학습'],
- ['late_night_study_1.mp3','Late Night Study Session','학습'],
  ['main.mp3','맛춘범 메인 테마','공유'],
  ['spelling.mp3','맛춘범 맞춤법 테마','공유'],
  ['idiom.mp3','맛춘범 사자성어 테마','공유']
