@@ -46,6 +46,14 @@ test('3D chapters are navigable from museum door, era list and dated 1947 cutsce
  assert.match(h,/MB_HISTORY_CROWDS\?\.populate/);
  assert.match(h,/MB_HISTORY_CROWDS\?\.draw/);
  assert.equal((h.match(/data:image\/webp;base64/g)||[]).length,4,'2D art should survive');
+ const originalSprites=[...h.matchAll(/data:image\/png;base64,([A-Za-z0-9+/=]+)/g)];
+ assert.equal(originalSprites.length,2,'user-supplied museum image and pixel sprite sheet should be embedded');
+ assert.ok(originalSprites.some(x=>x[1].length>100000),'museum 2200x360 sprite bitmap missing');
+ assert.ok(originalSprites.some(x=>x[1].length>6000&&x[1].length<20000),'pixel character sprite sheet missing');
+ assert.match(h,/function spriteFrame\(charName,frame,x,y/);
+ assert.match(h,/function drawMuseumBackground\(\)/);
+ assert.match(h,/if\(spriteFrame\(idx===2/);
+
  assert.match(load('history-v7-controls.js'),/MB_HISTORY_3D\?\.isActive/);
  const js=load('history-v8-3d.js');
  for(const button of ['v8WarOpen','v8YeoOpen','v8TwoDOpen','v8Back','v8Museum','v8Switch'])
