@@ -8,7 +8,7 @@ import {join} from 'node:path';
 import {HISTORY_NEW_5_PACKS,installHistoryPacks} from '../scripts/install-history-music-packs.mjs';
 
 const load=f=>readFileSync(new URL('../'+f,import.meta.url),'utf8');
-const five=HISTORY_NEW_5_PACKS.history_music_register_5_20261110.zip;
+const five=HISTORY_NEW_5_PACKS["history_music_register_5_20261110.zip"];
 
 test('All history routes expose the same always-accessible quiz/museum/story/Matchunbeom switcher',()=>{
  const routes=['history-study.html','history-museum.html','history-story-v7.html','history-final-exam.html'];
