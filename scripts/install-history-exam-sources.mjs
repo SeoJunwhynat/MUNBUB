@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 
 const ARCHIVE='history_exam_sources_186_20261110.zip';
-const MANIFEST_SHA='37bf1b01e7dfd395eb019d68f18aee89cbbbf010628356e60a7fbab8d68db38c';
+const MANIFEST_SHA='17af1a41c1c331883d1cf5d6189025835bd604642a4aa4a16601e2a35f4af265';
 const sha=b=>createHash('sha256').update(b).digest('hex');
 export function readSourceZip(buffer){
  const found=new Map();
