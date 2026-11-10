@@ -117,5 +117,5 @@ test('Story game remains independent from new main-exam image-question deploymen
  assert.doesNotMatch(html,/history-v8-3d\.js/);
  const installer=load('scripts/assemble-supplied-bgm.mjs');
  assert.match(installer,/installHistoryExamSources\(root\)/);
- assert.match(load('scripts/install-history-exam-sources.mjs'),/37bf1b01e7dfd395eb019d68f18aee89cbbbf010628356e60a7fbab8d68db38c/);
+ assert.match(load('scripts/install-history-exam-sources.mjs'),/17af1a41c1c331883d1cf5d6189025835bd604642a4aa4a16601e2a35f4af265/);
 });
