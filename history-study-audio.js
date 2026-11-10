@@ -10,7 +10,8 @@ const NEW=[
  ['Afternoon_in_a_Seoul_Teahouse.mp3','Afternoon in a Seoul Teahouse','찻집의 오후'],
  ['Questions_in_the_Gallery.mp3','Questions in the Gallery','전시실의 질문'],
  ['The_Clockmaker_s_Ledger.mp3',"The Clockmaker's Ledger",'시계공의 장부'],
- ['Last_Page_Turned.mp3','마지막 장을 넘겨도','엔딩·휴식']
+ ['Last_Page_Turned.mp3','마지막 장을 넘겨도','엔딩·휴식'],
+ ['Flowers_Beneath_the_Wall.mp3','Flowers Beneath the Wall','차분한 역사 탐구']
 ];
 // Names ending in (1) below are genuinely different recordings, not duplicate filenames.
 const UPDATED_20261110=[
