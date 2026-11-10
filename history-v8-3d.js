@@ -138,6 +138,7 @@ function worldCar(){
  box(0,1.14,-1.65,4,.15,.3,'#3e3433');
  box(0,.72,-2,2.5,.26,.54,'#886c51');
  box(-1.1,.72,-1.72,.6,.15,.15,'#b2a087');
+ for(const mesh of meshes)if(mesh.z<-4&&mesh.d<12)mesh.scroll=true;
 }
 function hex(rgb){
  const n=parseInt(rgb.replace('#',''),16);
