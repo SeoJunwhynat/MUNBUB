@@ -4,7 +4,11 @@ var db=window.HISTORY_FINAL_DB,root=document.getElementById("app"),tabs=document
 if(!db||!Array.isArray(db.items)){root.innerHTML='<div class="empty">역사 학습 데이터를 불러오지 못했습니다. 새로고침해 주세요.</div>';return}
 var extra=window.MB_HISTORY_EXTRA_DB&&typeof window.MB_HISTORY_EXTRA_DB==="object"?window.MB_HISTORY_EXTRA_DB:{events:[],questions:[]};
 var existingIds=new Set(db.items.map(function(x){return x.id}));
-var expanded=Array.isArray(extra.events)?extra.events.filter(function(x){return x&&Number.isInteger(x.id)&&!existingIds.has(x.id)&&db.chapters[x.u]&&/^(19|20)\d{2}/.test(x.date||"")&&typeof x.title==="string"&&typeof x.detail==="string"&&typeof x.keyword==="string"}):[];
+var existingTitles=new Set(db.items.map(function(x){return x.title}));
+var expanded=Array.isArray(extra.events)?extra.events.filter(function(x){
+ if(!x||!Number.isInteger(x.id)||existingIds.has(x.id)||existingTitles.has(x.title)||!db.chapters[x.u]||!/^(19|20)\d{2}/.test(x.date||"")||typeof x.title!=="string"||typeof x.detail!=="string"||typeof x.keyword!=="string")return false;
+ existingIds.add(x.id);existingTitles.add(x.title);return true;
+}):[];
 var facts=db.items.concat(expanded),units=db.chapters;
 var state={tab:"home",mode:"all",unit:"all",search:"",session:[],index:0,chosen:-1,score:0,start:0,timer:null,review:false,finished:false,answered:0,points:0,roundAt:0,deadline:null,endReason:""};
 var historyModes={
@@ -148,7 +152,9 @@ people.forEach(function(p,i){
 var existingQuestionIds=new Set(all.map(function(q){return String(q.id)}));
 (Array.isArray(extra.questions)?extra.questions:[]).forEach(function(q){
  if(!q||existingQuestionIds.has(String(q.id)))return;
- var ev=facts.find(function(f){return f.id===q.eventId&&f.u===q.unit});
+ var extraSource=(Array.isArray(extra.events)?extra.events:[]).find(function(f){return f.id===q.eventId});
+ var ev=facts.find(function(f){return f.id===q.eventId&&f.u===q.unit})||
+   (extraSource&&facts.find(function(f){return f.title===extraSource.title&&f.u===q.unit}));
  if(!ev||!Array.isArray(q.choices)||q.choices.length!==4||typeof q.body!=="string"||q.body.length<20)return;
  if(["event","year","keyword","meaning","source","order","context","people","visual","map","timeline","between","month","worksheet"].indexOf(q.type)<0)return;
  if(["basic","advanced","top"].indexOf(q.level)<0)return;
