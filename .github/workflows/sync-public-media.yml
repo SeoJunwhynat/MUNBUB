@@ -1,0 +1,54 @@
+name: Sync public game media to CDN snapshot
+
+on:
+  push:
+    branches: [migration/render-neon]
+    paths:
+      - "assets/bgm/**"
+      - "assets/history-exam/**"
+      - "backrooms/assets/**"
+      - "ui-assets/**"
+      - "scripts/assemble-supplied-bgm.mjs"
+      - "scripts/install-history-music-packs.mjs"
+      - "scripts/install-history-exam-sources.mjs"
+      - ".github/workflows/sync-public-media.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: media-snapshot-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Update the static-only media snapshot on main
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git worktree add --detach _cdn-main origin/main
+          for dir in assets/bgm assets/history-exam backrooms/assets ui-assets; do
+            mkdir -p "_cdn-main/cdn-static/source/$(dirname "$dir")"
+            rm -rf "_cdn-main/cdn-static/source/$dir"
+            cp -a "$dir" "_cdn-main/cdn-static/source/$dir"
+          done
+          mkdir -p _cdn-main/cdn-static/_tools
+          for file in assemble-supplied-bgm.mjs install-history-music-packs.mjs install-history-exam-sources.mjs; do
+            cp "scripts/$file" "_cdn-main/cdn-static/_tools/$file"
+          done
+          cd _cdn-main
+          git add cdn-static/source cdn-static/_tools
+          if git diff --cached --quiet; then
+            echo "CDN snapshot already matches gameplay media"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(cdn): sync public media from Render application branch"
+          git push origin HEAD:main
