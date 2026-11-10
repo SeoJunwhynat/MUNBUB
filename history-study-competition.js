@@ -9,7 +9,7 @@ modal.id='historyCompetitionDialog';
 modal.className='history-competition-dialog';
 modal.setAttribute('aria-label','한국사 온라인 랭킹과 멀티플레이');
 document.body.append(modal);
-let section='rank',selectedMode='infinite',state=null,room=null,roomCode='',busy=false,tickId=null,pollId=null,account=null,serial=0,board=[],expired=false;
+let section='rank',selectedMode='infinite',state=null,room=null,roomCode='',roomCapacity=4,busy=false,tickId=null,pollId=null,account=null,serial=0,board=[],expired=false;
 async function request(path,data){
  const params=data?{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}:{credentials:'same-origin'};
  const response=await fetch(path,params);let body={};
@@ -27,7 +27,8 @@ async function login(){
  return account;
 }
 function open(which='rank'){
- section=which==='multi'?'multi':'rank';
+ section=which==='multi'||which==='duel'?'multi':'rank';
+ if(which==='duel')roomCapacity=2;else if(which==='multi')roomCapacity=4;
  serial++;clearTimers();
  if(!modal.open){if(modal.showModal)modal.showModal();else modal.setAttribute('open','');}
  if(section==='rank'){state=null;showRankMenu();login().then(()=>{if(section==='rank'&&!state&&modal.open)showRankMenu()})}
@@ -107,9 +108,9 @@ function multiPolling(){
 }
 function showMulti(){
  clearTimers();section='multi';
- wrap('MULTIPLAYER · HISTORY','역사 퀴즈 멀티플레이',
+ wrap('MULTIPLAYER · HISTORY',roomCapacity===2?'역사 1:1 대전':'역사 퀴즈 멀티플레이',
  '<div class="history-competition-tabs"><button data-competition="tab-rank">🏆 랭킹전</button><button class="active" data-competition="tab-multi">🤝 멀티플레이</button></div>'+
- '<p class="history-competition-desc">기존 역사 박물관의 서버 퀴즈방을 사용합니다. 최대 4명이 같은 문제를 풀며 점수를 겨뤄요.</p>'+
+ '<p class="history-competition-desc">기존 역사 박물관의 서버 퀴즈방을 사용합니다. 최대 '+roomCapacity+'명이 같은 문제를 풀며 점수를 겨뤄요.</p>'+
  (account?.loggedIn?'<p class="history-competition-hint">접속: '+esc(account.name||'학습자')+'</p>':'<p class="history-competition-hint">🔒 참여하려면 먼저 <a href="/index.html">맛춘범에 로그인</a>해 주세요.</p>')+
  '<div class="history-multi-controls"><label>방 이름<input id="historyRoomName" maxlength="26" value="한국사 퀴즈방"></label><button type="button" data-competition="multi-create" '+(account?.loggedIn?'':'disabled')+'>+ 새 방 만들기</button></div>'+
  '<div class="history-multi-controls"><label>8자리 방 코드<input id="historyRoomCode" maxlength="8" placeholder="방 코드 입력"></label><button type="button" data-competition="multi-join" '+(account?.loggedIn?'':'disabled')+'>코드로 입장</button></div>'+
@@ -176,7 +177,7 @@ modal.addEventListener('click',e=>{
  const action=target.dataset.competition;
  if(action==='close'){close();return}
  if(action==='tab-rank'){section='rank';showRankMenu();return}
- if(action==='tab-multi'){section='multi';showMulti();return}
+ if(action==='tab-multi'){section='multi';roomCapacity=4;showMulti();return}
  const mode=target.dataset.rankMode;
  if(mode&&modes[mode]){selectedMode=mode;showRankMenu();return}
  if(action==='rank-refresh'){loadBoard();return}
@@ -186,7 +187,7 @@ modal.addEventListener('click',e=>{
  if(action==='rank-finish'){rankAction('finish');return}
  if(target.hasAttribute('data-rank-choice')){rankAction('answer',{choice:Number(target.dataset.rankChoice)});return}
  if(action==='multi-refresh'){loadRooms();return}
- if(action==='multi-create'){multiAction('create',{name:$('historyRoomName')?.value||'한국사 퀴즈방'});return}
+ if(action==='multi-create'){multiAction('create',{name:$('historyRoomName')?.value||'한국사 퀴즈방',capacity:roomCapacity});return}
  if(action==='multi-join'){roomCode=String($('historyRoomCode')?.value||'').trim().toUpperCase();multiAction('join');return}
  if(target.dataset.roomJoin){roomCode=target.dataset.roomJoin;multiAction('join');return}
  if(action==='multi-sync'){refreshRoom();return}
