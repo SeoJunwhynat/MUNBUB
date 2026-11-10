@@ -1,0 +1,43 @@
+/* Compact persistent navigation – safe above game canvases and quiz dialogs. */
+#mbQuickHistoryNav,#mbQuickHistoryNav *{box-sizing:border-box}
+#mbQuickHistoryNav{
+ position:sticky;top:0;z-index:9000;width:100%;
+ min-height:44px;background:linear-gradient(100deg,#2f202d,#412937);
+ border-bottom:2px solid #b88b75;color:#fff0d6;
+ box-shadow:0 2px 12px #09071066;font-family:system-ui,"Malgun Gothic",sans-serif;
+ font-size:12px;line-height:1.4
+}
+#mbQuickHistoryNav .mb-quick-nav-inner{max-width:1250px;margin:auto;padding:5px 12px}
+#mbQuickHistoryNav .mb-quick-nav-desktop{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap}
+#mbQuickHistoryNav .mb-quick-nav-caption{font-size:11px;letter-spacing:.03em;color:#d4b2b1;font-weight:800;margin-right:5px;white-space:nowrap}
+#mbQuickHistoryNav .mb-quick-nav-link{
+ display:inline-flex;align-items:center;justify-content:center;gap:4px;text-decoration:none;
+ background:#483140;color:#f6e5d4;border:1px solid #76515d;border-radius:7px;
+ min-height:34px;padding:7px 11px;font-size:12px;font-weight:800;
+ line-height:1.35;white-space:nowrap;box-shadow:none
+}
+#mbQuickHistoryNav .mb-quick-nav-link:hover{background:#65465a;color:#fff6df}
+#mbQuickHistoryNav .mb-quick-nav-link.active{background:#e8c391;color:#3b2931;border-color:#ffe5b6}
+#mbQuickHistoryNav a:focus-visible,#mbQuickHistoryNav summary:focus-visible{
+ outline:3px solid #ffdc96;outline-offset:2px
+}
+#mbQuickHistoryNav .mb-quick-nav-mobile{display:none}
+#mbQuickHistoryNav .mb-quick-nav-mobile summary{
+ list-style:none;cursor:pointer;padding:8px 11px;background:#493243;color:#fff2dc;
+ border:1px solid #9f7371;border-radius:7px;font-weight:900;user-select:none
+}
+#mbQuickHistoryNav .mb-quick-nav-mobile summary::-webkit-details-marker{display:none}
+#mbQuickHistoryNav .mb-quick-nav-mobile summary b{color:#ffd6a2;font-size:11px}
+#mbQuickHistoryNav .mb-quick-nav-dropdown{
+ display:flex;flex-direction:column;gap:5px;position:absolute;right:8px;top:calc(100% + 3px);
+ width:min(290px,calc(100vw - 16px));max-height:calc(100dvh - 75px);overflow:auto;
+ padding:9px;background:#302331;border:2px solid #bd9879;border-radius:9px;
+ box-shadow:0 8px 22px #130a18c9
+}
+#mbQuickHistoryNav .mb-quick-nav-dropdown .mb-quick-nav-link{justify-content:flex-start;white-space:normal}
+@media(max-width:790px){
+ #mbQuickHistoryNav .mb-quick-nav-inner{padding:5px 9px}
+ #mbQuickHistoryNav .mb-quick-nav-desktop{display:none}
+ #mbQuickHistoryNav .mb-quick-nav-mobile{display:block}
+}
+@media(prefers-reduced-motion:reduce){#mbQuickHistoryNav *{transition:none!important}}
