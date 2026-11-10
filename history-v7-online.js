@@ -5,7 +5,7 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id),api='/api/history-side';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',">":'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const FLAGS=['manuscript','paper','document','printed','delivered','cut','memorial'];
+const FLAGS=['manuscript','paper','document','printed','delivered','timeline','cut','memorial'];
 let account=null,room=null,code='',busy=false,moveBusy=false,pollBusy=false,requestSerial=0;
 let hadPlaying=false,soloBackup=null,sendPos='',progressQueue=[],progressBusy=false,lastRoomPhase='',oldCut=false,locallyStartedCut=false;
 const smooth=new Map(),pending=new Set();
