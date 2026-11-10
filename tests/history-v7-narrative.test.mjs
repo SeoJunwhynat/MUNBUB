@@ -34,7 +34,7 @@ test('historical side-scroller narrative preserves walkable environments and lay
  assert.match(h,/document:openDocument,use:/);
  assert.match(h,/dialog:openModal,closeDialog:closeModal/);
  assert.equal((h.match(/data:image\/webp;base64/g)||[]).length,4);
- assert.match(h,/!\\?\['market','news','home','school','plaza'\]/);
+ assert.ok(h.includes("!['market','news','home','school','plaza'].includes(s.id)"));
  const {script}=script();
  for(const [scene,labels] of Object.entries({
   street:['견습 기자 미란','거리의 전달책'],
@@ -55,7 +55,7 @@ test('first reporting choice is replayable if dialog is closed, then affects dow
  const {script,dialogues,storage}=script();const arr=[];
  script.populate('street',(x,y,label,kind,fn)=>arr.push({label,fn}));
  const miran=arr.find(o=>o.label==='견습 기자 미란');
- miran.fn();assert.match(dialogues.at(-1).body,/1946/);
+ miran.fn();assert.match(dialogues.at(-1).title,/1946/);
  // Closing without committing must not permanently lock a dialogue route.
  miran.fn();assert.equal(dialogues.length,2);
  dialogues.at(-1).buttons[1].f();
@@ -97,7 +97,7 @@ test('journal and story UI keep primary play nonblocking, with source-based hist
  const narrative=load('history-v7-narrative.js');
  const css=load('history-v7-narrative.css');
  assert.match(narrative,/창작 인물/);
- assert.match(narrative,/실제 사료와 구분/);
+ assert.match(narrative,/실제 사료와 구별/);
  assert.match(narrative,/1946년 10월 7일/);
  assert.match(narrative,/역사적 사건은 달라지지 않으며/);
  assert.match(css,/#v7-story-bubble/);
