@@ -29,6 +29,8 @@ for (const {file,parts,bytes,sha256} of tracks) {
 }
 
 // Apply only successfully verified uploaded music ZIPs. Existing files are overwritten on purpose.
+const {installHistoryExamSources}=await import('./install-history-exam-sources.mjs');
+await installHistoryExamSources(root);
 const {installHistoryPacks,HISTORY_NEW_5_PACKS}=await import('./install-history-music-packs.mjs');
 await installHistoryPacks(root);
 const newFive=await installHistoryPacks(root,console,HISTORY_NEW_5_PACKS);
