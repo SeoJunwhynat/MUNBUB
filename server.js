@@ -102,6 +102,18 @@ async function handle(req,res){
   try{pathname=decodeURIComponent(url.pathname)}catch{return json(res,400,{error:'Bad URL encoding'})}
   if(pathname.includes('\\')||pathname.includes('\0')||pathname.split('/').includes('..'))return json(res,404,{error:'Not found'});
   if(pathname==='/healthz')return json(res,200,{status:'up'});
+  // Separate the core Korean game from study pages on dedicated Render services.
+  // The original deployment defaults to core; a new study Render sets MB_SERVICE_ROLE=study.
+  if(process.env.MB_SERVICE_ROLE!=='study'){
+    if(pathname==='/subject-select.html'){
+      if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'GET only'});
+      res.writeHead(302,{'Location':'/','Cache-Control':'no-store'});
+      return res.end();
+    }
+    if(/^\/(?:history(?:[-/]|$)|social(?:[-/]|$)|assets\/history-exam(?:\/|$)|api\/history(?:[-/]|$))/.test(pathname)){
+      return json(res,404,{error:'Not found'});
+    }
+  }
   if(redirectPublicMedia(req,res,pathname,url))return;
   if(pathname==='/moved'){
     const page='<!doctype html><html lang="ko"><meta charset="utf-8"><meta http-equiv="refresh" content="2;url=/"><title>이전되었습니다</title><body>맛춘범은 Render로 이전되었습니다. <a href="/">홈으로 이동</a></body></html>';
@@ -168,8 +180,8 @@ async function handle(req,res){
     return sendPublicFile(req,res,filePath,asset.size,assetType,'public, max-age=300');
   }
   if(req.method!=='GET'&&req.method!=='HEAD')return json(res,405,{error:'GET only'});
-  // The standalone pixel subject launcher is the site entrance; /index.html remains the original complete Korean quiz game.
-  if(pathname==='/'||pathname==='')pathname='/subject-select.html';
+  // The core Render serves the full Korean game; a study Render serves the preserved launcher.
+  if(pathname==='/'||pathname==='')pathname=process.env.MB_SERVICE_ROLE==='study'?'/subject-select.html':'/index.html';
   const rel=pathname.replace(/^\/+/,''),ext=extname(rel).toLowerCase();
   if(hiddenPrefixes.some(p=>pathname.startsWith(p))||rel.split('/').some(s=>s.startsWith('.'))||prohibitedFiles.has(rel)||!mime[ext])return json(res,404,{error:'Not found'});
   const path=resolve(ROOT,rel);

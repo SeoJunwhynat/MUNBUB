@@ -44,25 +44,48 @@ test('subject selection opens history choices and preserves old Korean game link
  window.MatchunbeomSubjectUI.selectSubject('core');
  assert.deepEqual(navigated,['/index.html']);
 });
-test('Render root is pixel launcher, original index remains intact, and each history module responds',async()=>{
+test('Core Render restores Korean home and disables history/social routes',async()=>{
  const server=createAppServer();
  await new Promise((resolve,reject)=>server.once('error',reject).listen(0,'127.0.0.1',resolve));
  const base='http://127.0.0.1:'+server.address().port;
  try{
   const main=await fetch(base+'/');
   assert.equal(main.status,200);
-  const text=await main.text();
-  assert.match(text,/맛춘범 \| 과목 선택/);
-  assert.match(text,/historyModesDialog/);
-  const legacy=await fetch(base+'/index.html',{method:'HEAD',headers:{'Accept-Encoding':'identity'}});
-  assert.equal(legacy.status,200);
-  assert.ok(Number(legacy.headers.get('content-length'))>2000000,'Original Korean app HTML was preserved');
-  for(const url of ['/subject-select.html','/history-story.html','/history-museum.html','/history-study.html']){
+  const game=await main.text();
+  assert.ok(game.length>2000000,'The complete Korean game is the homepage');
+  assert.ok(!game.includes('<title>맛춘범 | 과목 선택 · 역사·국어 게임</title>'));
+  const oldLauncher=await fetch(base+'/subject-select.html',{redirect:'manual'});
+  assert.equal(oldLauncher.status,302);
+  assert.equal(oldLauncher.headers.get('location'),'/');
+  for(const url of ['/history-story.html','/history-museum.html','/history-study.html',
+    '/history-story-app.js','/history-final-exam.html','/assets/history-exam/images/s000.png',
+    '/api/history-museum','/social-study.html']){
+   const res=await fetch(base+url,{method:'HEAD'});
+   assert.equal(res.status,404,url+' must be unavailable on the core host');
+  }
+  const entry=load('munbub_subject_entry.js');
+  assert.doesNotMatch(entry,/panel.innerHTML|historyModesDialog|과목 선택/);
+ }finally{
+  await new Promise((resolve,reject)=>server.close(err=>err?reject(err):resolve()));
+ }
+});
+test('Study Render mode serves the preserved launcher and historical modules',async()=>{
+ const previous=process.env.MB_SERVICE_ROLE;
+ process.env.MB_SERVICE_ROLE='study';
+ const server=createAppServer();
+ await new Promise((resolve,reject)=>server.once('error',reject).listen(0,'127.0.0.1',resolve));
+ const base='http://127.0.0.1:'+server.address().port;
+ try{
+  const home=await fetch(base+'/');
+  assert.equal(home.status,200);
+  assert.ok((await home.text()).includes('맛춘범 | 과목 선택'));
+  for(const url of ['/history-story.html','/history-museum.html','/history-study.html']){
    const res=await fetch(base+url,{method:'HEAD'});
    assert.equal(res.status,200,url);
-   assert.match(res.headers.get('content-type'),/text\/html/);
   }
  }finally{
   await new Promise((resolve,reject)=>server.close(err=>err?reject(err):resolve()));
+  if(previous===undefined)delete process.env.MB_SERVICE_ROLE;
+  else process.env.MB_SERVICE_ROLE=previous;
  }
 });

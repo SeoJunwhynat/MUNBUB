@@ -55,7 +55,7 @@ test('Media CDN responds with a real 307 to verified host only; private paths an
   const image=await head('/ui-assets/ranked-stage-final.png');
   assert.equal(image.status,307);
   const history=await head('/assets/history-exam/images/s000.png');
-  assert.equal(history.status,307);
+  assert.equal(history.status,404,'history assets are disabled in the core deployment');
  }finally{
   await Promise.all([new Promise(resolve=>app.close(resolve)),new Promise(resolve=>fake.close(resolve))]);
  }
