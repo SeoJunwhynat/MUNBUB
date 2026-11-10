@@ -1,0 +1,52 @@
+name: Media CDN · GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cdn-static/**"
+      - ".github/workflows/media-cdn-pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "media-pages"
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout only the public asset snapshot
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Reconstruct verified game assets
+        run: node cdn-static/build.mjs
+      - name: Confirm no private source or ZIP archives ship
+        run: |
+          test -f cdn-static/dist/media-health.json
+          test ! -d cdn-static/dist/scripts
+          test ! -d cdn-static/dist/assets/bgm/_incoming
+          test ! -d cdn-static/dist/assets/bgm/_encoded
+          test ! -d cdn-static/dist/assets/history-exam/_incoming
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Upload static files
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: cdn-static/dist
+      - name: Deploy CDN
+        id: deploy
+        uses: actions/deploy-pages@v4
