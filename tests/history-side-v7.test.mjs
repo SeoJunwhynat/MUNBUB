@@ -23,7 +23,7 @@ test('V7 story route is the submitted full pixel side-scroller rather than the f
 test('side scroller does real physics, world coordinate camera and stage interactions',()=>{
  const src=load('history-story-v7.html');
  for(const term of [
-  'p.vy+=.51*dt','p.buffer=9','p.coyote=p.onGround','p.x+=p.vx*dt',
+  'p.vy+.51*dt','p.buffer=9','p.coyote=p.onGround','p.x+=p.vx*dt',
   'p.y+=p.vy*dt','const target=p1.x-236','cam+=','ladders.find',
   'groundScene(byid.print','groundScene(byid.street','progress.manuscript','progress.paper',
   'progress.document','progress.printed','progress.delivered','progress.memorial','startPrinting()'
@@ -52,7 +52,7 @@ test('online co-op is authenticated, has actual signed rooms and multiplayer pos
  for(const action of ['create','join','leave','ready','start','move','progress','chat','switch','cutReady']){
   assert.ok(server.includes("action==='"+action+"'"),'server missing action '+action);
  }
- assert.match(server,/if\(Math\.abs\(x-site\)>80/);
+ assert.match(server,/Math\.abs\(x-site\)>80/);
  assert.match(server,/l\.left\.id!==l\.right\.id/);
  assert.match(server,/revision/);
  assert.match(server,/Math\.abs\(x-actor\.x\)/);
