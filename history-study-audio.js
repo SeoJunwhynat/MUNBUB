@@ -12,7 +12,29 @@ const NEW=[
  ['The_Clockmaker_s_Ledger.mp3',"The Clockmaker's Ledger",'시계공의 장부'],
  ['Last_Page_Turned.mp3','마지막 장을 넘겨도','엔딩·휴식']
 ];
+// Names ending in (1) below are genuinely different recordings, not duplicate filenames.
+const UPDATED_20261110=[
+ ['late_night_study_1.mp3','Late Night Study Session · 원곡','새 음원으로 교체'],
+ ['late_night_study_2.mp3','Late Night Study Session (1) · 다른 음악','별도 버전'],
+ ['magical_bookshelf_1.mp3','Magical Bookshelf · 원곡','새 음원으로 교체'],
+ ['magical_bookshelf_2.mp3','Magical Bookshelf (1) · 다른 음악','별도 버전'],
+ ['neon_loop_1.mp3','ネオン・ループ · 원곡','새 음원으로 교체'],
+ ['neon_loop_2.mp3','ネオン・ループ (1) · 다른 음악','별도 버전'],
+ ['menu_drift_1.mp3','Menu Drift · 원곡','새 음악'],
+ ['menu_drift_2.mp3','Menu Drift (1) · 다른 음악','별도 버전'],
+ ['nostalgic_tape_1.mp3','Nostalgic Tape · 원곡','새 음악'],
+ ['nostalgic_tape_2.mp3','Nostalgic Tape (1) · 다른 음악','별도 버전'],
+ ['triumphant_fanfare_1.mp3','Triumphant Fanfare · 원곡','새 음악'],
+ ['triumphant_fanfare_2.mp3','Triumphant Fanfare (1) · 다른 음악','별도 버전'],
+ ['mystic_adventure_1.mp3','신비로운 모험 · 원곡','새 음악'],
+ ['mystic_adventure_2.mp3','신비로운 모험 (1) · 다른 음악','별도 버전'],
+ ['history_journey_1.mp3','역사의 여정 · 원곡','새 음악'],
+ ['history_journey_2.mp3','역사의 여정 (1) · 다른 음악','별도 버전'],
+ ['quiz_rhythm_1.mp3','퀴즈의 리듬 · 원곡','새 음악'],
+ ['quiz_rhythm_2.mp3','퀴즈의 리듬 (1) · 다른 음악','별도 버전']
+];
 const RECOMMENDED=[
+ ...UPDATED_20261110,
  ...NEW,
  ['Evening_Rain_On_Paper.mp3','Evening Rain on Paper','차분한 학습'],
  ['Beneath_the_Painted_Arch.mp3','Beneath the Painted Arch','전시·기록'],
@@ -38,7 +60,7 @@ try{
 }catch{}
 settings.bgmVolume=clamp(settings.bgmVolume,0,100);
 settings.sfxVolume=clamp(settings.sfxVolume,0,100);
-let playlist=[],missing=new Set(),audio=null,ctx=null,dialog=null,idx=-1,active=false,changing=false,ready=false,errorText='',last='',
+let playlist=[],assetRevisions=new Map(),missing=new Set(),audio=null,ctx=null,dialog=null,idx=-1,active=false,changing=false,ready=false,errorText='',last='',
  history=[],installed=false;
 function save(){
  try{localStorage.setItem(KEY,JSON.stringify({...settings,enabled:false}))}catch{}
@@ -121,7 +143,9 @@ async function start(target){
  if(!chooseIndex(target))return;
  active=true;settings.enabled=true;settings.track=nowTrack();
  const player=audioElement();
- const src=BASE+encodeURIComponent(nowTrack());
+ const filename=nowTrack();
+ const rev=assetRevisions.get(filename);
+ const src=BASE+encodeURIComponent(filename)+(rev?'?v='+rev:'');
  if(player.getAttribute('src')!==src){player.src=src;player.load()}
  player.volume=settings.bgmVolume/100;
  save();redraw();
@@ -235,6 +259,9 @@ async function catalog(){
   if(!Array.isArray(data?.tracks))throw Error('Invalid catalog');
   const installedFiles=new Set(data.tracks.filter(x=>typeof x==='string'&&/^assets\/bgm\/[A-Za-z0-9_-]+\.mp3$/.test(x))
      .map(x=>x.slice('assets/bgm/'.length)));
+  assetRevisions=new Map();
+  const hashes=data.hashes&&typeof data.hashes==='object'?data.hashes:{};
+  for(const file of installedFiles){const digest=hashes['assets/bgm/'+file];if(typeof digest==='string'&&/^[a-f0-9]{12,64}$/i.test(digest))assetRevisions.set(file,digest.slice(0,16))}
   playlist=[...installedFiles].filter(x=>!excluded.test(x)).sort((a,b)=>{
    const aKey=RECOMMENDED.findIndex(v=>v[0]===a),bKey=RECOMMENDED.findIndex(v=>v[0]===b);
    if(aKey<0&&bKey<0)return a.localeCompare(b);
