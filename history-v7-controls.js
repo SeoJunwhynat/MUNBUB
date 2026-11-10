@@ -80,6 +80,7 @@ function capture(e){
   if(e.type==='keydown'&&e.code==='Escape'){e.preventDefault();e.stopImmediatePropagation();close()}
   return;
  }
+ if($('modal')?.classList.contains('show'))return;
  const local=$('local')?.textContent?.includes('ON');
  const arrows=local?{}:{ArrowLeft:'KeyA',ArrowRight:'KeyD',ArrowUp:'Space',ArrowDown:'KeyS'};
  let mapping=arrows[e.code];
