@@ -13,6 +13,7 @@ test('V7 story route is the submitted full pixel side-scroller rather than the f
  assert.match(html,/canvas id="canvas" width="640" height="360"/);
  assert.equal((html.match(/data:image\/webp;base64/g)||[]).length,4,'all four uploaded pixel layers must survive');
  assert.match(html,/history-v7-online\.js/);
+ assert.match(html,/history-v7-controls\.js/);
  assert.match(html,/id="v7OnlinePanel"/);
  assert.match(html,/id="v7RoomCode"/);
  assert.match(html,/id="v7ChatForm"/);
@@ -43,6 +44,9 @@ test('online co-op is authenticated, has actual signed rooms and multiplayer pos
  for(const key of ['/api/history-side','/api/account','function drawPlayers','setInterval(refresh,650)','setInterval(move,260)','function onProgress','function onScene','function pressReady','function lever','function restoreSolo']){
   assert.ok(src.includes(key),'client missing '+key);
  }
+ assert.doesNotThrow(()=>new Script(load('history-v7-controls.js')));
+ assert.match(load('history-v7-controls.js'),/history_v7_input/);
+ assert.match(load('history-v7-controls.js'),/ArrowLeft:'KeyA'/);
  const server=load('api/history-side.js');
  assert.match(server,/session\(req\)/);
  assert.match(server,/sameOrigin\(req\)/);
@@ -63,7 +67,7 @@ test('Render serves new historic side-scroller public files while preserving ori
  await new Promise((resolve,reject)=>server.once('error',reject).listen(0,'127.0.0.1',resolve));
  const root='http://127.0.0.1:'+server.address().port;
  try{
-  for(const path of ['/history-story-v7.html','/history-v7-online.js','/history-study.html','/history-museum.html']){
+  for(const path of ['/history-story-v7.html','/history-v7-online.js','/history-v7-controls.js','/history-v7-controls.css','/history-study.html','/history-museum.html']){
    const r=await fetch(root+path);
    assert.equal(r.status,200,'missing '+path);
    const bytes=await r.arrayBuffer();
