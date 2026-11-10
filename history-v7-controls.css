@@ -1,0 +1,38 @@
+/* User-controlled mobile buttons and keyboard / investigation dialogs for V7 */
+@media(max-width:780px){
+ .mobile{bottom:var(--v7-touch-bottom,30px)!important;left:var(--v7-touch-left,8px)!important;right:var(--v7-touch-right,8px)!important}
+ .mobile button{width:var(--v7-touch-size,49px)!important;height:var(--v7-touch-size,49px)!important;min-width:38px!important;min-height:38px!important}
+}
+@media(max-width:780px) and (pointer:fine){.mobile{display:none!important}}
+#v7ControlsDialog{
+ width:min(600px,calc(100vw - 22px));max-height:90dvh;overflow:auto;
+ border:3px solid #ba8b6c;background:#291d2c;color:#f6e7d1;
+ box-shadow:8px 8px #0f0b13;padding:0;border-radius:6px
+}
+#v7ControlsDialog::backdrop{background:#0d0812d8}
+#v7ControlsDialog header{display:flex;align-items:center;justify-content:space-between;gap:8px;
+ padding:11px 13px;border-bottom:2px solid #b7896d;background:#4a3040;position:sticky;top:0;z-index:2}
+#v7ControlsDialog h2{font-size:19px;margin:0;color:#ffe0ae}
+#v7ControlsDialog #v7DialogBody{padding:15px;font-size:13px;line-height:1.8}
+#v7ControlsDialog h3{color:#ffe0ae;font-size:15px;margin:12px 0 5px}
+#v7ControlsDialog p{color:#edd5c1;line-height:1.8}
+#v7ControlsDialog a{color:#ffcc8c;text-decoration:underline;overflow-wrap:anywhere}
+#v7ControlsDialog .v7-item{padding:8px 12px;border:1px solid #765767;margin:6px 0}
+#v7ControlsDialog .v7-task-list{display:grid;gap:5px}
+#v7ControlsDialog .v7-task-list p{margin:0;padding:6px 8px;border:1px solid #684957}
+#v7ControlsDialog .v7-map-route{border:2px solid #957167;background:#1c1724;padding:15px;line-height:2}
+#v7ControlsDialog .v7-binding{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 8px;border:1px solid #634758}
+#v7ControlsDialog .v7-binding span{font-weight:850;flex:1 1 auto}
+#v7ControlsDialog .v7-binding button{font-size:12px;padding:6px}
+#v7ControlsDialog .v7-binding input{flex:1 1 120px;min-width:0;accent-color:#e6ad7a}
+#v7ControlsDialog .v7-binding b{min-width:18px}
+#v7ControlsDialog .v7-bind-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:10px}
+#v7ControlsDialog .v7-muted{font-size:11px;color:#cdb2b3}
+.v7-shortcuts{display:flex;flex-wrap:wrap;gap:7px;justify-content:center;align-items:center;
+ padding:10px;margin:9px 0;border:1px solid #604653;background:#251b2dc9;border-radius:4px}
+.v7-shortcuts button{font-size:12px;padding:7px 10px}
+@media(max-width:520px){
+ #v7ControlsDialog .v7-bind-grid{grid-template-columns:1fr}
+ .v7-shortcuts{gap:4px;padding:6px;margin:6px 0}
+ .v7-shortcuts button{font-size:11px;padding:5px 6px}
+}
