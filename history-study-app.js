@@ -2,7 +2,10 @@
 "use strict";
 var db=window.HISTORY_FINAL_DB,root=document.getElementById("app"),tabs=document.getElementById("tabs");
 if(!db||!Array.isArray(db.items)){root.innerHTML='<div class="empty">역사 학습 데이터를 불러오지 못했습니다. 새로고침해 주세요.</div>';return}
-var facts=db.items,units=db.chapters;
+var extra=window.MB_HISTORY_EXTRA_DB&&typeof window.MB_HISTORY_EXTRA_DB==="object"?window.MB_HISTORY_EXTRA_DB:{events:[],questions:[]};
+var existingIds=new Set(db.items.map(function(x){return x.id}));
+var expanded=Array.isArray(extra.events)?extra.events.filter(function(x){return x&&Number.isInteger(x.id)&&!existingIds.has(x.id)&&db.chapters[x.u]&&/^(19|20)\d{2}/.test(x.date||"")&&typeof x.title==="string"&&typeof x.detail==="string"&&typeof x.keyword==="string"}):[];
+var facts=db.items.concat(expanded),units=db.chapters;
 var state={tab:"home",mode:"all",unit:"all",search:"",session:[],index:0,chosen:-1,score:0,start:0,timer:null,review:false,finished:false,answered:0,points:0,roundAt:0,deadline:null,endReason:""};
 var historyModes={
  all:{label:"전체 문제",types:null},
