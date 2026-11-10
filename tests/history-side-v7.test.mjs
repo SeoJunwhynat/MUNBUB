@@ -64,9 +64,10 @@ test('Render serves new historic side-scroller public files while preserving ori
  const root='http://127.0.0.1:'+server.address().port;
  try{
   for(const path of ['/history-story-v7.html','/history-v7-online.js','/history-study.html','/history-museum.html']){
-   const r=await fetch(root+path,{method:'HEAD'});
+   const r=await fetch(root+path);
    assert.equal(r.status,200,'missing '+path);
-   assert.ok(Number(r.headers.get('content-length'))>500,path);
+   const bytes=await r.arrayBuffer();
+   assert.ok(bytes.byteLength>500,'empty '+path);
   }
   const html=await (await fetch(root+'/history-story-v7.html')).text();
   assert.ok(html.includes('data:image/webp;base64,'));
