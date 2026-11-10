@@ -13,7 +13,7 @@ const imageSrc=id=>idOk(id)?BASE+id+'.png':'';
 const titleOf=(id,catalog)=>{
  const n=Number(id?.slice(1));
  const c=catalog||window.MB_HISTORY_EXAM_2026?.captions||{};
- return installed.find(x=>x.id===id)?.caption||c[n]||'교과서 자료 '+String(n+1).padStart(3,'0');
+ return c[n]||installed.find(x=>x.id===id)?.caption||'교과서 자료 '+String(n+1).padStart(3,'0');
 };
 function ensureZoom(){
  if(dialog)return dialog;
@@ -99,7 +99,7 @@ async function load(){
   const info=await res.json();
   if(!info||info.total!==LIMIT||!Array.isArray(info.items)||info.items.length!==LIMIT||
    !info.items.every(x=>idOk(x.id)&&x.file===x.id+'.png'))throw Error('catalog mismatch');
-  installed=info.items;status='installed';
+  installed=info.items.map(x=>{const index=Number(x.id.slice(1));const curated=window.MB_HISTORY_EXAM_2026?.captions?.[index];return curated?{...x,caption:curated}:x});status='installed';
  }catch(e){installed=[];status='missing'}
  if(root&&root.querySelector('.history-exam-gallery-head'))renderGallery(root,window.MB_HISTORY_EXAM_2026);
  if(typeof window.dispatchEvent==='function')window.dispatchEvent(new Event('history-exam-media-ready'));
