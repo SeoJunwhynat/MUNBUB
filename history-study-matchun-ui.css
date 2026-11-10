@@ -1,0 +1,120 @@
+/* 한국사 2 게임 홈 · 맛춘범 메인 UI와 동일한 배치 구조
+   이미지 디자인은 사용자가 나중에 넣을 수 있게 data-art-slot 속성으로 분리. */
+:root{--history-wine:#613743;--history-night:#271923;--history-gold:#f2c17f;--history-cream:#fff0cb;--history-line:#a56d65;--history-paper:#e9c49b}
+body{background:radial-gradient(circle at 50% -40%,#533747,transparent 52%),#19121d;color:var(--history-cream)}
+header{background:#211624f2;border-bottom:2px solid #6d4c55}
+header .bar{padding:11px 0}
+.brand{font-weight:950;color:#ffe2b3}
+.barLinks a{border:2px solid #a27961;background:#46303e;color:#ffe8c4}
+.tabs{gap:8px;padding:8px 0 11px}
+.tab{border:2px solid #78535d;color:#f4d7c4;background:#382635;border-radius:5px;box-shadow:0 3px #1d1420;font-weight:900}
+.tab.active{background:#eac192;border-color:#fff0bc;color:#35242e}
+.tab:hover{background:#66404b;color:#fff3d7}
+.tab.active:hover{background:#eac192;color:#35242e}
+#app{min-width:0}
+.history-game-home,.history-game-home *{box-sizing:border-box}
+.history-game-home{width:100%;max-width:1120px;margin:0 auto;min-width:0}
+.history-game-head{border:4px double #ca906d;border-bottom:5px solid #422631;box-shadow:0 6px #130d15;background:linear-gradient(130deg,#583845,#342331);padding:16px clamp(14px,3vw,28px);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.history-game-head .eyebrow{font-size:11px;letter-spacing:.12em;color:#ffca87}
+.history-game-head h1{font-size:clamp(24px,3.5vw,38px);color:#ffe5b6;margin:6px 0 4px;text-shadow:2px 3px #251720}
+.history-game-head h1 span{color:#fff2d7}
+.history-game-head p{font-size:13px;color:#dec1af;margin:0}
+.history-game-head-seal{font:900 48px/1 serif;color:#ffcf8e;border:3px solid #d19c68;padding:10px 13px;box-shadow:inset 0 0 0 3px #4f303b;background:#35232c}
+.history-home-stage{min-width:0;display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:clamp(10px,2vw,22px);margin-top:20px;align-items:stretch}
+.history-home-main-col,.history-home-side-col{min-width:0;display:flex;flex-direction:column;gap:12px}
+.history-hero-title{min-height:38px;display:flex;align-items:center;gap:10px;font-size:18px;font-weight:950;color:#ffe2a7}
+.history-hero-title:before{content:"";height:23px;width:6px;background:#e9b77a;box-shadow:3px 0 #7d4650}
+.history-hero-title small{font-size:10px;letter-spacing:.14em;color:#bda59f}
+.history-mode-card{display:flex;align-items:center;gap:clamp(8px,1.3vw,15px);min-width:0;width:100%;min-height:100px;padding:clamp(10px,1.6vw,15px);text-align:left;text-decoration:none;font:inherit;cursor:pointer;border:3px solid #b98a6b;border-bottom:6px solid #572f3d;border-radius:7px;background:linear-gradient(135deg,#7b4450 0%,#493040 100%);color:#ffeed4;box-shadow:inset 0 0 0 3px #613948,4px 5px #1a111a;transition:transform .12s,filter .12s}
+.history-mode-card:hover,.history-mode-card:focus-visible{filter:brightness(1.15);transform:translateY(-2px);border-color:#ffe1a4;outline-offset:3px}
+.history-mode-card:active{transform:translateY(2px)}
+.history-mode-art{display:grid;flex:0 0 clamp(65px,9vw,98px);width:clamp(65px,9vw,98px);height:clamp(63px,8vw,80px);place-items:center;background:linear-gradient(160deg,#d6ac83,#ae6e62);border:3px solid #442831;outline:2px solid #e6b582;outline-offset:-7px;font-size:clamp(28px,4vw,42px);color:#4c2f36;text-shadow:1px 1px #fff1d0;image-rendering:pixelated}
+.history-mode-meta{display:flex;flex:1 1 auto;min-width:0;flex-direction:column;gap:6px}
+.history-mode-meta strong{color:#ffe3b5;font-weight:950;font-size:clamp(20px,2.3vw,30px);line-height:1.25;word-break:keep-all}
+.history-mode-meta small{color:#e9caba;font-weight:750;font-size:clamp(11px,1.15vw,13px);line-height:1.5;word-break:keep-all}
+.history-mode-arrow{font-size:35px;color:#ffc989;margin-left:auto;line-height:1}
+.history-mode-year{background:linear-gradient(135deg,#78544b,#3b3441)}
+.history-mode-advanced{background:linear-gradient(135deg,#634d62,#362b42)}
+.history-primary-hint{color:#baa0a3;font-size:11px;line-height:1.5;padding:0 5px}
+.history-home-side-col{padding-top:50px}
+.history-hero-art{position:relative;overflow:hidden;flex:1 1 auto;min-height:245px;border:3px double #a16f62;background:radial-gradient(ellipse at 50% 10%,#785052,#3b2737 65%,#2d2130);box-shadow:inset 0 0 0 6px #392738;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:20px}
+.history-hero-art:before{content:"";position:absolute;inset:12px;border:1px dashed #b2826570;pointer-events:none}
+.history-hero-emblem{font:900 82px/1 serif;letter-spacing:.07em;color:#ffe0aa;text-shadow:5px 5px #2d1d31}
+.history-hero-art strong{font-size:20px;letter-spacing:.14em;color:#ffdeaf}
+.history-hero-art span{font-size:14px;color:#efc8b2;line-height:1.7}
+.history-hero-art small{font-size:11px;color:#b7a0a4}
+.history-museum-card{min-height:105px;background:linear-gradient(135deg,#846049,#52353d)}
+.history-museum-card .history-mode-art{background:#d6b082}
+.history-extra-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:24px 0 18px}
+.history-extra-modes button,.history-extra-modes a{min-width:0;min-height:50px;display:flex;align-items:center;justify-content:center;gap:5px;padding:10px 7px;text-align:center;font:900 clamp(12px,1.4vw,15px)/1.4 "Malgun Gothic",sans-serif;text-decoration:none;border:3px double #a87965;background:#433040;color:#ffdfba;border-radius:5px;box-shadow:0 3px #241622;cursor:pointer}
+.history-extra-modes button:hover,.history-extra-modes a:hover{filter:brightness(1.15);background:#604053}
+.history-extra-modes span{color:#ffc68f}
+.history-units-panel{border-top:3px double #8c5c5f;padding:23px 0 12px}
+.history-units-heading{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px}
+.history-units-heading h2{color:#ffe3b6;font-size:22px}
+.history-units-heading p{color:#bfa9af;font-size:13px}
+.history-unit-stats{display:flex;gap:5px;flex-wrap:wrap}
+.history-unit-stats span{font-size:12px;border:1px solid #86616c;background:#362837;padding:5px 8px;color:#e8c9ac}
+.history-unit-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:14px 0}
+.history-unit-card{width:100%;min-width:0;min-height:92px;display:flex;flex-direction:column;gap:3px;text-align:left;padding:11px 13px;border:2px solid #89646a;border-bottom:4px solid #50313c;background:#2c2431;color:#fbe7ca;border-radius:4px;cursor:pointer}
+.history-unit-card:hover{border-color:#f0bd8d;background:#4a3342}
+.history-unit-card>span{font-size:13px;color:#efbb7c;font-weight:950}
+.history-unit-card>strong{font-size:14px;line-height:1.5}
+.history-unit-card>small{font-size:12px;color:#bea7af}
+.history-disclaimer{font-size:12px;color:#bca7b2}
+.history-active-mode{display:flex;align-items:center;flex-wrap:wrap;gap:8px;background:linear-gradient(90deg,#603f4b,#3a2c3d);padding:14px 17px;border:3px double #ba8b6d;border-bottom:5px solid #5d3748;margin:2px 0 19px}
+.history-active-mode span{color:#ffca88;font-size:11px;font-weight:900;letter-spacing:.15em}
+.history-active-mode strong{font-size:21px;color:#fff0c8}
+.history-active-mode small{color:#dcc3b8}
+#app>.card,#app>.quiz .card,#app>.quiz.card,.card{border-radius:7px;border:2px solid #71515b;background:#2b2230;box-shadow:inset 0 0 0 1px #3b2a39}
+#app .btn{border-radius:5px;border:2px solid #886366;background:#433141;color:#ffe3c2;box-shadow:0 2px #231824}
+#app .btn.main{background:linear-gradient(120deg,#f4c890,#cc927e);border-color:#ffe4b4;color:#3d2930}
+#app .field select,#app .field input{border-radius:5px}
+#app .choice{border-radius:6px;border:2px solid #684d57;background:#3a2c3b;color:#fff0d8}
+#app .choice:hover:not(:disabled){border-color:#f3c68c;background:#4f3a48}
+#app .choice.correct{border-color:#94d8af;background:#254338}
+#app .choice.wrong{border-color:#f1a9a1;background:#512e36}
+#app .quiz{max-width:880px}
+#app .question{font-size:clamp(16px,2.4vw,22px)}
+#app .progress{border-radius:3px}
+#app button:focus-visible,#app a:focus-visible{outline:3px solid #ffe0a0;outline-offset:3px}
+@media(max-width:790px){
+ .history-home-stage{grid-template-columns:minmax(0,1fr);gap:14px}
+ .history-home-side-col{padding-top:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch}
+ .history-hero-art{min-height:145px;max-height:190px}
+ .history-hero-emblem{font-size:48px}
+ .history-hero-art strong{font-size:13px}
+ .history-hero-art span{font-size:12px}
+ .history-hero-art small{display:none}
+ .history-museum-card{min-height:145px}
+ .history-mode-meta strong{font-size:24px}
+ .history-extra-modes{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:560px){
+ .wrap{padding-left:10px;padding-right:10px}
+ .history-game-head{padding:13px 14px}
+ .history-game-head-seal{font-size:33px;padding:8px 9px}
+ .history-game-head h1{font-size:26px}
+ .history-game-head p{font-size:12px}
+ .history-hero-title{min-height:28px;font-size:16px}
+ .history-mode-card{min-height:80px;padding:9px;gap:9px}
+ .history-mode-art{flex-basis:63px;width:63px;height:59px;font-size:27px}
+ .history-mode-meta strong{font-size:22px}
+ .history-mode-meta small{font-size:11px}
+ .history-mode-arrow{font-size:26px}
+ .history-home-side-col{display:flex;flex-direction:column;gap:8px}
+ .history-hero-art{display:none}
+ .history-museum-card{min-height:86px}
+ .history-extra-modes{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:18px}
+ .history-unit-grid{grid-template-columns:1fr}
+ .history-active-mode{padding:11px;gap:5px}
+ .history-active-mode strong{font-size:18px}
+}
+@media(max-width:350px){
+ .history-mode-card{gap:6px}
+ .history-mode-art{flex-basis:52px;width:52px;height:53px}
+ .history-mode-meta strong{font-size:19px}
+ .history-mode-meta small{font-size:10px}
+ .history-mode-arrow{font-size:21px}
+}
+@media(prefers-reduced-motion:reduce){.history-mode-card{transition:none}}
