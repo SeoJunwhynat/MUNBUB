@@ -10,14 +10,15 @@ const PREFIX='history-side-v7/', LIFETIME=90*60*1000,MAX_PLAYERS=4;
 const CODE=/^[A-HJ-NP-Z2-9]{8}$/;
 const ALPHABET='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const VALID_SCENES=new Set(['museum','1945','street','print','market','news','home','school','plaza','1947','1950','1960','1970','1980','1987','modern']);
-const FLAGS=['manuscript','paper','document','printed','delivered','cut','memorial'];
+const FLAGS=['manuscript','paper','document','printed','delivered','timeline','cut','memorial'];
 const SITES={
  manuscript:{scene:'print',x:790,requires:[]},
  paper:{scene:'print',x:1025,requires:[]},
  document:{scene:'print',x:690,requires:[]},
  printed:{scene:'print',x:1500,requires:['manuscript','paper','document']},
  delivered:{scene:'street',x:1560,requires:['printed']},
- cut:{scene:'street',x:1560,requires:['delivered']},
+ timeline:{scene:'street',x:1795,requires:['delivered']},
+ cut:{scene:'street',x:1940,requires:['timeline']},
  memorial:{scene:'1947',x:700,requires:['cut']}
 };
 let client;
