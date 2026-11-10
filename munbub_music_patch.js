@@ -66,6 +66,18 @@
   ['warmnight','따스한 이 밤에','assets/bgm/Warm_Winter_Night.mp3'],
   ['pumpkin','Moonlight Pumpkin Sprint','assets/bgm/Moonlight_Pumpkin_Sprint.mp3']
  ];
+ // Shared history & spelling playlist. These become playable only after actual MP3s
+ // are present in assets/bgm and announced by Render's published catalog.
+ const HISTORY_SHARED_BGM=[
+  ['history-teahouse','Afternoon in a Seoul Teahouse','assets/bgm/Afternoon_in_a_Seoul_Teahouse.mp3'],
+  ['history-gallery','Questions in the Gallery','assets/bgm/Questions_in_the_Gallery.mp3'],
+  ['history-ledger',"The Clockmaker's Ledger",'assets/bgm/The_Clockmaker_s_Ledger.mp3'],
+  ['history-ending','마지막 장을 넘겨도','assets/bgm/Last_Page_Turned.mp3']
+ ];
+ HOME.push(...HISTORY_SHARED_BGM);
+ BASIC.push(...HISTORY_SHARED_BGM);
+ HIGH.push(...HISTORY_SHARED_BGM);
+ INFINITE.push(...HISTORY_SHARED_BGM);
  HOME.push(...SEASONAL_BGM);
  BASIC.push(...SEASONAL_BGM);
  HIGH.push(...SEASONAL_BGM);
