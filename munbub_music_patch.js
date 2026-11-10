@@ -51,12 +51,12 @@
   ['triumph','Triumphant Orchestra','assets/bgm/triumphant_orchestra.mp3'],
   ['vhs','Retro VHS Horror','assets/bgm/retro_vhs_horror.mp3'],
   ['dreamcore','Dreamcore Ambient','assets/bgm/dreamcore_ambient.mp3'],
-  ['night1','Late Night Study Session','assets/bgm/late_night_study_1.mp3'],
-  ['night2','Late Night Study Session · Alternate','assets/bgm/late_night_study_2.mp3'],
-  ['books1','Magical Bookshelf','assets/bgm/magical_bookshelf_1.mp3'],
-  ['books2','Magical Bookshelf · Alternate','assets/bgm/magical_bookshelf_2.mp3'],
-  ['neon1','Neon Loop','assets/bgm/neon_loop_1.mp3'],
-  ['neon2','Neon Loop · Alternate','assets/bgm/neon_loop_2.mp3']
+  ['night1','Late Night Study Session · 원곡','assets/bgm/late_night_study_1.mp3'],
+  ['night2','Late Night Study Session (1) · 다른 음악','assets/bgm/late_night_study_2.mp3'],
+  ['books1','Magical Bookshelf · 원곡','assets/bgm/magical_bookshelf_1.mp3'],
+  ['books2','Magical Bookshelf (1) · 다른 음악','assets/bgm/magical_bookshelf_2.mp3'],
+  ['neon1','ネオン・ループ · 원곡','assets/bgm/neon_loop_1.mp3'],
+  ['neon2','ネオン・ループ (1) · 다른 음악','assets/bgm/neon_loop_2.mp3']
  ];
  // Five user-supplied tracks: share across every non-Backrooms mode.
  const SEASONAL_BGM=[
@@ -82,6 +82,26 @@
  BASIC.push(...SEASONAL_BGM);
  HIGH.push(...SEASONAL_BGM);
  INFINITE.push(...SEASONAL_BGM);
+ // The new 12 songs form six independent original/(1) pairs.
+ // The existing night/books/neon pairs above are also distinct tracks.
+ const NEW_PAIRS_20261110=[
+  ['menu1','Menu Drift · 원곡','assets/bgm/menu_drift_1.mp3'],
+  ['menu2','Menu Drift (1) · 다른 음악','assets/bgm/menu_drift_2.mp3'],
+  ['tape1','Nostalgic Tape · 원곡','assets/bgm/nostalgic_tape_1.mp3'],
+  ['tape2','Nostalgic Tape (1) · 다른 음악','assets/bgm/nostalgic_tape_2.mp3'],
+  ['fanfare1','Triumphant Fanfare · 원곡','assets/bgm/triumphant_fanfare_1.mp3'],
+  ['fanfare2','Triumphant Fanfare (1) · 다른 음악','assets/bgm/triumphant_fanfare_2.mp3'],
+  ['mystic1','신비로운 모험 · 원곡','assets/bgm/mystic_adventure_1.mp3'],
+  ['mystic2','신비로운 모험 (1) · 다른 음악','assets/bgm/mystic_adventure_2.mp3'],
+  ['journey1','역사의 여정 · 원곡','assets/bgm/history_journey_1.mp3'],
+  ['journey2','역사의 여정 (1) · 다른 음악','assets/bgm/history_journey_2.mp3'],
+  ['rhythm1','퀴즈의 리듬 · 원곡','assets/bgm/quiz_rhythm_1.mp3'],
+  ['rhythm2','퀴즈의 리듬 (1) · 다른 음악','assets/bgm/quiz_rhythm_2.mp3']
+ ];
+ HOME.push(...NEW_PAIRS_20261110);
+ BASIC.push(...NEW_PAIRS_20261110);
+ HIGH.push(...NEW_PAIRS_20261110);
+ INFINITE.push(...NEW_PAIRS_20261110);
  HOME.push(...ADDED_BGM);
  BASIC.push(...ADDED_BGM.filter(t=>!['vhs','dreamcore','neon1','neon2'].includes(t[0])));
  HIGH.push(...ADDED_BGM.filter(t=>['vhs','dreamcore','neon1','neon2','triumph','mischief'].includes(t[0])));
@@ -146,7 +166,8 @@
   return ['quiz','setup','result','spelling','application','mistakes'].includes(view)?'spelling':'home';
  }
  const groupFor=m=>m==='duel'?'duel':['hardcore','infinite','ranked'].includes(m)?'high':'basic';
- const abs=t=>new URL(t[2],document.baseURI).href;
+ const assetRevisions=new Map();
+ const abs=t=>{const url=new URL(t[2],document.baseURI);const ver=assetRevisions.get(t[2]);if(ver)url.searchParams.set('v',ver);return url.href};
  // Backrooms themes are available in Home's manual picker, never the automatic rotation.
  const BACKROOMS_MENU_TRACKS=new Set(['vhs','dreamcore']);
  const available=t=>!!t&&PUBLISHED_BGM.has(t[2])&&!missing.has(abs(t));
@@ -329,6 +350,9 @@
    if(!files.length)return;
    PUBLISHED_BGM.clear();
    for(const file of files)PUBLISHED_BGM.add(file);
+   assetRevisions.clear();
+   const hashes=data?.hashes&&typeof data.hashes==='object'?data.hashes:{};
+   for(const file of files){const ver=hashes[file];if(typeof ver==='string'&&/^[0-9a-f]{12,64}$/i.test(ver))assetRevisions.set(file,ver.slice(0,16))}
    // Restore the requested homepage theme when the original MP3 is installed.
    let restoreHomeTheme=false;
    if(available(HOME[0])&&homeChoice==='new'){
