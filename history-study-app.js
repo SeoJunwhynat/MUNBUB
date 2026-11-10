@@ -164,15 +164,26 @@ var existingQuestionIds=new Set(all.map(function(q){return String(q.id)}));
  add(q.id,ev,q.type,q.level,q.body,q.choices,q.answer,q.explanation,q.wrongNotes||{});
  if(all.length>before)existingQuestionIds.add(String(q.id));
 });
-/* User-provided textbook images: every question preserves an explicit source-image ID. */
-(Array.isArray(newExam.questions)?newExam.questions:[]).forEach(function(q){
- var ev=facts.find(function(f){return f.title===q.eventTitle});
- if(!ev||!/^s\d{3}$/.test(String(q.imageId||""))||q.choices?.length!==4)return;
- if(!["source","visual","map","context","worksheet","timeline","month"].includes(q.type))return;
- if(!["basic","advanced","top"].includes(q.level))return;
- var before=all.length;
- add(q.id,ev,q.type,q.level,q.body,q.choices,q.answer,q.explanation,{});
- if(all.length>before){all[all.length-1].imageId=q.imageId;}
+/* Image-dependent exercises are released only after all 186 original PNGs
+   are installed and the verified catalog has loaded. Avoid unanswerable missing-image questions. */
+function loadNewExamMediaQuestions(){
+ if(window.MB_HISTORY_EXAM_MEDIA?.status?.()!=="installed")return 0;
+ var inserted=0;
+ (Array.isArray(newExam.questions)?newExam.questions:[]).forEach(function(q){
+  var ev=facts.find(function(f){return f.title===q.eventTitle});
+  if(!ev||!/^s\d{3}$/.test(String(q.imageId||""))||q.choices?.length!==4)return;
+  if(!["source","visual","map","context","worksheet","timeline","month"].includes(q.type))return;
+  if(!["basic","advanced","top"].includes(q.level)||all.some(function(x){return x.id===q.id}))return;
+  var before=all.length;
+  add(q.id,ev,q.type,q.level,q.body,q.choices,q.answer,q.explanation,{});
+  if(all.length>before){all[all.length-1].imageId=q.imageId;inserted++;}
+ });
+ return inserted;
+}
+loadNewExamMediaQuestions();
+if(typeof window.addEventListener==="function")window.addEventListener("history-exam-media-ready",function(){
+ var n=loadNewExamMediaQuestions();
+ if(n&&["home","quiz"].includes(state.tab)&&(!state.session||state.session.length===0))draw();
 });
 function setTab(tab){if(state.timer)clearInterval(state.timer);state.timer=null;state.tab=tab;tabs.querySelectorAll("[data-tab]").forEach(function(b){b.classList.toggle("active",b.dataset.tab===tab)});draw();window.scrollTo(0,0)}
 function home(){
