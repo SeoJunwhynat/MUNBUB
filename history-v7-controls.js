@@ -18,7 +18,7 @@ function objective(){
  return '<p>현재 지역: '+escape(player().scene)+' · 월드 위치 '+Math.round(player().x)+'</p><div class="v7-task-list">'+[
   [p.manuscript,'인쇄소 위층에서 신문 원고 찾기'],[p.paper,'인쇄용 종이 수집'],
   [p.document,'1946. 10. 7. 좌우합작 7원칙 조사'],[p.printed,'활자 배열·신문 인쇄'],
-  [p.delivered,'서울 거리에서 신문 전달'],[p.cut,'1947. 7. 19. 역사 컷신'],
+  [p.delivered,'서울 거리에서 신문 전달'],[p.timeline,'공동 기록판에 1945~1946년 사건 순서 정리'],[p.cut,'1947. 7. 19. 역사 컷신'],
   [p.memorial,'혜화동 후속 기록 조사']
  ].map(x=>'<p>'+(x[0]?'✅':'⬜')+' '+x[1]+'</p>').join('')+'</div>';
 }
