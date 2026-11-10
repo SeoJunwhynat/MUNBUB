@@ -1,0 +1,19 @@
+/* NAMeless History: scene-first storytelling; dialogue bubble stays in-game without blocking motion */
+#v7-story-bubble{
+ position:absolute;z-index:6;left:clamp(8px,3%,25px);bottom:clamp(8px,4%,22px);
+ width:min(460px,87%);max-height:35%;display:flex;flex-direction:column;gap:4px;
+ padding:10px 13px;border-left:4px solid #edb979;
+ background:linear-gradient(95deg,#211b2cf0,#302334db);box-shadow:0 4px 18px #0a0a1399;
+ color:#fff0dd;pointer-events:none;opacity:0;transform:translateY(8px);
+ transition:opacity .18s ease,transform .18s ease
+}
+#v7-story-bubble.show{opacity:1;transform:translateY(0)}
+#v7-story-bubble span{font-size:11px;font-weight:900;color:#ffd099;letter-spacing:.01em}
+#v7-story-bubble p{margin:0;font-size:clamp(11px,1.7vw,14px);line-height:1.48;word-break:keep-all;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+#v7ControlsDialog .v7-story-note{border-left:3px solid #d7a477;border-bottom:1px solid #80666a;padding:8px 10px;margin:8px 0;background:#342633}
+#v7ControlsDialog .v7-story-note strong{color:#ffe0b1}
+#v7ControlsDialog .v7-story-note p{margin:3px 0;font-size:12px;line-height:1.65;color:#e3cbbd}
+#v7ControlsDialog .v7-story-note-footer{font-size:11px;color:#d3b7b5}
+.v7-history-after{border-left:3px solid #dcb987;background:#433341;padding:9px 11px;color:#ffe9cc}
+@media(max-width:780px){#v7-story-bubble{bottom:max(72px,calc(var(--v7-touch-bottom,30px) + var(--v7-touch-size,49px) + 8px));width:min(500px,92%);max-height:27%;padding:7px 9px}#v7-story-bubble p{font-size:11px;-webkit-line-clamp:3}}
+@media(prefers-reduced-motion:reduce){#v7-story-bubble{transition:none}}
