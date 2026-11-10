@@ -102,6 +102,7 @@ async function load(){
   installed=info.items;status='installed';
  }catch(e){installed=[];status='missing'}
  if(root&&root.querySelector('.history-exam-gallery-head'))renderGallery(root,window.MB_HISTORY_EXAM_2026);
+ if(typeof window.dispatchEvent==='function')window.dispatchEvent(new Event('history-exam-media-ready'));
 }
 window.MB_HISTORY_EXAM_MEDIA={questionImage,renderGallery,load,status:()=>status,count:()=>installed.length,imageSrc};
 load();
