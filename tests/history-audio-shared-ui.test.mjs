@@ -25,7 +25,7 @@ test('History audio reads exactly the existing published Matchunbeom BGM catalog
  assert.match(s,/function next\(/);
  assert.match(s,/audio\.addEventListener\('ended'/);
  assert.match(s,/\.filter\(x=>!excluded\.test\(x\)\)/);
- assert.match(s,/encodeURIComponent\(nowTrack\(\)\)/);
+ assert.match(s,/encodeURIComponent\(filename\)/);
  const original=load('munbub_music_patch.js');
  assert.match(original,/assets\/bgm\/catalog\.json/);
  assert.match(load('scripts/assemble-supplied-bgm.mjs'),/BGM catalog OK/);
