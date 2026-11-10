@@ -37,7 +37,7 @@ function renderHome({facts,questions,units,wrongCount,encode}){
  '<strong>HISTORY ARCHIVE</strong><span>한국 현대사의 기록을 따라<br>공부하고 탐험하는 공간</span><small>캐릭터 및 배경 아트 슬롯</small></div>'+
  '<div class="history-online-actions" aria-label="역사 온라인 기능">'+
  '<button type="button" data-history-competition="rank" data-art-slot="ranked">🏆 랭킹전</button>'+
- '<button type="button" data-history-competition="multi" data-art-slot="duel">⚔ 1:1 대전</button>'+
+ '<button type="button" data-history-competition="duel" data-art-slot="duel">⚔ 1:1 대전</button>'+
  '<button type="button" data-history-competition="multi" data-art-slot="public-rooms">🤝 공개방</button>'+
  '<a href="/history-museum.html#achievement" data-art-slot="achievement">🎖 업적·칭호</a></div>'+
  '<a class="history-mode-card history-museum-card" href="/history-museum.html" data-art-slot="backrooms"><span class="history-mode-art" aria-hidden="true">▤</span>'+
