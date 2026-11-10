@@ -31,7 +31,7 @@ function renderHome({facts,questions,units,wrongCount,encode}){
  card('infinite','∞','끝없는 역사 문제 도전')+
  card('hardcore','⚔','첫 오답에서 종료')+
  card('timed60','⌛','60초 제한시간 도전')+
- '<div class="history-primary-hint">버튼 일러스트는 나중에 전달받을 UI 디자인으로 교체할 수 있습니다.</div></div>'+
+ '<button type="button" class="history-music-home-btn" data-history-audio="open"><span aria-hidden="true">♫</span><span><strong>음악 · 소리 설정</strong><small>맛춘범과 공유하는 배경음악 재생 및 볼륨 조절</small></span></button></div>'+
  '<div class="history-home-side-col">'+
  '<div class="history-hero-art" data-art-slot="character" aria-label="캐릭터 그림 교체 자리"><div class="history-hero-emblem" aria-hidden="true">史</div>'+
  '<strong>HISTORY ARCHIVE</strong><span>한국 현대사의 기록을 따라<br>공부하고 탐험하는 공간</span><small>캐릭터 및 배경 아트 슬롯</small></div>'+
@@ -49,6 +49,7 @@ function renderHome({facts,questions,units,wrongCount,encode}){
  '<button type="button" data-go="timeline">📅 역사 연표</button>'+
  '<button type="button" data-go="sources">📜 사료 분석</button>'+
  '<button type="button" data-go="wrong">📒 오답노트 <span>('+wrongCount+')</span></button>'+
+ '<button type="button" data-history-audio="open">🎵 소리 설정</button>'+
  '<a href="/history-story.html">🎞️ 스토리 게임</a></nav>'+
  '<section class="history-units-panel"><div class="history-units-heading"><div><h2>단원별 학습</h2>'+
  '<p>단원을 선택하면 해당 범위의 종합 문제를 설정할 수 있습니다.</p></div>'+
