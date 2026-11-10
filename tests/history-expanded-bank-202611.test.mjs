@@ -64,7 +64,8 @@ test('all local Korean history quiz modes receive the expanded 145-event pool pl
  const app=load('history-study-app.js'),html=load('history-study.html');
  assert.doesNotThrow(()=>new Script(app));
  assert.ok(html.indexOf('history-study-additions.js')<html.indexOf('history-study-app.js'),'extension must load first');
- assert.match(app,/facts=db\.items\.concat\(expanded\)/);
+ assert.match(app,/facts=db\.items\.concat\(expanded,newExamEvents\)/);
+ assert.match(app,/newExamEvents=Array\.isArray\(newExam\.events\)/);
  assert.match(app,/Array\.isArray\(extra\.questions\)/);
  const handlers={},root={innerHTML:'',addEventListener(name,fn){handlers[name]=fn}},tabs={addEventListener(){},querySelectorAll(){return[]}};
  const inputs={unit:{value:'all'},level:{value:'all'},type:{value:'all'},count:{value:'10000'}};
