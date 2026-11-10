@@ -295,7 +295,7 @@ html,body{max-width:100%;overflow-x:clip}
   });
   window.MatchunbeomSubjectUI = { open: () => view('subjects'), close: () => view('home'), selectSubject };
   // 과목 탭에서 돌아온 경우에도 해당 메뉴를 즉시 연다.
-  const requestedSubject=new URLSearchParams(window.location.search).get('subject');
+  const requestedSubject=(String(window.location?.search||'').match(/(?:\?|&)subject=([^&]+)/)||[])[1]||'';
   if(requestedSubject==='history'){view('subjects');selectSubject('history');}
   else if(window.location.hash==='#subjects'){view('subjects');}
   else view('home');
