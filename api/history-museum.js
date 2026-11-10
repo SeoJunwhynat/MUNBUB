@@ -42,7 +42,7 @@ function userView(room,id){
   myChoice:me?.choice??null
  }:null;
  return {code:room.code,name:room.name,phase:room.phase,hostId:room.hostId,
-  capacity:MAX_PLAYERS,createdAt:room.createdAt,round,
+  capacity:room.capacity||MAX_PLAYERS,createdAt:room.createdAt,round,
   players:room.players.map(p=>({id:p.id,name:p.name,score:p.score,ready:p.ready,answered:p.choice!==null})),
   me:id,canStart:room.phase==='lobby'&&room.players.length>=2&&room.players.every(p=>p.ready)};
 }
@@ -66,7 +66,7 @@ async function mutate(code,actor,action,body){
   if(action==='join'){
    if(next.phase!=='lobby')return error(409,'이미 게임이 시작됐어.');
    if(!player){
-    if(next.players.length>=MAX_PLAYERS)return error(409,'방이 가득 찼어.');
+    if(next.players.length>=(next.capacity||MAX_PLAYERS))return error(409,'방이 가득 찼어.');
     next.players.push({id:actor.id,name:actor.name,ready:false,score:0,choice:null});
    }
   }else{
@@ -115,7 +115,7 @@ export default async function handler(req,res){
    if(!code){
     const rows=await sql("SELECT body FROM mb_objects WHERE pathname LIKE 'history-museum/%' AND updated_at>NOW()-INTERVAL '65 minutes' ORDER BY updated_at DESC LIMIT 80");
     const rooms=rows.map(x=>x.body).filter(x=>x&&x.expiresAt>Date.now()&&x.players?.length&&x.phase==='lobby')
-    .slice(0,35).map(x=>({code:x.code,name:x.name,players:x.players.length,capacity:MAX_PLAYERS,host:x.players.find(p=>p.id===x.hostId)?.name||'방장'}));
+    .slice(0,35).map(x=>({code:x.code,name:x.name,players:x.players.length,capacity:x.capacity||MAX_PLAYERS,host:x.players.find(p=>p.id===x.hostId)?.name||'방장'}));
     return res.status(200).json({rooms});
    }
    if(!VALID.test(code))return res.status(400).json({error:'방 코드를 확인해 줘.'});
@@ -137,7 +137,7 @@ export default async function handler(req,res){
    for(let i=0;i<8;i++){
     const code=codeNew(),now=Date.now();
     const room={code,name:sanitizeName(body.name),hostId:me.id,createdAt:now,expiresAt:now+ROOM_MS,revision:0,
-     phase:'lobby',index:0,deadline:0,ids:shuffle(MUSEUM_QUESTIONS.map(q=>q.id)).slice(0,COUNT),
+     capacity:body.capacity===2?2:4,phase:'lobby',index:0,deadline:0,ids:shuffle(MUSEUM_QUESTIONS.map(q=>q.id)).slice(0,COUNT),
      players:[{id:me.id,name:me.name,ready:false,score:0,choice:null}]};
     if(await insertRoom(room))return res.status(200).json({state:userView(room,me.id)});
    }
