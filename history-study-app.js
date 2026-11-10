@@ -167,7 +167,7 @@ var existingQuestionIds=new Set(all.map(function(q){return String(q.id)}));
 /* User-provided textbook images: every question preserves an explicit source-image ID. */
 (Array.isArray(newExam.questions)?newExam.questions:[]).forEach(function(q){
  var ev=facts.find(function(f){return f.title===q.eventTitle});
- if(!ev||!/^s\\d{3}$/.test(String(q.imageId||""))||q.choices?.length!==4)return;
+ if(!ev||!/^s\d{3}$/.test(String(q.imageId||""))||q.choices?.length!==4)return;
  if(!["source","visual","map","context","worksheet","timeline","month"].includes(q.type))return;
  if(!["basic","advanced","top"].includes(q.level))return;
  var before=all.length;
