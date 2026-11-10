@@ -1,0 +1,62 @@
+/* 한국사 전용 랭킹전 / 멀티플레이 모달 · 도트풍 배치 */
+.history-competition-dialog{width:min(800px,calc(100vw - 24px));max-width:800px;max-height:min(92dvh,940px);padding:0;border:0;border-radius:8px;background:#261c2a;color:#ffecd2;box-shadow:0 22px 80px #050208ca;overflow:auto}
+.history-competition-dialog::backdrop{background:#100b15c9;backdrop-filter:blur(3px)}
+.history-competition-shell{border:4px solid #be8c6b;box-shadow:inset 0 0 0 4px #5e3c4a;min-height:250px}
+.history-competition-head{display:flex;align-items:start;justify-content:space-between;gap:12px;background:linear-gradient(135deg,#68414b,#352638);border-bottom:3px solid #9d705e;padding:17px 22px 14px}
+.history-competition-head small{font-size:11px;letter-spacing:.13em;font-weight:900;color:#edbb80}
+.history-competition-head h2{font-size:clamp(20px,3vw,28px);margin:4px 0;color:#fff0c6}
+.history-competition-close{color:#ffe8c6;border:2px solid #a77960;background:#47313f;border-radius:4px;font-weight:950;font-size:24px;min-width:40px;min-height:40px;cursor:pointer}
+.history-competition-body{padding:clamp(12px,3vw,24px)}
+.history-competition-body h3{color:#ffe1b4;margin:21px 0 10px}
+.history-competition-body button,.history-competition-body a{font:900 14px/1.4 system-ui,"Malgun Gothic",sans-serif;cursor:pointer}
+.history-competition-body button:not(:disabled):hover,.history-competition-body a:hover{filter:brightness(1.12)}
+.history-competition-body button:disabled{opacity:.47;cursor:not-allowed}
+.history-competition-tabs,.history-competition-actions,.history-competition-modes{display:flex;flex-wrap:wrap;gap:9px;margin:11px 0}
+.history-competition-tabs button,.history-competition-actions button,.history-competition-actions a,.history-competition-modes button,.history-multi-room button{border-radius:5px;border:2px solid #b08064;background:#4d3443;color:#ffdeae;text-decoration:none;padding:9px 13px;min-height:42px}
+.history-competition-tabs .active,.history-competition-modes .active,.history-competition-actions .primary{background:#f1c38a;color:#3b2530;border-color:#fff1bd}
+.history-competition-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.history-competition-modes button{min-width:0;padding:12px 6px}
+.history-competition-desc,.history-competition-hint{font-size:13px;color:#d7b9b3;line-height:1.7}
+.history-competition-hint a{color:#ffdc9e}
+.history-competition-status{min-height:18px;font-size:12px;color:#eab77e;padding:4px}
+.history-rank-rows,.history-multi-room-list{max-height:265px;overflow-y:auto;border:2px solid #684859;background:#241c29;border-radius:5px;padding:12px}
+.history-rank-row{display:flex;gap:12px;align-items:center;border-bottom:1px solid #614652;min-height:42px;padding:7px}
+.history-rank-row:last-child{border-bottom:0}.history-rank-row strong{width:50px;color:#ffcb8a}
+.history-rank-row span{flex:1;overflow-wrap:anywhere}
+.history-rank-row b{color:#ffe5a9;font-variant-numeric:tabular-nums}
+.history-rank-status{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;color:#ffdfa9;background:#453240;border:1px solid #ae7b68;padding:12px;margin-bottom:14px}
+.history-rank-question{white-space:pre-wrap;background:#332835;border:2px solid #946872;padding:15px;margin-bottom:13px;font-weight:800;font-size:clamp(15px,2.5vw,21px);line-height:1.65;color:#ffefd8}
+.history-rank-question small{display:block;color:#ecb98c;font-size:12px;margin-bottom:12px}
+.history-rank-choices{display:grid;gap:8px}
+.history-rank-choices button{min-height:51px;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;color:#ffebd2;background:#3a2d3a;border:2px solid #80606a;border-radius:5px}
+.history-rank-choices button.is-correct{border-color:#93d9b6;background:#284138;color:#ddffeb}
+.history-rank-feedback{padding:12px;border:2px solid #8da990;background:#2a3d37;margin:14px 0;white-space:pre-wrap;color:#e6fff0}
+.history-rank-feedback p{margin:7px 0}
+.history-rank-next{width:100%;min-height:48px;border:2px solid #f4c592;background:#e9b783;color:#3a2630;font-size:16px!important}
+.history-competition-result{text-align:center;padding:25px;background:#322735;border:2px solid #8c6773;margin:12px 0}
+.history-competition-result strong{font-size:52px;color:#ffe0a8}
+.history-multi-controls{display:flex;align-items:end;gap:10px;margin:12px 0}
+.history-multi-controls label{flex:1 1 200px;min-width:0;color:#eac5a3;font-size:12px;font-weight:900}
+.history-multi-controls input{display:block;width:100%;min-width:0;margin-top:5px;border:2px solid #826476;border-radius:4px;background:#211b28;color:#fff1d4;padding:10px;min-height:42px}
+.history-multi-controls button{padding:10px;background:#dca773;color:#382630;border:2px solid #f8cd90;min-height:43px}
+.history-multi-room{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid #614552}
+.history-multi-room span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.history-multi-room strong{font-size:14px;color:#ffe9c6}
+.history-multi-room small{font-size:12px;color:#c5a9aa}
+.history-multi-players{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.history-multi-players>div{display:flex;flex-direction:column;gap:2px;padding:10px;border:2px solid #87606b;background:#322737}
+.history-multi-players span{font-weight:900;word-break:break-all}
+.history-multi-players b{color:#f5c98f}
+.history-multi-players small{font-size:12px;color:#caadb5}
+@media(max-width:600px){
+ .history-competition-dialog{width:calc(100vw - 12px);max-height:95dvh}
+ .history-competition-head{padding:11px 12px}
+ .history-competition-body{padding:12px}
+ .history-competition-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .history-competition-modes{grid-template-columns:1fr}
+ .history-competition-modes button{min-height:42px}
+ .history-multi-controls{flex-wrap:wrap}
+ .history-multi-controls button{flex:1 1 100%;width:100%}
+ .history-multi-players{grid-template-columns:1fr 1fr}
+ .history-rank-status{font-size:12px}
+}
