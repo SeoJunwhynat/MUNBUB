@@ -24,7 +24,7 @@ function shown(s,review=false){
  return {
   runId:s.runId,mode:s.mode,phase:s.phase,answered:s.answered,correct:s.correct,score:s.score,
   elapsedMs:Date.now()-s.startedAt,deadline:s.deadline||null,finishedReason:s.finishedReason||null,
-  question:s.phase==='question'&&q?{id:q.id,type:q.type,unit:q.unit,prompt:q.prompt,choices:q.choices,number:s.answered+1}:null,
+  question:['question','review'].includes(s.phase)&&q?{id:q.id,type:q.type,unit:q.unit,prompt:q.prompt,choices:q.choices,number:s.answered+1}:null,
   review:review||s.phase==='review'?{correctIndex:q?.correct??null,explanation:q?.explain||'',wasCorrect:s.lastCorrect===true,points:s.lastPoints||0}:null
  };
 }
