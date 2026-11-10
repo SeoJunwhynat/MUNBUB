@@ -5,6 +5,9 @@ const definitions={
  concept:{label:'개념문제',description:'사건 · 용어 · 인물 · 원인과 영향',slot:'spelling'},
  year:{label:'연도문제',description:'연도 · 시대 흐름 · 사건 배열',slot:'idiom'},
  advanced:{label:'심화문제',description:'사료 · 지도 · 자료 · 추론',slot:'application'},
+ infinite:{label:'무한모드',description:'정답 수와 관계없이 계속 학습',slot:'infinite'},
+ hardcore:{label:'하드코어',description:'첫 오답에서 즉시 종료되는 도전',slot:'hard'},
+ timed60:{label:'시간제한',description:'60초 동안 최다 정답에 도전',slot:'timed'},
  all:{label:'전체 문제',description:'전 범위 종합 연습',slot:'all'}
 };
 const htmlEscape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -25,14 +28,22 @@ function renderHome({facts,questions,units,wrongCount,encode}){
  card('concept','✎','개념과 사건을 이해하는 문제')+
  card('year','▣','연도와 사건의 순서를 맞히는 문제')+
  card('advanced','✦','사료·사진·지도 활용 심화문제')+
+ card('infinite','∞','끝없는 역사 문제 도전')+
+ card('hardcore','⚔','첫 오답에서 종료')+
+ card('timed60','⌛','60초 제한시간 도전')+
  '<div class="history-primary-hint">버튼 일러스트는 나중에 전달받을 UI 디자인으로 교체할 수 있습니다.</div></div>'+
  '<div class="history-home-side-col">'+
  '<div class="history-hero-art" data-art-slot="character" aria-label="캐릭터 그림 교체 자리"><div class="history-hero-emblem" aria-hidden="true">史</div>'+
  '<strong>HISTORY ARCHIVE</strong><span>한국 현대사의 기록을 따라<br>공부하고 탐험하는 공간</span><small>캐릭터 및 배경 아트 슬롯</small></div>'+
+ '<div class="history-online-actions" aria-label="역사 온라인 기능">'+
+ '<button type="button" data-history-competition="rank" data-art-slot="ranked">🏆 랭킹전</button>'+
+ '<button type="button" data-history-competition="multi" data-art-slot="duel">⚔ 1:1 대전</button>'+
+ '<button type="button" data-history-competition="multi" data-art-slot="public-rooms">🤝 공개방</button>'+
+ '<a href="/history-museum.html#achievement" data-art-slot="achievement">🎖 업적·칭호</a></div>'+
  '<a class="history-mode-card history-museum-card" href="/history-museum.html" data-art-slot="backrooms"><span class="history-mode-art" aria-hidden="true">▤</span>'+
  '<span class="history-mode-meta"><strong>역사 박물관</strong><small>백룸 모드 자리 · 사료·전시·탐험</small></span><span class="history-mode-arrow" aria-hidden="true">›</span></a>'+
  '</div></section>'+
- '<nav class="history-extra-modes" aria-label="추가 학습 메뉴">'+
+ '<div class="history-only-menu-title">HISTORY EXTRAS · 한국사 전용 기능</div><nav class="history-extra-modes" aria-label="추가 학습 메뉴">'+
  '<button type="button" data-history-mode="all">🎯 전체 문제</button>'+
  '<button type="button" data-go="concept">📚 개념정리</button>'+
  '<button type="button" data-go="timeline">📅 역사 연표</button>'+
