@@ -63,7 +63,7 @@ test('New tracks are registered as available only after asset registration; Kore
  for(const f of ['Afternoon_in_a_Seoul_Teahouse.mp3','Questions_in_the_Gallery.mp3',
                    'The_Clockmaker_s_Ledger.mp3','Last_Page_Turned.mp3'])assert.ok(s.includes(f));
  assert.match(s,/if\(!ready\)/);
- assert.match(s,/if\(!playlist\.length\)/); // intentional: if missing, UI stays non-playable.
+ assert.match(s,/if\(!playable\.length\)/); // no audio is attempted when catalog is empty.
  assert.doesNotMatch(s,/document\.addEventListener\('pointerdown'[^;]*start\(/);
  assert.match(shared,/PUBLISHED_BGM/);
  assert.match(shared,/function playlist\(m\)/);
