@@ -2,6 +2,7 @@
 "use strict";
 var db=window.HISTORY_FINAL_DB,root=document.getElementById("app"),tabs=document.getElementById("tabs");
 if(!db||!Array.isArray(db.items)){root.innerHTML='<div class="empty">역사 학습 데이터를 불러오지 못했습니다. 새로고침해 주세요.</div>';return}
+var newExam=window.MB_HISTORY_EXAM_2026&&typeof window.MB_HISTORY_EXAM_2026==="object"?window.MB_HISTORY_EXAM_2026:{events:[],questions:[]};
 var extra=window.MB_HISTORY_EXTRA_DB&&typeof window.MB_HISTORY_EXTRA_DB==="object"?window.MB_HISTORY_EXTRA_DB:{events:[],questions:[]};
 var existingIds=new Set(db.items.map(function(x){return x.id}));
 var existingTitles=new Set(db.items.map(function(x){return x.title}));
@@ -9,7 +10,8 @@ var expanded=Array.isArray(extra.events)?extra.events.filter(function(x){
  if(!x||!Number.isInteger(x.id)||existingIds.has(x.id)||existingTitles.has(x.title)||!db.chapters[x.u]||!/^(19|20)\d{2}/.test(x.date||"")||typeof x.title!=="string"||typeof x.detail!=="string"||typeof x.keyword!=="string")return false;
  existingIds.add(x.id);existingTitles.add(x.title);return true;
 }):[];
-var facts=db.items.concat(expanded),units=db.chapters;
+var newExamEvents=Array.isArray(newExam.events)?newExam.events.filter(function(f){return f&&Number.isInteger(f.id)&&db.chapters[f.u]&&!existingIds.has(f.id)&&!existingTitles.has(f.title)&&(existingIds.add(f.id),existingTitles.add(f.title),true)}):[];
+var facts=db.items.concat(expanded,newExamEvents),units=db.chapters;
 var state={tab:"home",mode:"all",unit:"all",search:"",session:[],index:0,chosen:-1,score:0,start:0,timer:null,review:false,finished:false,answered:0,points:0,roundAt:0,deadline:null,endReason:""};
 var historyModes={
  all:{label:"전체 문제",types:null},
@@ -162,9 +164,19 @@ var existingQuestionIds=new Set(all.map(function(q){return String(q.id)}));
  add(q.id,ev,q.type,q.level,q.body,q.choices,q.answer,q.explanation,q.wrongNotes||{});
  if(all.length>before)existingQuestionIds.add(String(q.id));
 });
+/* User-provided textbook images: every question preserves an explicit source-image ID. */
+(Array.isArray(newExam.questions)?newExam.questions:[]).forEach(function(q){
+ var ev=facts.find(function(f){return f.title===q.eventTitle});
+ if(!ev||!/^s\\d{3}$/.test(String(q.imageId||""))||q.choices?.length!==4)return;
+ if(!["source","visual","map","context","worksheet","timeline","month"].includes(q.type))return;
+ if(!["basic","advanced","top"].includes(q.level))return;
+ var before=all.length;
+ add(q.id,ev,q.type,q.level,q.body,q.choices,q.answer,q.explanation,{});
+ if(all.length>before){all[all.length-1].imageId=q.imageId;}
+});
 function setTab(tab){if(state.timer)clearInterval(state.timer);state.timer=null;state.tab=tab;tabs.querySelectorAll("[data-tab]").forEach(function(b){b.classList.toggle("active",b.dataset.tab===tab)});draw();window.scrollTo(0,0)}
 function home(){
-root.innerHTML='<div class="hero"><div class="eyebrow">2022 개정 · 한국사 2 · 기말 대비</div><h1>광복 이후 대한민국의 발전과 현대사</h1><p>기존 중간고사 학습기는 유지하고, 기말고사를 위한 핵심 사건·연도·개념·사료형·연표 문제와 오답 복습을 별도 구성했습니다.</p><div class="stats"><div class="stat"><b>8</b><span>주제</span></div><div class="stat"><b>'+facts.length+'</b><span>핵심 개념</span></div><div class="stat"><b>'+all.length+'</b><span>문제 후보</span></div><div class="stat"><b>'+wrong.size+'</b><span>누적 오답</span></div></div><div class="actions"><button class="btn main" data-go="quiz">기말 문제 풀기</button><button class="btn" data-go="concept">개념 정리</button><a href="/" class="btn" style="text-decoration:none">중간고사 이어서</a></div></div>'+
+root.innerHTML='<div class="hero"><div class="eyebrow">2022 개정 · 한국사 2 · 기말 대비</div><h1>카이로 회담부터 현대까지 · 한국사 기말</h1><p>기존 중간고사 학습기는 유지하고, 기말고사를 위한 핵심 사건·연도·개념·사료형·연표 문제와 오답 복습을 별도 구성했습니다.</p><div class="stats"><div class="stat"><b>8</b><span>주제</span></div><div class="stat"><b>'+facts.length+'</b><span>핵심 개념</span></div><div class="stat"><b>'+all.length+'</b><span>문제 후보</span></div><div class="stat"><b>'+wrong.size+'</b><span>누적 오답</span></div></div><div class="actions"><button class="btn main" data-go="quiz">기말 문제 풀기</button><button class="btn" data-go="concept">개념 정리</button><a href="/" class="btn" style="text-decoration:none">중간고사 이어서</a></div></div>'+
 '<div class="panel">'+section("8개 주제별 학습","단원을 클릭하면 해당 범위의 문제만 출제됩니다.")+'<div class="grid">'+Object.keys(units).map(function(k){return '<button class="card unit" data-unitgo="'+k+'"><div class="date">'+k+'</div><h3>'+enc(units[k])+'</h3><div class="small">핵심 사건 '+facts.filter(function(f){return f.u===k}).length+'개</div></button>'}).join("")+'</div></div>'+
 '<div class="panel card"><h3>교과서 연계 범위 안내</h3><p class="muted">제공된 한국사 2 교과서 캡처를 주제별로 참고한 자체 제작 학습 자료입니다. 전자교과서의 전체 본문을 그대로 옮긴 것이 아니며, 학교가 지정한 기말 시험 범위와 정확히 일치한다고 단정하지 않습니다. 사료형 문제는 원문이 아닌 재구성 문장입니다.</p><a href="https://ebook.dongapublishing.com/ebook/ecatalog5.asp?Dir=2394" target="_blank" rel="noopener">동아출판 전자교과서 보기</a></div>';
 if(window.MB_HISTORY_MODE_UI&&typeof window.MB_HISTORY_MODE_UI.renderHome==="function"){
@@ -177,7 +189,7 @@ root.innerHTML=section("기말 실전 문제풀이","문항 수·난이도·유�
 '<label class="field">난이도<select id="level"><option value="all">전체</option><option value="basic">기본</option><option value="advanced">심화</option><option value="top">최상</option></select></label>'+
 '<label class="field">문제 유형<select id="type"><option value="all">전체</option><option value="event">사건 추론</option><option value="year">연도 판단</option><option value="keyword">핵심어</option><option value="meaning">역사적 의미</option><option value="source">사료형</option><option value="order">연표 배열(기존)</option><option value="context">개념·배경·영향</option><option value="people">인물·기관 특징</option><option value="visual">사진·도표 자료 설명</option><option value="map">지도 해석</option><option value="timeline">ㄱ~ㅁ 연표 추론</option><option value="between">A·B 사이 사건</option><option value="month">연·월·일 집중</option><option value="worksheet">학습지 빈칸</option></select></label>'+
 '<label class="field">문항 수<select id="count"><option value="10">10문제</option><option value="20" selected>20문제</option><option value="30">30문제</option><option value="40">40문제</option><option value="50">50문제</option><option value="80">80문제</option><option value="100">100문제</option><option value="10000">선택 범위 전체</option></select></label></div>'+
-'<div class="actions"><button class="btn main" id="start">문제 시작</button><button class="btn" data-go="wrong">오답 노트 ('+wrong.size+')</button></div><p class="small">중간고사 방식의 문제 유형을 기말 범위에 적용했습니다. 연표의 날짜는 정답을 선택한 뒤 해설에서 공개합니다. 사진·지도 유형은 실제 원본 대신 학습용 자료 설명을 표시합니다.</p><div class="actions" style="margin-top:12px;flex-wrap:wrap"><button class="btn" data-quick="source">📜 사료 심화</button><button class="btn" data-quick="visual">🖼️ 사진·도표</button><button class="btn" data-quick="map">🗺️ 지도</button><button class="btn" data-quick="timeline">⏳ ㄱ~ㅁ 연표</button><button class="btn" data-quick="between">↔ A·B 사이</button><button class="btn" data-quick="month">📅 월 순서</button><button class="btn" data-quick="people">👤 인물·기관</button><button class="btn" data-quick="context">🧠 개념·배경</button><button class="btn" data-quick="worksheet">✏️ 학습지 빈칸</button><button class="btn" data-quick="top">🔥 최상 난도</button></div></div>';
+'<div class="actions"><button class="btn main" id="start">문제 시작</button><button class="btn" data-go="wrong">오답 노트 ('+wrong.size+')</button></div><p class="small">중간고사 방식의 문제 유형을 기말 범위에 적용했습니다. 연표의 날짜는 정답을 선택한 뒤 해설에서 공개합니다. 사진·지도 유형에서는 이번에 받은 교과서 캡처 자료를 함께 표시합니다. 자료가 아직 서버에 설치되지 않았다면 설명형으로 풀이할 수 있습니다.</p><div class="actions" style="margin-top:12px;flex-wrap:wrap"><button class="btn" data-quick="source">📜 사료 심화</button><button class="btn" data-quick="visual">🖼️ 사진·도표</button><button class="btn" data-quick="map">🗺️ 지도</button><button class="btn" data-quick="timeline">⏳ ㄱ~ㅁ 연표</button><button class="btn" data-quick="between">↔ A·B 사이</button><button class="btn" data-quick="month">📅 월 순서</button><button class="btn" data-quick="people">👤 인물·기관</button><button class="btn" data-quick="context">🧠 개념·배경</button><button class="btn" data-quick="worksheet">✏️ 학습지 빈칸</button><button class="btn" data-quick="top">🔥 최상 난도</button></div></div>';
 if(window.MB_HISTORY_MODE_UI&&typeof window.MB_HISTORY_MODE_UI.prepareSetup==="function"){
  window.MB_HISTORY_MODE_UI.prepareSetup(state.mode,historyModes[state.mode]);
 }
@@ -280,8 +292,9 @@ root.innerHTML=section("오답노트와 즐겨찾기","정답을 맞히면 복�
 '<div class="card"><h3>오답 '+w.length+'개 · 저장한 문제 '+b.length+'개</h3><div class="actions"><button id="reviewStart" class="btn main" '+(w.length?"":"disabled")+'>오답 다시 풀기</button><button id="savedStart" class="btn" '+(b.length?"":"disabled")+'>즐겨찾기 풀기</button><button id="clearWrong" class="btn" '+(w.length?"":"disabled")+'>오답 초기화</button></div></div>'+
 '<div class="panel"><h3>오답 목록</h3>'+(w.length?'<div class="grid">'+w.slice(0,100).map(function(q){return '<div class="card"><div class="chip">'+enc(units[q.ev.u])+'</div><h3>'+enc(q.ev.title)+'</h3><div class="small">유형: '+q.type+'</div></div>'}).join("")+'</div>':'<div class="empty">아직 기록한 오답이 없습니다.</div>')+'</div>';
 }
+function gallery(){if(window.MB_HISTORY_EXAM_MEDIA)window.MB_HISTORY_EXAM_MEDIA.renderGallery(root,newExam,enc);else root.innerHTML='<div class="empty">자료실을 불러오지 못했습니다.</div>'}
 function draw(){
-if(state.tab==="home")home();else if(state.tab==="quiz")setup();else if(state.tab==="concept")concepts();else if(state.tab==="timeline")timeline();else if(state.tab==="sources")sources();else if(state.tab==="people")persons();else if(state.tab==="flow")flow();else if(state.tab==="wrong")review();
+if(state.tab==="home")home();else if(state.tab==="quiz")setup();else if(state.tab==="concept")concepts();else if(state.tab==="timeline")timeline();else if(state.tab==="sources")sources();else if(state.tab==="gallery")gallery();else if(state.tab==="people")persons();else if(state.tab==="flow")flow();else if(state.tab==="wrong")review();
 }
 tabs.addEventListener("click",function(e){var b=e.target.closest("[data-tab]");if(b){if(b.dataset.tab==="quiz")state.mode="all";setTab(b.dataset.tab)}});
 root.addEventListener("click",function(e){
@@ -301,7 +314,7 @@ root.addEventListener("click",function(e){
  if(e.target.id==="clearWrong"&&confirm("모든 오답 기록을 삭제할까요?")){wrong.clear();save("wrong",wrong);review();return}
  if(e.target.id==="resetFilter"){state.unit="all";state.search="";draw();return}
 });
-root.addEventListener("change",function(e){if(e.target.id==="unit"){state.unit=e.target.value;if(["concept","timeline","sources"].includes(state.tab))draw()}});
+root.addEventListener("change",function(e){if(e.target.id==="unit"){state.unit=e.target.value;if(["concept","timeline","sources","gallery"].includes(state.tab))draw()}});
 root.addEventListener("input",function(e){if(e.target.id==="search"){state.search=e.target.value;var caret=e.target.selectionStart;draw();var input=document.getElementById("search");if(input){input.focus();try{input.setSelectionRange(caret,caret)}catch(_){}}}});
 draw();
 })();
