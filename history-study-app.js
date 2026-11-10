@@ -144,6 +144,18 @@ people.forEach(function(p,i){
  add("mid-person-"+i,{u:"all",date:"1945",title:p[0]},"people","advanced","다음 활동과 관련된 역사적 인물은?\n\n"+p[1],[p[0]].concat(others.map(function(x){return x[0]})),p[0],p[0]+" — "+p[1]);
 });
 
+/* 별도로 검수한 추가 실전 문제: 재구성 사료·상황 추론·인물·연표·지도 설명 */
+var existingQuestionIds=new Set(all.map(function(q){return String(q.id)}));
+(Array.isArray(extra.questions)?extra.questions:[]).forEach(function(q){
+ if(!q||existingQuestionIds.has(String(q.id)))return;
+ var ev=facts.find(function(f){return f.id===q.eventId&&f.u===q.unit});
+ if(!ev||!Array.isArray(q.choices)||q.choices.length!==4||typeof q.body!=="string"||q.body.length<20)return;
+ if(["event","year","keyword","meaning","source","order","context","people","visual","map","timeline","between","month","worksheet"].indexOf(q.type)<0)return;
+ if(["basic","advanced","top"].indexOf(q.level)<0)return;
+ var before=all.length;
+ add(q.id,ev,q.type,q.level,q.body,q.choices,q.answer,q.explanation,q.wrongNotes||{});
+ if(all.length>before)existingQuestionIds.add(String(q.id));
+});
 function setTab(tab){if(state.timer)clearInterval(state.timer);state.timer=null;state.tab=tab;tabs.querySelectorAll("[data-tab]").forEach(function(b){b.classList.toggle("active",b.dataset.tab===tab)});draw();window.scrollTo(0,0)}
 function home(){
 root.innerHTML='<div class="hero"><div class="eyebrow">2022 개정 · 한국사 2 · 기말 대비</div><h1>광복 이후 대한민국의 발전과 현대사</h1><p>기존 중간고사 학습기는 유지하고, 기말고사를 위한 핵심 사건·연도·개념·사료형·연표 문제와 오답 복습을 별도 구성했습니다.</p><div class="stats"><div class="stat"><b>8</b><span>주제</span></div><div class="stat"><b>'+facts.length+'</b><span>핵심 개념</span></div><div class="stat"><b>'+all.length+'</b><span>문제 후보</span></div><div class="stat"><b>'+wrong.size+'</b><span>누적 오답</span></div></div><div class="actions"><button class="btn main" data-go="quiz">기말 문제 풀기</button><button class="btn" data-go="concept">개념 정리</button><a href="/" class="btn" style="text-decoration:none">중간고사 이어서</a></div></div>'+
