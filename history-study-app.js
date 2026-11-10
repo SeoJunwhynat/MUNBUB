@@ -3,9 +3,12 @@
 var db=window.HISTORY_FINAL_DB,root=document.getElementById("app"),tabs=document.getElementById("tabs");
 if(!db||!Array.isArray(db.items)){root.innerHTML='<div class="empty">역사 학습 데이터를 불러오지 못했습니다. 새로고침해 주세요.</div>';return}
 var facts=db.items,units=db.chapters;
-var state={tab:"home",mode:"all",unit:"all",search:"",session:[],index:0,chosen:-1,score:0,start:0,timer:null,review:false,finished:false};
+var state={tab:"home",mode:"all",unit:"all",search:"",session:[],index:0,chosen:-1,score:0,start:0,timer:null,review:false,finished:false,answered:0,points:0,roundAt:0,deadline:null,endReason:""};
 var historyModes={
  all:{label:"전체 문제",types:null},
+ infinite:{label:"무한모드",types:null},
+ hardcore:{label:"하드코어",types:null},
+ timed60:{label:"시간제한",types:null},
  concept:{label:"개념문제",types:["event","keyword","meaning","context","people","worksheet"]},
  year:{label:"연도문제",types:["year","month","order","timeline","between"]},
  advanced:{label:"심화문제",types:["source","visual","map","context","meaning","people","worksheet","timeline","between","order"]}
@@ -163,19 +166,28 @@ var unit=document.getElementById("unit")?document.getElementById("unit").value:s
 var lev=document.getElementById("level")?document.getElementById("level").value:"all";
 var type=document.getElementById("type")?document.getElementById("type").value:"all";
 var count=Number(document.getElementById("count")?document.getElementById("count").value:10000);
+if(["infinite","hardcore","timed60"].includes(state.mode))count=10000;
 state.unit=unit;state.review=!!review;state.session=rnd(list||all.filter(function(q){return (unit==="all"||q.ev.u===unit)&&(lev==="all"||q.level===lev)&&(type==="all"||q.type===type)&&(!historyModes[state.mode].types||historyModes[state.mode].types.includes(q.type))&&(!review||wrong.has(q.id))})).slice(0,count);
 if(!state.session.length){toast("선택한 조건에 문제가 없습니다.");return}
-state.index=0;state.score=0;state.chosen=-1;state.start=Date.now();state.tab="quiz";question();
+state.index=0;state.score=0;state.points=0;state.answered=0;state.chosen=-1;state.start=Date.now();state.roundAt=state.start;state.deadline=state.mode==="timed60"?state.start+60000:null;state.endReason="";state.tab="quiz";question();
 }
 function clock(){var n=Math.floor((Date.now()-state.start)/1000);return Math.floor(n/60)+":"+String(n%60).padStart(2,"0")}
 function question(){
 if(state.timer)clearInterval(state.timer);
-if(state.index>=state.session.length){result();return}
+if(state.deadline&&Date.now()>=state.deadline){state.endReason="time";result();return}
+if(state.index>=state.session.length){
+ if(["infinite","hardcore","timed60"].includes(state.mode)){
+  state.session=rnd(all.filter(function(q){return (state.unit==="all"||q.ev.u===state.unit)&&(!historyModes[state.mode].types||historyModes[state.mode].types.includes(q.type))}));
+  state.index=0;
+  if(!state.session.length){state.endReason="empty";result();return}
+ }else{result();return}
+}
+if(state.chosen<0)state.roundAt=Date.now();
 var q=state.session[state.index],chosen=state.chosen;
-root.innerHTML='<div class="quiz"><div class="actions" style="justify-content:space-between"><span class="chip">'+enc(units[q.ev.u])+'</span><span id="clock" class="date">'+clock()+'</span></div><div style="display:flex;justify-content:space-between"><b>문제 '+(state.index+1)+' / '+state.session.length+'</b><span class="small">'+(q.level==="advanced"?"심화":"기본")+' · '+q.type+'</span></div><div class="progress"><div style="width:'+(state.index*100/state.session.length)+'%"></div></div>'+
+root.innerHTML='<div class="quiz"><div class="actions" style="justify-content:space-between"><span class="chip">'+enc(units[q.ev.u])+'</span><span id="clock" class="date">'+(state.deadline?Math.max(0,Math.ceil((state.deadline-Date.now())/1000))+"초 남음":clock())+'</span></div><div style="display:flex;justify-content:space-between"><b>문제 '+(state.answered+1)+' / '+(["infinite","hardcore"].includes(state.mode)?"∞":state.mode==="timed60"?"60초":state.session.length)+'</b><span class="small">'+(q.level==="advanced"?"심화":"기본")+' · '+q.type+'</span></div><div class="progress"><div style="width:'+(state.index*100/state.session.length)+'%"></div></div>'+
 '<section class="card"><div class="actions" style="justify-content:flex-end"><button class="btn" id="bookmark">'+(saved.has(q.id)?"★ 저장됨":"☆ 즐겨찾기")+'</button></div><div class="question">'+enc(q.body)+'</div><div class="choices">'+q.choices.map(function(c,i){return '<button class="choice '+(chosen>=0?(c===q.answer?"correct":chosen===i?"wrong":""):"")+'" data-choice="'+i+'" '+(chosen>=0?"disabled":"")+'><b>'+(i+1)+'</b><span>'+enc(c)+'</span></button>'}).join("")+'</div>'+
-(chosen>=0?feedback(q,chosen):"")+'</section><div class="actions"><button class="btn" id="quit">문제 설정으로</button>'+(chosen>=0?'<button class="btn main" id="next">'+(state.index+1===state.session.length?"결과 확인":"다음 문제")+'</button>':"")+'</div></div>';
-if(chosen<0){var clockNode=document.getElementById("clock");state.timer=setInterval(function(){if(clockNode)clockNode.textContent=clock()},1000)}
+(chosen>=0?feedback(q,chosen):"")+'</section><div class="actions"><button class="btn" id="quit">문제 설정으로</button>'+(["infinite","hardcore","timed60"].includes(state.mode)?'<button class="btn" id="stopRun">기록 마치기</button>':"")+(chosen>=0?'<button class="btn main" id="next">'+(state.index+1===state.session.length?"결과 확인":"다음 문제")+'</button>':"")+'</div></div>';
+if(chosen<0||state.deadline){var clockNode=document.getElementById("clock");state.timer=setInterval(function(){if(state.deadline&&Date.now()>=state.deadline){state.endReason="time";result();return}if(clockNode)clockNode.textContent=state.deadline?Math.max(0,Math.ceil((state.deadline-Date.now())/1000))+"초 남음":clock()},400)}
 }
 function feedback(q,index){
 var ok=q.choices[index]===q.answer;
@@ -183,14 +195,29 @@ return '<div class="feedback '+(ok?"good":"")+'"><h3>'+(ok?"✅ 정답":"❌ 오
 }
 function choose(i){
 if(state.chosen>=0)return;var q=state.session[state.index];state.chosen=i;
-if(q.choices[i]===q.answer){state.score++;if(state.review){wrong.delete(q.id);save("wrong",wrong)}}
+var correct=q.choices[i]===q.answer;state.answered++;
+if(correct){state.score++;state.points+=state.mode==="hardcore"?Math.max(1,10-Math.floor((Date.now()-state.roundAt)/6000)):1;if(state.review){wrong.delete(q.id);save("wrong",wrong)}}
 else{wrong.add(q.id);save("wrong",wrong)}
+if(state.mode==="hardcore"&&!correct){state.endReason="wrong";result();return}
+if(state.deadline&&Date.now()>=state.deadline){state.endReason="time";result();return}
 question();
 }
 function result(){
 if(state.timer)clearInterval(state.timer);state.timer=null;
-var pct=Math.round(state.score*100/state.session.length);
-root.innerHTML='<div class="quiz card"><div class="eyebrow">기말 모의고사 결과</div><h1>학습 완료 🎯</h1><div class="result">'+pct+'점</div><p>'+state.session.length+'문항 중 '+state.score+'개 정답 · 풀이시간 '+clock()+'</p><p class="muted">틀린 문제는 이 브라우저의 오답노트에 자동 저장됩니다.</p><div class="actions"><button class="btn main" data-go="quiz">다른 문제 풀기</button><button class="btn" data-go="wrong">오답 복습 ('+wrong.size+')</button></div></div>';
+var count=state.answered||state.session.length;
+var pct=Math.round(state.score*100/Math.max(1,count));
+var name=historyModes[state.mode]?.label||"기말 모의고사";
+var arcade=["infinite","hardcore","timed60"].includes(state.mode);
+var high=0;
+if(arcade){
+ var key="history_final_arcade_"+state.mode;
+ try{high=Number(localStorage.getItem(key)||0);if(state.points>high){high=state.points;localStorage.setItem(key,String(high))}}catch(_){}
+}
+root.innerHTML='<div class="quiz card"><div class="eyebrow">'+enc(name)+' · 학습 결과</div><h1>학습 완료 🎯</h1><div class="result">'+(arcade?state.points:pct)+'점</div>'+
+'<p>정답 '+state.score+'개 / 풀이 '+count+'문항 · 진행시간 '+clock()+'</p>'+
+(arcade?'<p class="muted">내 최고 점수: '+high+'점 · '+(state.endReason==="wrong"?"첫 오답으로 하드코어 종료":state.endReason==="time"?"60초 제한시간 종료":"학습 기록 종료")+'</p>':'')+
+'<p class="muted">틀린 문제는 오답노트에 기록됩니다. 온라인 순위는 별도의 서버 랭킹전에서 기록됩니다.</p>'+
+'<div class="actions"><button class="btn main" data-history-mode="'+enc(state.mode)+'">같은 모드 다시 도전</button><button class="btn" data-go="home">게임 홈</button><button class="btn" data-go="wrong">오답 복습 ('+wrong.size+')</button></div></div>';
 }
 function concepts(){
 var a=filtered();root.innerHTML=section("개념·사건 정리","사건의 배경·전개·의의를 확인하고 핵심어를 암기하세요.")+control(true)+
@@ -237,6 +264,7 @@ if(state.tab==="home")home();else if(state.tab==="quiz")setup();else if(state.ta
 }
 tabs.addEventListener("click",function(e){var b=e.target.closest("[data-tab]");if(b){if(b.dataset.tab==="quiz")state.mode="all";setTab(b.dataset.tab)}});
 root.addEventListener("click",function(e){
+ var compete=e.target.closest("[data-history-competition]");if(compete){if(window.MB_HISTORY_COMPETITION)window.MB_HISTORY_COMPETITION.open(compete.dataset.historyCompetition);else toast("온라인 기능을 불러오지 못했습니다.");return}
  var modeBtn=e.target.closest("[data-history-mode]");if(modeBtn){selectHistoryMode(modeBtn.dataset.historyMode);return}
  var go=e.target.closest("[data-go]");if(go){setTab(go.dataset.go);return}
  var u=e.target.closest("[data-unitgo]");if(u){state.mode="all";state.unit=u.dataset.unitgo;setTab("quiz");return}
@@ -245,6 +273,7 @@ root.addEventListener("click",function(e){
  var c=e.target.closest("[data-choice]");if(c){choose(Number(c.dataset.choice));return}
  if(e.target.id==="next"){state.index++;state.chosen=-1;question();return}
  if(e.target.id==="quit"){setTab("quiz");return}
+ if(e.target.id==="stopRun"){state.endReason="exit";result();return}
  if(e.target.id==="bookmark"){var q=state.session[state.index];if(saved.has(q.id))saved.delete(q.id);else saved.add(q.id);save("saved",saved);e.target.textContent=saved.has(q.id)?"★ 저장됨":"☆ 즐겨찾기";return}
  if(e.target.id==="reviewStart"){state.unit="all";begin(true);return}
  if(e.target.id==="savedStart"){begin(false,all.filter(function(q){return saved.has(q.id)}));return}
