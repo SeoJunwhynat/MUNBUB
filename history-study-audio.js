@@ -256,6 +256,8 @@ async function catalog(){
 function boot(){
  mini();renderSettings();
  document.addEventListener('click',e=>{
+  const openAudio=e.target.closest?.('[data-history-audio]');
+  if(openAudio){open();return}
   const btn=e.target.closest?.('[data-choice]');
   if(btn){
    setTimeout(()=>{
