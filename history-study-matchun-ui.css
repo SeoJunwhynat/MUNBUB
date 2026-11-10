@@ -118,3 +118,48 @@ header .bar{padding:11px 0}
  .history-mode-arrow{font-size:21px}
 }
 @media(prefers-reduced-motion:reduce){.history-mode-card{transition:none}}
+
+
+/* 국어 맛춘범 홈과 일치하는 39:61 사이드바/캐릭터+온라인버튼 배치 */
+@media(min-width:791px){
+ .history-home-stage{grid-template-columns:minmax(0,39fr) minmax(0,61fr);gap:clamp(10px,1.2vw,16px)}
+ .history-home-side-col{padding-top:0}
+}
+.history-home-main-col{gap:9px}
+.history-mode-card{min-height:75px}
+.history-home-main-col .history-mode-art{flex:0 0 clamp(54px,6.7vw,75px);width:clamp(54px,6.7vw,75px);height:58px;font-size:28px}
+.history-home-main-col .history-mode-meta strong{font-size:clamp(18px,2vw,25px)}
+.history-home-main-col .history-mode-meta small{font-size:clamp(10px,1vw,12px)}
+.history-mode-infinite{background:linear-gradient(130deg,#65517b,#362c50)}
+.history-mode-hardcore{background:linear-gradient(130deg,#8d4f59,#44202f)}
+.history-mode-timed60{background:linear-gradient(130deg,#92755c,#4b3945)}
+.history-home-side-col{gap:12px}
+.history-online-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.history-online-actions button,.history-online-actions a{
+ display:flex;align-items:center;justify-content:center;min-width:0;min-height:56px;
+ padding:10px 8px;text-align:center;text-decoration:none;
+ border-radius:8px;border:4px double #ab8268;border-bottom:5px solid #5d3d43;
+ background:linear-gradient(#fff0d1,#d9ad8c);color:#40272e;
+ box-shadow:inset 0 0 0 2px #fff8e7,0 3px #28151e;
+ font-weight:950;font-size:clamp(13px,1.65vw,19px);cursor:pointer
+}
+.history-online-actions button:hover,.history-online-actions a:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.history-hero-art{min-height:250px}
+.history-museum-card{min-height:98px}
+.history-only-menu-title{font-size:11px;letter-spacing:.13em;color:#f0c58b;font-weight:900;margin:22px 0 0;border-bottom:2px double #7a5260;padding-bottom:7px}
+@media(min-width:791px){
+ .history-home-stage .history-home-side-col{padding-top:0}
+ .history-home-stage .history-hero-art{flex:1 1 auto}
+}
+@media(max-width:790px){
+ .history-home-main-col{gap:8px}
+ .history-home-side-col{padding-top:0}
+ .history-online-actions{gap:7px}
+ .history-online-actions button,.history-online-actions a{min-height:50px;font-size:13px}
+}
+@media(max-width:560px){
+ .history-home-main-col .history-mode-card{min-height:72px}
+ .history-home-main-col .history-mode-art{flex-basis:56px;width:56px;height:55px;font-size:25px}
+ .history-online-actions button,.history-online-actions a{min-height:46px;padding:7px 5px;font-size:12px}
+ .history-only-menu-title{margin-top:17px}
+}
