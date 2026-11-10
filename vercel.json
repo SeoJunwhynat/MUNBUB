@@ -6,22 +6,12 @@
   "redirects": [
     {
       "source": "/",
-      "destination": "https://matchunbeom-render.onrender.com/",
+      "destination": "https://matchunbeom-mark2.onrender.com/",
       "permanent": false
     },
     {
-      "source": "/backrooms",
-      "destination": "https://matchunbeom-render.onrender.com/backrooms/",
-      "permanent": false
-    },
-    {
-      "source": "/backrooms/",
-      "destination": "https://matchunbeom-render.onrender.com/backrooms/",
-      "permanent": false
-    },
-    {
-      "source": "/(.*)",
-      "destination": "https://matchunbeom-render.onrender.com/",
+      "source": "/:path*",
+      "destination": "https://matchunbeom-mark2.onrender.com/:path*",
       "permanent": false
     }
   ]
